@@ -38,7 +38,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
       console.log('🔍 [DEBUG] DocumentShareModal: Attempting to retrieve document with code:', upperShareCode);
       
       // Retrieve shared document from backend API (no authentication required for viewing)
-      const response = await fetch(`http://localhost:3001/api/documents/share/${upperShareCode}`);
+      const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${upperShareCode}`);
 
       const result = await response.json();
 

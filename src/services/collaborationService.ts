@@ -147,7 +147,7 @@ class CollaborationService {
         return;
       }
 
-      const wsUrl = `ws://localhost:8080?token=${encodeURIComponent(token)}`;
+      const wsUrl = `wss://where-to-next-backend.onrender.com?token=${encodeURIComponent(token)}`;
       console.log('🌐 [DEBUG] Connecting to WebSocket:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
       
       this.ws = new WebSocket(wsUrl);
@@ -225,7 +225,7 @@ class CollaborationService {
         
         // Check if backend server is running
         console.log('🔍 [DEBUG] Checking if backend server is accessible...');
-        fetch('http://localhost:3001/api/health')
+        fetch('https://where-to-next-backend.onrender.com/api/health')
           .then(response => {
             if (response.ok) {
               console.log('✅ [DEBUG] Backend server is running');
@@ -836,7 +836,7 @@ class CollaborationService {
           
           // Check WebSocket server
           console.log('🔍 [DEBUG] Testing WebSocket server...');
-          const testWs = new WebSocket('ws://localhost:8080');
+          const testWs = new WebSocket('wss://where-to-next-backend.onrender.com');
           
           testWs.onopen = () => {
             console.log('✅ [DEBUG] WebSocket server is accessible');

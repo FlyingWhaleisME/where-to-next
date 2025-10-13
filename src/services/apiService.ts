@@ -1,6 +1,6 @@
 // API Service for backend communication
-// Use localhost for local development (more reliable)
-const API_BASE_URL = 'http://localhost:3001/api';
+// Use cloud backend for production deployment
+const API_BASE_URL = 'https://where-to-next-backend.onrender.com/api';
 
 // Types
 interface ApiResponse<T> {

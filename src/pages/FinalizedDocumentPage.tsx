@@ -31,7 +31,7 @@ const FinalizedDocumentPage: React.FC = () => {
           // Retrieve shared document from backend API
           const loadSharedDocument = async () => {
             try {
-              const response = await fetch(`http://localhost:3001/api/documents/share/${shareCode.toUpperCase()}`, {
+              const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode.toUpperCase()}`, {
                 headers: {
                   'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -181,7 +181,7 @@ const FinalizedDocumentPage: React.FC = () => {
       // --- END: More robust token validation ---
 
       // Call backend API to create document share
-      const response = await fetch('http://localhost:3001/api/documents/share', {
+      const response = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -265,9 +265,9 @@ const FinalizedDocumentPage: React.FC = () => {
                       </p>
                       <p className="text-blue-600 text-sm mt-2">
                         📖 <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
-                      </p>
-                    </div>
-                  )}
+                </p>
+              </div>
+            )}
 
         </motion.div>
 
@@ -323,7 +323,7 @@ const FinalizedDocumentPage: React.FC = () => {
                   // If there's an active share code, update the backend document share
                   if (shareCode) {
                     try {
-                      const response = await fetch(`http://localhost:3001/api/documents/share/${shareCode}`, {
+                      const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode}`, {
                         method: 'PUT',
                         headers: {
                           'Content-Type': 'application/json',
@@ -964,7 +964,7 @@ const FinalizedDocumentPage: React.FC = () => {
                     if (shareCode) {
                       try {
                         // Call backend API to delete document share
-                        const response = await fetch(`http://localhost:3001/api/documents/share/${shareCode}`, {
+                        const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode}`, {
                           method: 'DELETE',
                           headers: {
                             'Authorization': `Bearer ${localStorage.getItem('token')}`
