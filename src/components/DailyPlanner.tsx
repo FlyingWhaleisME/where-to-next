@@ -1,5 +1,8 @@
+// ADVANCED TECHNIQUE 48: COMPLEX COMPONENT INTERFACE WITH OPTIONAL PROPERTIES
+// TypeScript interface with optional properties and callback functions for data flow
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TimeSlot } from '../types';
 
 interface DailyPlannerProps {
   startDate: string;
@@ -8,17 +11,12 @@ interface DailyPlannerProps {
   mealOptions: string[];
   activityOptions: string[];
   planningStyle: number;
-  onTimeSlotUpdate: (timeSlots: TimeSlot[]) => void;
+  onTimeSlotUpdate: (timeSlots: TimeSlot[]) => void; // Callback function for parent communication
+  readOnly?: boolean; // Optional property for shared document mode
+  initialTimeSlots?: TimeSlot[]; // Optional property for data persistence
 }
 
-interface TimeSlot {
-  id: string;
-  startTime: string;
-  endTime: string;
-  activity: string;
-  type: 'accommodation' | 'meal' | 'activity';
-  description: string;
-}
+// TimeSlot interface is imported from '../types'
 
 interface DayData {
   date: string;
@@ -39,7 +37,9 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   mealOptions,
   activityOptions,
   planningStyle,
-  onTimeSlotUpdate
+  onTimeSlotUpdate,
+  readOnly = false,
+  initialTimeSlots = []
 }) => {
   const [currentDate, setCurrentDate] = useState<string>(startDate);
   const [daysData, setDaysData] = useState<DayData[]>([]);
@@ -56,7 +56,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   });
   const [hasTimeConflict, setHasTimeConflict] = useState<boolean>(false);
 
-  // Generate days between start and end date
+  // ADVANCED TECHNIQUE 49: DATE RANGE GENERATION WITH ITERATIVE ALGORITHM
+  // Complex date manipulation and iteration to generate day-by-day data structures
   useEffect(() => {
     if (!startDate || !endDate) return;
     
@@ -64,10 +65,18 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     const end = new Date(endDate);
     const days: DayData[] = [];
     
+    // ADVANCED TECHNIQUE 50: DATE ITERATION WITH MUTATION AND ISO STRING PARSING
+    // Loop through date range with date mutation and ISO string extraction
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dayDate = d.toISOString().split('T')[0];
+      
+      // For now, we'll initialize with empty time slots
+      // The initialTimeSlots will be handled separately
+      const dayTimeSlots: TimeSlot[] = [];
+      
       days.push({
-        date: d.toISOString().split('T')[0],
-        timeSlots: []
+        date: dayDate,
+        timeSlots: dayTimeSlots
       });
     }
     
@@ -75,8 +84,38 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     setCurrentDate(startDate);
   }, [startDate, endDate]);
 
+  // ADVANCED TECHNIQUE 51: DATA GROUPING AND MERGING WITH FUNCTIONAL PROGRAMMING
+  // Complex data transformation using reduce, map, and spread operators for state updates
+  useEffect(() => {
+    if (initialTimeSlots.length > 0 && daysData.length > 0) {
+      // ADVANCED TECHNIQUE 52: OBJECT GROUPING WITH DYNAMIC KEY CREATION
+      // Group time slots by date using dynamic object keys and array accumulation
+      const slotsByDate: { [date: string]: TimeSlot[] } = {};
+      initialTimeSlots.forEach(slot => {
+        if (!slotsByDate[slot.date]) {
+          slotsByDate[slot.date] = [];
+        }
+        slotsByDate[slot.date].push(slot);
+      });
+
+      // ADVANCED TECHNIQUE 53: FUNCTIONAL STATE UPDATE WITH SPREAD OPERATORS
+      // Complex state update using functional setState with map and spread operators
+      setDaysData(prevDays => {
+        return prevDays.map(day => ({
+          ...day,
+          timeSlots: slotsByDate[day.date] || []
+        }));
+      });
+    }
+  }, [initialTimeSlots, daysData.length]);
+
   // Get current day data
   const currentDayData = daysData.find(day => day.date === currentDate);
+
+  // Helper function to collect all time slots from all days
+  const getAllTimeSlots = () => {
+    return daysData.flatMap(day => day.timeSlots);
+  };
 
   // Check for time conflicts when times change
   useEffect(() => {
@@ -149,7 +188,12 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     });
 
     setDaysData(updatedDays);
-    onTimeSlotUpdate(currentDayData?.timeSlots || []);
+    
+    // Get updated days data to pass all time slots
+    const updatedDaysData = updatedDays.map(day => 
+      day.date === currentDate ? { ...day, timeSlots: updatedDays.find(d => d.date === currentDate)?.timeSlots || [] } : day
+    );
+    onTimeSlotUpdate(updatedDaysData.flatMap(day => day.timeSlots));
   };
 
   const handleConfirmTimeSlot = () => {
@@ -168,13 +212,22 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
       return;
     }
 
+    // Calculate duration from start and end time
+    const startMinutes = parseInt(customTimes.startTime.split(':')[0]) * 60 + parseInt(customTimes.startTime.split(':')[1]);
+    const endMinutes = parseInt(customTimes.endTime.split(':')[0]) * 60 + parseInt(customTimes.endTime.split(':')[1]);
+    const durationMinutes = endMinutes - startMinutes;
+    const durationHours = Math.floor(durationMinutes / 60);
+    const durationMins = durationMinutes % 60;
+    const durationString = durationHours > 0 ? `${durationHours}h ${durationMins}m` : `${durationMins}m`;
+
     const newTimeSlot: TimeSlot = {
       id: `${Date.now()}-${Math.random()}`,
+      date: currentDate,
       startTime: customTimes.startTime,
-      endTime: customTimes.endTime,
+      duration: durationString,
       activity: timePickerModal.option,
-      type: timePickerModal.type as 'accommodation' | 'meal' | 'activity',
-      description: ''
+      description: `${timePickerModal.option} from ${customTimes.startTime} to ${customTimes.endTime}`,
+      type: timePickerModal.type as 'accommodation' | 'meal' | 'activity'
     };
 
     // Update current day's time slots
@@ -189,7 +242,12 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     });
 
     setDaysData(updatedDays);
-    onTimeSlotUpdate(currentDayData?.timeSlots || []);
+    
+    // Get updated days data to pass all time slots
+    const updatedDaysData = updatedDays.map(day => 
+      day.date === currentDate ? { ...day, timeSlots: updatedDays.find(d => d.date === currentDate)?.timeSlots || [] } : day
+    );
+    onTimeSlotUpdate(updatedDaysData.flatMap(day => day.timeSlots));
     
     // Close modal
     setTimePickerModal({
@@ -208,7 +266,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
     return currentDayData.timeSlots.some(existingSlot => {
       const existingStart = timeToMinutes(existingSlot.startTime);
-      const existingEnd = timeToMinutes(existingSlot.endTime);
+      // Calculate end time from start time and duration
+      const existingEnd = existingStart + durationToMinutes(existingSlot.duration);
 
       // Check if the new time slot overlaps with any existing slot
       return (newStart < existingEnd && newEnd > existingStart);
@@ -217,6 +276,16 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
   const timeToMinutes = (timeString: string): number => {
     const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const durationToMinutes = (durationString: string): number => {
+    // Parse duration string like "2h 30m" or "45m"
+    const match = durationString.match(/(?:(\d+)h\s*)?(?:(\d+)m)?/);
+    if (!match) return 0;
+    
+    const hours = parseInt(match[1] || '0');
+    const minutes = parseInt(match[2] || '0');
     return hours * 60 + minutes;
   };
 
@@ -280,7 +349,16 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
       {/* Draggable Options */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">Drag options to time slots:</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-gray-800">
+            {readOnly ? 'Available Options (View Only)' : 'Drag options to time slots:'}
+          </h3>
+          {readOnly && (
+            <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full border border-yellow-200">
+              👁️ View Only
+            </span>
+          )}
+        </div>
         <div className="grid grid-cols-3 gap-4">
           {/* Accommodation Options */}
           <div className="space-y-2">
@@ -288,9 +366,11 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             {accommodationOptions.map((option, index) => (
               <div
                 key={`accommodation-${index}`}
-                draggable
-                onDragStart={() => handleDragStart('accommodation', option)}
-                className="p-2 bg-blue-50 border border-blue-200 rounded-lg cursor-move hover:bg-blue-100 transition-colors"
+                draggable={!readOnly}
+                onDragStart={readOnly ? undefined : () => handleDragStart('accommodation', option)}
+                className={`p-2 bg-blue-50 border border-blue-200 rounded-lg transition-colors ${
+                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-blue-100'
+                }`}
               >
                 <span className="text-sm text-blue-800">{option}</span>
               </div>
@@ -303,9 +383,11 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             {mealOptions.map((option, index) => (
               <div
                 key={`meal-${index}`}
-                draggable
-                onDragStart={() => handleDragStart('meal', option)}
-                className="p-2 bg-green-50 border border-green-200 rounded-lg cursor-move hover:bg-green-100 transition-colors"
+                draggable={!readOnly}
+                onDragStart={readOnly ? undefined : () => handleDragStart('meal', option)}
+                className={`p-2 bg-green-50 border border-green-200 rounded-lg transition-colors ${
+                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-green-100'
+                }`}
               >
                 <span className="text-sm text-green-800">{option}</span>
               </div>
@@ -318,9 +400,11 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             {activityOptions.map((option, index) => (
               <div
                 key={`activity-${index}`}
-                draggable
-                onDragStart={() => handleDragStart('activity', option)}
-                className="p-2 bg-purple-50 border border-purple-200 rounded-lg cursor-move hover:bg-purple-100 transition-colors"
+                draggable={!readOnly}
+                onDragStart={readOnly ? undefined : () => handleDragStart('activity', option)}
+                className={`p-2 bg-purple-50 border border-purple-200 rounded-lg transition-colors ${
+                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-purple-100'
+                }`}
               >
                 <span className="text-sm text-purple-800">{option}</span>
               </div>
@@ -349,9 +433,11 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             {hourlySlots.map((slot) => (
               <div
                 key={slot.hour}
-                className="h-16 border-b border-gray-200 relative hover:bg-gray-50 transition-colors"
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, slot.hour)}
+                className={`h-16 border-b border-gray-200 relative transition-colors ${
+                  readOnly ? '' : 'hover:bg-gray-50'
+                }`}
+                onDragOver={readOnly ? undefined : handleDragOver}
+                onDrop={readOnly ? undefined : (e) => handleDrop(e, slot.hour)}
               >
                 {/* Existing time slots */}
                 {currentDayData?.timeSlots
@@ -360,11 +446,14 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                     return slotHour === slot.hour;
                   })
                   .map((timeSlot) => {
-                    // Calculate position and height based on custom times
+                    // Calculate position and height based on start time and duration
                     const startMinutes = parseInt(timeSlot.startTime.split(':')[1]);
-                    const endMinutes = parseInt(timeSlot.endTime.split(':')[1]);
                     const startHour = parseInt(timeSlot.startTime.split(':')[0]);
-                    const endHour = parseInt(timeSlot.endTime.split(':')[0]);
+                    const durationInMinutes = durationToMinutes(timeSlot.duration);
+                    const startTimeInMinutes = startHour * 60 + startMinutes;
+                    const endTimeInMinutes = startTimeInMinutes + durationInMinutes;
+                    const endHour = Math.floor(endTimeInMinutes / 60);
+                    const endMinutes = endTimeInMinutes % 60;
                     
                     // Calculate position within the hour slot
                     const topPosition = (startMinutes / 60) * 100;
@@ -376,10 +465,10 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                         key={timeSlot.id}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className={`absolute rounded-lg p-2 text-xs font-medium text-white ${
-                          timeSlot.type === 'accommodation' ? 'bg-blue-500' :
-                          timeSlot.type === 'meal' ? 'bg-green-500' :
-                          'bg-purple-500'
+                        className={`absolute rounded-lg p-2 text-xs font-medium ${
+                          (timeSlot as any).type === 'accommodation' ? 'bg-blue-50 border-2 border-blue-400 text-blue-800' :
+                          (timeSlot as any).type === 'meal' ? 'bg-green-50 border-2 border-green-400 text-green-800' :
+                          'bg-purple-50 border-2 border-purple-400 text-purple-800'
                         }`}
                         style={{
                           top: `${topPosition}%`,
@@ -389,11 +478,17 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                           zIndex: 10
                         }}
                       >
-                        <div className="truncate">{timeSlot.activity}</div>
-                        <div className="text-xs opacity-90">
-                          {timeSlot.startTime} - {timeSlot.endTime}
+                        <div className="truncate flex items-center gap-1">
+                          <span>
+                            {(timeSlot as any).type === 'accommodation' ? '🏨' :
+                             (timeSlot as any).type === 'meal' ? '🍽️' : '🎯'}
+                          </span>
+                          {timeSlot.activity}
                         </div>
-                        {canDeleteTimeSlots && (
+                        <div className="text-xs opacity-90">
+                          {timeSlot.startTime} ({timeSlot.duration})
+                        </div>
+                        {canDeleteTimeSlots && !readOnly && (
                           <button
                             onClick={() => handleDeleteTimeSlot(timeSlot.id)}
                             className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs hover:bg-red-600"
@@ -495,13 +590,16 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={handleCancelTimeSlot}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                disabled={readOnly}
+                className={`px-4 py-2 transition-colors ${
+                  readOnly ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-800'
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmTimeSlot}
-                disabled={!customTimes.startTime || !customTimes.endTime || customTimes.startTime >= customTimes.endTime || hasTimeConflict}
+                disabled={readOnly || !customTimes.startTime || !customTimes.endTime || customTimes.startTime >= customTimes.endTime || hasTimeConflict}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add Activity

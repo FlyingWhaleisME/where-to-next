@@ -206,6 +206,7 @@ export interface TimeSlot {
   duration: string;
   activity: string;
   description: string;
+  type: 'accommodation' | 'meal' | 'activity'; // Add type field for color coding
 }
 
 export interface DocumentData {

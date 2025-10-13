@@ -55,6 +55,7 @@ const TripTracingPage: React.FC = () => {
       console.log('❌ No trip preferences found, redirecting to Big Picture');
       navigate('/big-picture');
     }
+
   }, [navigate]);
 
   const handleNext = () => {
@@ -162,6 +163,7 @@ const TripTracingPage: React.FC = () => {
       // Save to localStorage immediately for navigation logic
       localStorage.setItem('tripTracingState', JSON.stringify(newState));
       
+      
       return newState;
     });
   };
@@ -260,6 +262,82 @@ const TripTracingPage: React.FC = () => {
       sectionsCompleted,
       hasExpenseSharing: !!tripTracingState.expenses
     });
+
+    // Update existing documents with trip tracing data
+    updateDocumentsWithTripTracingData(enhancedSurveyData);
+
+    // Create shared document for non-solo travelers
+    if (tripPreferences?.groupSize !== 'solo') {
+      createSharedDocument(enhancedSurveyData);
+    }
+  };
+
+  const updateDocumentsWithTripTracingData = (tripTracingData: any) => {
+    try {
+      const savedDocs = localStorage.getItem('destinationDocuments');
+      if (savedDocs) {
+        const docs = JSON.parse(savedDocs);
+        const updatedDocs = docs.map((doc: any) => ({
+          ...doc,
+          tripTracingSurveyData: tripTracingData,
+          lastModified: new Date().toISOString()
+        }));
+        localStorage.setItem('destinationDocuments', JSON.stringify(updatedDocs));
+        console.log('✅ Updated documents with trip tracing data');
+      }
+    } catch (error) {
+      console.error('Error updating documents with trip tracing data:', error);
+    }
+  };
+
+  const createSharedDocument = async (tripTracingData: any) => {
+    try {
+      const savedDocs = localStorage.getItem('destinationDocuments');
+      if (savedDocs) {
+        const docs = JSON.parse(savedDocs);
+        if (docs.length > 0) {
+          // Use the first document as the main document to share
+          const mainDocument = docs[0];
+          
+          // Create a comprehensive document with both big idea and trip tracing data
+          const documentToShare = {
+            ...mainDocument,
+            tripTracingSurveyData: tripTracingData,
+            lastModified: new Date().toISOString()
+          };
+
+          // Call the backend API to create a shared document
+          const response = await fetch('/api/documents/share', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+              documentData: documentToShare,
+              documentId: mainDocument.id
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Document shared successfully with code:', result.shareCode);
+            
+            // Store the share code in localStorage for the user to access
+            localStorage.setItem('latestSharedDocumentCode', result.shareCode);
+            
+            // Dispatch an event to notify other components
+            window.dispatchEvent(new CustomEvent('documentShared', {
+              detail: { shareCode: result.shareCode, documentId: mainDocument.id }
+            }));
+          } else {
+            console.error('Failed to create shared document');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error creating shared document:', error);
+    }
   };
 
   const handlePromptClose = () => {
@@ -349,6 +427,7 @@ const TripTracingPage: React.FC = () => {
           <p className="text-xl text-gray-600 mb-8">
             Dive deeper into your travel preferences for accommodation, transportation, meals, and food styles
           </p>
+          
           
         {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
@@ -622,6 +701,7 @@ const TripTracingPage: React.FC = () => {
           showBackToSurvey={true}
         />
       )}
+
     </div>
   );
 };

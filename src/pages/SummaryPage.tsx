@@ -124,8 +124,22 @@ const SummaryPage: React.FC = () => {
         lastModified: new Date().toISOString()
       }));
 
+      // IMPORTANT: Append to existing documents instead of overwriting
+      const existingDocs = localStorage.getItem('destinationDocuments');
+      let allDocs = destinationDocs;
+      
+      if (existingDocs) {
+        try {
+          const parsed = JSON.parse(existingDocs);
+          // Add new documents to existing ones
+          allDocs = [...parsed, ...destinationDocs];
+        } catch (error) {
+          console.error('Error parsing existing documents:', error);
+        }
+      }
+
       // Save to localStorage
-      localStorage.setItem('destinationDocuments', JSON.stringify(destinationDocs));
+      localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
       
       // Mark AI planning guide as completed
       localStorage.setItem('ai_planning_guide_completed', 'true');
@@ -213,12 +227,26 @@ const SummaryPage: React.FC = () => {
 
       console.log('Destination documents created:', destinationDocs);
       
+      // IMPORTANT: Append to existing documents instead of overwriting
+      const existingDocs = localStorage.getItem('destinationDocuments');
+      let allDocs = destinationDocs;
+      
+      if (existingDocs) {
+        try {
+          const parsed = JSON.parse(existingDocs);
+          // Add new documents to existing ones
+          allDocs = [...parsed, ...destinationDocs];
+        } catch (error) {
+          console.error('Error parsing existing documents:', error);
+        }
+      }
+      
       // Save to localStorage
-      localStorage.setItem('destinationDocuments', JSON.stringify(destinationDocs));
+      localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
       console.log('Documents saved to localStorage');
       
       // Update local state to show documents immediately
-      setDocuments(destinationDocs);
+      setDocuments(allDocs);
       console.log('Documents state updated');
       
       // Mark AI planning guide as completed

@@ -1,37 +1,214 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { DocumentData } from '../types';
 import DailyPlanner from '../components/DailyPlanner';
+import { getCurrentUser } from '../services/apiService';
 
 const FinalizedDocumentPage: React.FC = () => {
   const { documentId } = useParams<{ documentId: string }>();
+  const [searchParams] = useSearchParams();
   const [document, setDocument] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, setIsCreator] = useState(false);
+  const [isSharedView, setIsSharedView] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [creatorName, setCreatorName] = useState<string>('Unknown Creator');
 
   useEffect(() => {
     if (documentId) {
       try {
-        const savedDocs = localStorage.getItem('destinationDocuments');
-        if (savedDocs) {
-          const docs = JSON.parse(savedDocs);
-          const foundDoc = docs.find((doc: DocumentData) => doc.id === documentId);
-          if (foundDoc) {
-            setDocument(foundDoc);
-          } else {
-            setError('Document not found');
-          }
+        const currentUser = getCurrentUser();
+        const shareCode = searchParams.get('code');
+        
+        // Check if this is a shared document view (via share code)
+        if (shareCode) {
+          console.log('🔗 [DEBUG] Loading shared document with code:', shareCode);
+          setIsSharedView(true);
+          
+          // Retrieve shared document from backend API
+          const loadSharedDocument = async () => {
+            try {
+              const response = await fetch(`http://localhost:3001/api/documents/share/${shareCode.toUpperCase()}`, {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+              });
+
+              const result = await response.json();
+
+              if (!response.ok) {
+                throw new Error(result.error || 'Document not found');
+              }
+
+              console.log('🔗 [DEBUG] Shared document retrieved from backend:', result);
+              setDocument(result.document.data);
+              setCreatorName(result.document.creatorName || 'Unknown Creator');
+              setIsCreator(false); // This is a shared view, not creator
+            } catch (err) {
+              console.error('🔗 [ERROR] Failed to load shared document:', err);
+              setError(err instanceof Error ? err.message : 'Shared document not found or invalid share code');
+            } finally {
+              setLoading(false);
+            }
+          };
+          
+          loadSharedDocument();
         } else {
-          setError('No documents found');
-        }
-      } catch (err) {
-        setError('Error loading document');
-      } finally {
-        setLoading(false);
+          // This is a direct access (likely from Finalize button)
+          console.log('📄 [DEBUG] Loading document directly for creator');
+          setIsSharedView(false);
+          
+          const savedDocs = localStorage.getItem('destinationDocuments');
+          if (savedDocs) {
+            const docs = JSON.parse(savedDocs);
+            const foundDoc = docs.find((doc: DocumentData) => doc.id === documentId);
+            if (foundDoc) {
+              setDocument(foundDoc);
+              // Check if current user is the creator
+              setIsCreator(currentUser ? foundDoc.creatorId === currentUser.id : false);
+            } else {
+              setError('Document not found');
+            }
+      } else {
+            setError('No documents found');
+          }
+      }
+    } catch (err) {
+        console.error('Error loading document:', err);
+      setError('Error loading document');
+    } finally {
+        // Only set loading to false if we're not loading a shared document
+        // (shared document loading is handled in the async function)
+        if (!shareCode) {
+      setLoading(false);
+    }
       }
     }
-  }, [documentId]);
+  }, [documentId, searchParams]);
+
+  const handleInviteClick = async () => {
+    console.log('🔥 [DEBUG] BUTTON CLICKED! handleInviteClick function called!');
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        alert('Please log in to share documents');
+        return;
+      }
+
+      if (!document) {
+        alert('Document not found');
+        return;
+      }
+
+      console.log('📝 [DEBUG] FinalizedDocumentPage: Creating document share via backend API');
+      console.log('📝 [DEBUG] FinalizedDocumentPage: Document ID:', document.id);
+      
+      // Debug: Check the token being used
+      const token = localStorage.getItem('token');
+      console.log('🔑 [DEBUG] Token being used:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
+      console.log('🔑 [DEBUG] Full token for debugging:', token);
+      
+      // --- START: More robust token validation ---
+      console.log('🔑 [DEBUG] Starting token validation...');
+      if (!token) {
+        console.error('🔑 [ERROR] No token found, forcing re-login');
+        // Only clear authentication data, not user documents
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/';
+        return;
+      }
+
+      console.log('🔑 [DEBUG] Token exists, checking structure...');
+      const parts = token.split('.');
+      console.log('🔑 [DEBUG] Token parts count:', parts.length);
+      if (parts.length !== 3) {
+        console.error('🔑 [ERROR] Token has incorrect number of parts, forcing re-login');
+        console.error('🔑 [ERROR] Token parts:', parts.length);
+        // Only clear authentication data, not user documents
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/';
+        return;
+      }
+
+      // Basic check for the header part (first part)
+      // A valid JWT header for HS256 is typically 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+      // The corrupted one observed is 'eyJhbGci0iJIUzI1NiIs...' (with a '0' instead of 'O')
+      const expectedHeaderPrefix = 'eyJhbGciOiJIUzI1NiIs'; // Note the 'O'
+      console.log('🔑 [DEBUG] Checking header prefix...');
+      console.log('🔑 [DEBUG] Expected:', expectedHeaderPrefix);
+      console.log('🔑 [DEBUG] Actual:', parts[0].substring(0, expectedHeaderPrefix.length));
+      console.log('🔑 [DEBUG] Expected length:', expectedHeaderPrefix.length);
+      console.log('🔑 [DEBUG] Actual length:', parts[0].substring(0, expectedHeaderPrefix.length).length);
+      console.log('🔑 [DEBUG] Starts with expected?', parts[0].startsWith(expectedHeaderPrefix));
+      
+      // More robust check - compare character by character
+      const actualPrefix = parts[0].substring(0, expectedHeaderPrefix.length);
+      console.log('🔑 [DEBUG] Starting character-by-character comparison...');
+      console.log('🔑 [DEBUG] Expected chars:', expectedHeaderPrefix.split('').map((c, i) => `${i}:${c}`).join(' '));
+      console.log('🔑 [DEBUG] Actual chars:  ', actualPrefix.split('').map((c, i) => `${i}:${c}`).join(' '));
+      
+      let isCorrupted = false;
+      for (let i = 0; i < expectedHeaderPrefix.length; i++) {
+        console.log(`🔑 [DEBUG] Comparing position ${i}: expected '${expectedHeaderPrefix[i]}' (${expectedHeaderPrefix.charCodeAt(i)}) vs actual '${actualPrefix[i]}' (${actualPrefix.charCodeAt(i)})`);
+        if (expectedHeaderPrefix[i] !== actualPrefix[i]) {
+          console.error(`🔑 [ERROR] Character mismatch at position ${i}: expected '${expectedHeaderPrefix[i]}', got '${actualPrefix[i]}'`);
+          isCorrupted = true;
+          break;
+        }
+      }
+      console.log('🔑 [DEBUG] Character comparison complete. isCorrupted:', isCorrupted);
+      
+      if (isCorrupted || !parts[0].startsWith(expectedHeaderPrefix)) {
+        console.error('🔑 [ERROR] Token header appears corrupted, forcing re-login');
+        console.error('🔑 [ERROR] Expected header starts with:', expectedHeaderPrefix);
+        console.error('🔑 [ERROR] Actual header starts with:', parts[0].substring(0, 20));
+        console.error('🔑 [ERROR] Full corrupted token:', token);
+        // Only clear authentication data, not user documents
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/';
+        return;
+      }
+      console.log('🔑 [DEBUG] Token validation passed!');
+      // --- END: More robust token validation ---
+
+      // Call backend API to create document share
+      const response = await fetch('http://localhost:3001/api/documents/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          documentData: document
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create document share');
+      }
+
+      console.log('📝 [DEBUG] FinalizedDocumentPage: Backend API response:', result);
+      
+      setShareCode(result.shareCode);
+      setShowInviteModal(true);
+      
+    } catch (error) {
+      console.error('Error creating share code:', error);
+      alert('Failed to create share code. Please try again.');
+    }
+  };
 
   if (loading) {
     return (
@@ -76,21 +253,35 @@ const FinalizedDocumentPage: React.FC = () => {
             }
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            Your complete travel planning document is ready to share!
+            {isSharedView ? 
+              `Shared travel planning document by ${creatorName}` :
+              'Your complete travel planning document is ready to share!'
+            }
           </p>
+                  {isSharedView && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+                      <p className="text-blue-800 font-medium">
+                        👥 You're viewing a shared document. This document was created and shared by another user.
+                      </p>
+                      <p className="text-blue-600 text-sm mt-2">
+                        📖 <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
+                      </p>
+                    </div>
+                  )}
+
         </motion.div>
 
         {/* Itinerary Plan - Daily Planner */}
-          <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           className="mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
             📅 Daily Itinerary Planner
             </h2>
-            
+
           {document.editableFields?.dates?.startDate && document.editableFields?.dates?.endDate ? (
             <DailyPlanner
               startDate={document.editableFields.dates.startDate}
@@ -98,17 +289,68 @@ const FinalizedDocumentPage: React.FC = () => {
               accommodationOptions={document.optionsOrganizer?.accommodation || []}
               mealOptions={document.optionsOrganizer?.meals || []}
               activityOptions={document.optionsOrganizer?.activities || []}
+              readOnly={isSharedView}
               planningStyle={typeof document.bigIdeaSurveyData?.planningStyle === 'number' ? document.bigIdeaSurveyData.planningStyle : 50}
-              onTimeSlotUpdate={(timeSlots) => {
+              initialTimeSlots={document.calendarPlanner?.timeSlots || []}
+              onTimeSlotUpdate={async (timeSlots) => {
                 // Update document with new time slots
                 console.log('Time slots updated:', timeSlots);
+                
+                // Save the updated time slots to the document
+                if (!isSharedView && document) {
+                  const updatedDocument = {
+                    ...document,
+                    calendarPlanner: {
+                      ...document.calendarPlanner,
+                      timeSlots: timeSlots
+                    }
+                  };
+                  
+                  // Update the document state
+                  setDocument(updatedDocument);
+                  
+                  // Save to localStorage
+                  const savedDocs = localStorage.getItem('destinationDocuments');
+                  if (savedDocs) {
+                    const docs = JSON.parse(savedDocs);
+                    const updatedDocs = docs.map((doc: DocumentData) => 
+                      doc.id === documentId ? updatedDocument : doc
+                    );
+                    localStorage.setItem('destinationDocuments', JSON.stringify(updatedDocs));
+                    console.log('✅ Daily planner changes saved to localStorage');
+                  }
+
+                  // If there's an active share code, update the backend document share
+                  if (shareCode) {
+                    try {
+                      const response = await fetch(`http://localhost:3001/api/documents/share/${shareCode}`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({
+                          documentData: updatedDocument
+                        })
+                      });
+
+                      if (response.ok) {
+                        console.log('✅ Daily planner changes updated in backend for shared viewers');
+                      } else {
+                        console.warn('⚠️ Failed to update backend document share');
+                      }
+                    } catch (error) {
+                      console.error('❌ Error updating backend document share:', error);
+                    }
+                  }
+                }
               }}
             />
           ) : (
             <div className="text-center py-8 text-gray-500">
               <div className="text-4xl mb-2">📝</div>
               <p>Please set your travel dates to use the daily planner!</p>
-              </div>
+            </div>
             )}
           </motion.div>
 
@@ -134,7 +376,7 @@ const FinalizedDocumentPage: React.FC = () => {
                   This contract helps ensure everyone has a great trip together!
                 </p>
               </div>
-                
+
                 <div className="bg-white rounded-lg p-6">
                   <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
                     {/* Trip Info */}
@@ -292,7 +534,7 @@ const FinalizedDocumentPage: React.FC = () => {
                               activitySections.push(
                                 <div key={vibe} className="mb-2">
                                   <span className="font-medium">{vibeLabels[vibe] || vibe}:</span> {validActivities.join(', ')}
-                    </div>
+                  </div>
                               );
                             }
                           });
@@ -302,7 +544,7 @@ const FinalizedDocumentPage: React.FC = () => {
                               <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                                 <p className="text-sm font-medium text-gray-700 mb-2">Specific activities we're excited about:</p>
                                 {activitySections}
-                    </div>
+                  </div>
                             );
                           }
                         }
@@ -421,7 +663,7 @@ const FinalizedDocumentPage: React.FC = () => {
                           <strong>Built-in Recess Note:</strong> {document.bigIdeaSurveyData.leewayExplanation}
                         </p>
                       )}
-            </div>
+                    </div>
 
                     {/* Expense Sharing Rules */}
                     <div className="mb-4">
@@ -443,7 +685,7 @@ const FinalizedDocumentPage: React.FC = () => {
                           })()}
                         </p>
                       ) : (
-                          <div>
+                    <div>
                           <p>Members must follow the rules of expense splitting as mentioned below:</p>
                           <ol className="list-decimal list-inside ml-4 space-y-1">
                             {(document.editableFields?.expenseSharing?.customPolicies || document.tripTracingSurveyData?.expenses?.customPolicies || [])
@@ -452,9 +694,9 @@ const FinalizedDocumentPage: React.FC = () => {
                                 <li key={index}>{policy}</li>
                               ))}
                           </ol>
-                        </div>
+                    </div>
                       )}
-              </div>
+                  </div>
 
                     {/* Group Rules */}
                     {document.editableFields?.groupRules?.rules && 
@@ -471,8 +713,8 @@ const FinalizedDocumentPage: React.FC = () => {
                               <li key={index}>{rule}</li>
                             ))}
                         </ul>
-              </div>
-            )}
+                    </div>
+                  )}
 
                     {/* Travel Companions */}
                     <div className="mb-4">
@@ -492,17 +734,17 @@ const FinalizedDocumentPage: React.FC = () => {
                           <span className="text-blue-600 font-medium">[Travel Companion Names]</span>
                         )}
                       </p>
-                  </div>
+            </div>
 
                     {/* Date */}
                     <div className="mt-6 pt-4 border-t border-gray-200">
                       <p className="text-sm text-gray-500">
                         <strong>Date:</strong> {new Date().toLocaleDateString()}
-                      </p>
-                </div>
-              </div>
-            </div>
-          </div>
+                            </p>
+                          </div>
+                          </div>
+                        </div>
+                        </div>
         </motion.div>
         )}
 
@@ -523,11 +765,11 @@ const FinalizedDocumentPage: React.FC = () => {
                 <div className="text-4xl mb-3">📚</div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   Personal Travel Guide for {document.editableFields?.travelerName || 'Your Name'}
-                </h3>
+                  </h3>
                 <p className="text-gray-600">
                   Your comprehensive travel planning document
-                </p>
-              </div>
+                        </p>
+                      </div>
               
               <div className="bg-white rounded-lg p-6">
                 <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
@@ -620,9 +862,9 @@ const FinalizedDocumentPage: React.FC = () => {
                   <p className="mb-4">
                     <strong>Date:</strong> {new Date().toLocaleDateString()}
                   </p>
+                  </div>
                 </div>
               </div>
-            </div>
           </motion.div>
         )}
 
@@ -635,35 +877,130 @@ const FinalizedDocumentPage: React.FC = () => {
         >
           <h3 className="text-2xl font-bold text-gray-800 mb-4">
             📊 Document Information
-            </h3>
+                </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-            <div>
+                  <div>
               <strong className="text-gray-700">Created:</strong><br/>
               <span className="text-gray-600">{new Date(document.createdAt).toLocaleDateString()}</span>
-            </div>
-            <div>
+                  </div>
+                  <div>
               <strong className="text-gray-700">Last Modified:</strong><br/>
               <span className="text-gray-600">{new Date(document.lastModified).toLocaleDateString()}</span>
-            </div>
-            <div>
+                  </div>
+                  <div>
               <strong className="text-gray-700">Document ID:</strong><br/>
               <span className="text-gray-600 font-mono text-xs">{document.id}</span>
-            </div>
-          </div>
+                  </div>
+                </div>
           
           <div className="mt-6">
             <p className="text-gray-600 mb-4">
               This document is automatically saved and can be edited anytime from your profile page.
             </p>
+            <div className="flex gap-4 justify-center">
+              {!isSharedView && (
             <button
-              onClick={() => window.close()}
+                  onClick={handleInviteClick}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                  </svg>
+                  Invite Others
+                </button>
+              )}
+              <button
+                onClick={() => window.close()}
               className="btn-primary"
             >
-              Close Document
+                Close Document
             </button>
           </div>
+      </div>
         </motion.div>
+
+        {/* Invite Modal */}
+        {showInviteModal && shareCode && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Share Document</h3>
+              <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+              >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+              </button>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-gray-600 mb-2">Share this code with others to let them view your document:</p>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <code className="text-lg font-mono font-bold text-gray-800 flex-1">{shareCode}</code>
+              <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(shareCode);
+                      alert('Share code copied to clipboard!');
+                    }}
+                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Copy
+              </button>
+            </div>
+          </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-500">
+                  Others can use this code in the "View Document" button to see your finalized document.
+                </p>
+            </div>
+              
+              <div className="flex gap-3">
+              <button
+                  onClick={async () => {
+                    if (shareCode) {
+                      try {
+                        // Call backend API to delete document share
+                        const response = await fetch(`http://localhost:3001/api/documents/share/${shareCode}`, {
+                          method: 'DELETE',
+                          headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          }
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                          throw new Error(result.error || 'Failed to stop sharing');
+                        }
+
+                        console.log('📝 [DEBUG] FinalizedDocumentPage: Document sharing stopped via backend API');
+                        setShowInviteModal(false);
+                        setShareCode(null);
+                        alert('Document sharing has been disabled.');
+                      } catch (error) {
+                        console.error('Error stopping document sharing:', error);
+                        alert('Failed to stop sharing. Please try again.');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                >
+                  Stop Sharing
+                </button>
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          </div>
+      )}
       </div>
     </div>
   );

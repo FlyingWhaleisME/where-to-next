@@ -132,9 +132,24 @@ const BigIdeaPage: React.FC = () => {
 
     console.log('Documents created:', destinationDocs);
     
+    // IMPORTANT: Append to existing documents instead of overwriting
+    const existingDocs = localStorage.getItem('destinationDocuments');
+    let allDocs = destinationDocs;
+    
+    if (existingDocs) {
+      try {
+        const parsed = JSON.parse(existingDocs);
+        // Add new documents to existing ones
+        allDocs = [...parsed, ...destinationDocs];
+        console.log('Appending to existing documents. Existing count:', parsed.length, 'New count:', destinationDocs.length);
+      } catch (error) {
+        console.error('Error parsing existing documents:', error);
+      }
+    }
+    
     // Save to localStorage
-    localStorage.setItem('destinationDocuments', JSON.stringify(destinationDocs));
-    console.log('Documents saved to localStorage');
+    localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
+    console.log('Documents saved to localStorage. Total documents:', allDocs.length);
     
     // Mark AI planning guide as completed
     localStorage.setItem('ai_planning_guide_completed', 'true');

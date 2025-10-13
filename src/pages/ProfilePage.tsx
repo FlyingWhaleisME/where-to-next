@@ -115,8 +115,8 @@ const ProfilePage: React.FC = () => {
     }
   }, [location]);
 
-  useEffect(() => {
-    // Load documents and trip preferences from localStorage
+  // Helper function to load all user data
+  const loadUserData = () => {
     try {
       const savedDocs = localStorage.getItem('destinationDocuments');
       if (savedDocs) {
@@ -148,6 +148,39 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
       console.error('Error loading data:', error);
     }
+  };
+
+  useEffect(() => {
+    // Load user data on mount
+    loadUserData();
+
+    // Listen for user login to reload data
+    const handleUserLogin = () => {
+      console.log('ProfilePage: User logged in, reloading data');
+      loadUserData();
+    };
+
+    // Listen for user logout to clear all data
+    const handleUserLogout = () => {
+      console.log('ProfilePage: User logged out, clearing all data');
+      setDocuments([]);
+      setTripPreferences(null);
+      setSelectedDestination('');
+      setSavedTripPreferences([]);
+      setFlightStrategies([]);
+      setExpensePolicySets([]);
+      setShowAIPrompt(false);
+      setAiPrompt(null);
+    };
+
+    window.addEventListener('userLogin', handleUserLogin);
+    window.addEventListener('userLogout', handleUserLogout);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('userLogin', handleUserLogin);
+      window.removeEventListener('userLogout', handleUserLogout);
+    };
   }, []);
 
   const handleCreateDocument = () => {
@@ -919,7 +952,7 @@ const ProfilePage: React.FC = () => {
             onClick={() => navigate('/')}
             className="btn-secondary text-lg px-8 py-4 mr-4"
           >
-            ← Back to Home
+            ← Back to homepage
           </button>
           
           <button

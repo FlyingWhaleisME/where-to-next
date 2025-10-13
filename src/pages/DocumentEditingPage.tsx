@@ -31,11 +31,10 @@ const DocumentEditingPage: React.FC = () => {
   const [showGroupRules, setShowGroupRules] = useState(false);
   const [travelerName, setTravelerName] = useState('');
   
-  // Additional state for options organizer and calendar planner
+  // Additional state for options organizer
   const [accommodationOptions, setAccommodationOptions] = useState<string[]>([]);
   const [mealOptions, setMealOptions] = useState<string[]>([]);
   const [activityOptions, setActivityOptions] = useState<string[]>([]);
-  const [timeSlots, setTimeSlots] = useState<any[]>([]);
   
   // State for preference switching
   const [showPreferenceModal, setShowPreferenceModal] = useState(false);
@@ -191,10 +190,7 @@ const DocumentEditingPage: React.FC = () => {
           setMealOptions(meals.length > 0 ? meals : ['']);
           setActivityOptions(activities.length > 0 ? activities : ['']);
           
-          // Calendar Planner
-          console.log('Loading calendar planner:', foundDoc.calendarPlanner);
-          const slots = foundDoc.calendarPlanner?.timeSlots || [];
-          setTimeSlots(slots.length > 0 ? slots : [{ date: '', duration: '', activity: '', description: '' }]);
+          // Calendar planner removed - no longer needed
         } else {
           console.error('Document not found');
           navigate('/profile');
@@ -298,8 +294,7 @@ const DocumentEditingPage: React.FC = () => {
             activities: activityOptions
           },
           calendarPlanner: {
-            ...docs[existingDocIndex].calendarPlanner,
-            timeSlots: timeSlots
+            ...docs[existingDocIndex].calendarPlanner
           },
           lastModified: new Date().toISOString()
         };
@@ -345,7 +340,7 @@ const DocumentEditingPage: React.FC = () => {
           calendarPlanner: {
             duration: '',
             dates: [],
-            timeSlots: timeSlots
+            timeSlots: []
           },
           lastModified: new Date().toISOString()
         };
@@ -896,7 +891,7 @@ const DocumentEditingPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="bg-white rounded-2xl shadow-xl p-8 mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">🚗 Transportation & Mobility</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">🚗 Transportation</h2>
           
           <div className="space-y-6">
             <div>
@@ -1238,92 +1233,6 @@ const DocumentEditingPage: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Calendar Planner Section - Hidden for Lazy Planning Style */}
-        {!(typeof document?.bigIdeaSurveyData?.planningStyle === 'number' && document.bigIdeaSurveyData.planningStyle <= 25) && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          className="bg-white rounded-2xl shadow-xl p-8 mb-8"
-        >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">📅 Calendar Planner</h2>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              ⏰ Time Slots
-            </label>
-            <div className="space-y-3">
-              {timeSlots.map((slot, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border border-gray-200 rounded-lg">
-                  <input
-                    type="date"
-                    value={slot.date || ''}
-                    onChange={(e) => {
-                      const newSlots = [...timeSlots];
-                      newSlots[index] = { ...newSlots[index], date: e.target.value };
-                      setTimeSlots(newSlots);
-                    }}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={slot.duration || ''}
-                    onChange={(e) => {
-                      const newSlots = [...timeSlots];
-                      newSlots[index] = { ...newSlots[index], duration: e.target.value };
-                      setTimeSlots(newSlots);
-                    }}
-                    placeholder="2 hours, Full day, etc."
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={slot.activity || ''}
-                    onChange={(e) => {
-                      const newSlots = [...timeSlots];
-                      newSlots[index] = { ...newSlots[index], activity: e.target.value };
-                      setTimeSlots(newSlots);
-                    }}
-                    placeholder="Activity name"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={slot.description || ''}
-                      onChange={(e) => {
-                        const newSlots = [...timeSlots];
-                        newSlots[index] = { ...newSlots[index], description: e.target.value };
-                        setTimeSlots(newSlots);
-                      }}
-                      placeholder="Description"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => {
-                        const newSlots = timeSlots.filter((_, i) => i !== index);
-                        setTimeSlots(newSlots);
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button
-                onClick={() => setTimeSlots([...timeSlots, { date: '', duration: '', activity: '', description: '' }])}
-                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600"
-              >
-                + Add Time Slot
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Plan your daily schedule and activities for the trip.
-            </p>
-          </div>
-        </motion.div>
-        )}
 
         {/* Action Buttons */}
         <motion.div
@@ -1332,22 +1241,13 @@ const DocumentEditingPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="flex justify-end items-center"
         >
-          <div className="flex space-x-4">
-            <button
-              onClick={() => window.open(`/shared-document/${document.id}`, '_blank')}
-              className="px-6 py-3 bg-red-400 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
-            >
-              ✅ Finalize
-            </button>
-            
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? '💾 Saving...' : '💾 Save Changes'}
-            </button>
-          </div>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? '💾 Saving...' : '💾 Save Changes'}
+          </button>
         </motion.div>
         
         {/* Preference Switching Modal */}
