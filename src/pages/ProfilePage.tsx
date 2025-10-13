@@ -272,7 +272,7 @@ const ProfilePage: React.FC = () => {
 
   const handleFinalizeDocument = (document: DocumentData) => {
     // Open the finalized document page in a new tab
-    window.open(`/shared-document/${document.id}`, '_blank');
+    window.open(`/finalized-document/${document.id}`, '_blank');
   };
 
   const formatDate = (dateString: string) => {

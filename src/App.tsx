@@ -193,7 +193,7 @@ function App() {
                   <SummaryPage />
                 </ProtectedRoute>
               } />
-              <Route path="/shared-document/:documentId" element={<FinalizedDocumentPage />} />
+              <Route path="/finalized-document/:documentId" element={<FinalizedDocumentPage />} />
               <Route path="/edit-document/:id" element={
                 <ProtectedRoute>
                   <DocumentEditingPage />

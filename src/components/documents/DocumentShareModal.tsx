@@ -223,7 +223,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                       <button
                         onClick={() => {
                           // Navigate to the full document page with share code
-                          navigate(`/shared-document/${sharedDocument.id}?code=${shareCode}`);
+                          navigate(`/finalized-document/${sharedDocument.id}?code=${shareCode}`);
                           onClose(); // Close the modal
                         }}
                         className="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors text-sm"
