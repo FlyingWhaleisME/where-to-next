@@ -641,8 +641,19 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   console.log('❌ [DEBUG] Trip ID:', tripId);
                 }
               }}
-              className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔄 [DEBUG] Touch end event - Go Online button');
+                // Trigger the same logic as onClick
+                const currentUser = getCurrentUser();
+                if (currentUser && tripId) {
+                  collaborationService.forceReconnect();
+                }
+              }}
+              className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors touch-manipulation"
               title="Go online"
+              style={{ touchAction: 'manipulation' }}
             >
               Go Online
             </button>
@@ -671,7 +682,16 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                     alert(success ? 'Connection test passed!' : 'Connection test failed - check console for details');
                   });
                 }}
-                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🧪 [DEBUG] Touch end - Test Connection button');
+                  collaborationService.testConnection().then(success => {
+                    alert(success ? 'Connection test passed!' : 'Connection test failed - check console for details');
+                  });
+                }}
+                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
                 Test Connection
               </button>
@@ -680,7 +700,14 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   console.log('🔄 [DEBUG] User clicked force reconnect');
                   collaborationService.forceReconnect();
                 }}
-                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔄 [DEBUG] Touch end - Force Reconnect button');
+                  collaborationService.forceReconnect();
+                }}
+                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
                 Force Reconnect
               </button>
@@ -689,7 +716,14 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   console.log('🔧 [DEBUG] User clicked manual connect');
                   collaborationService.manualConnect();
                 }}
-                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔧 [DEBUG] Touch end - Manual Connect button');
+                  collaborationService.manualConnect();
+                }}
+                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
                 Manual Connect
               </button>
@@ -699,7 +733,15 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   console.log('📊 [DEBUG] Connection status:', status);
                   alert(`Connection Status:\nWebSocket: ${status.wsStateName}\nConnected: ${status.isConnected}\nTrip ID: ${status.currentTripId}\nUsers: ${status.onlineUsers}\nMessages: ${status.messages}\nError: ${status.lastError || 'None'}`);
                 }}
-                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('📊 [DEBUG] Touch end - Show Status button');
+                  const status = collaborationService.getConnectionStatus();
+                  alert(`Connection Status:\nWebSocket: ${status.wsStateName}\nConnected: ${status.isConnected}\nTrip ID: ${status.currentTripId}\nUsers: ${status.onlineUsers}\nMessages: ${status.messages}\nError: ${status.lastError || 'None'}`);
+                }}
+                className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
                 Show Status
               </button>
