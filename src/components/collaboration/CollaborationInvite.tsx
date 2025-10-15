@@ -89,11 +89,18 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
               />
               <button
                 onClick={copyToClipboard}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('📋 [DEBUG] Touch end - Copy button');
+                  copyToClipboard();
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors touch-manipulation ${
                   copied 
                     ? 'bg-green-600 text-white' 
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
+                style={{ touchAction: 'manipulation' }}
               >
                 {copied ? '✓ Copied' : 'Copy'}
               </button>
@@ -106,7 +113,14 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
             
             <button
               onClick={shareViaEmail}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📧 [DEBUG] Touch end - Email button');
+                shareViaEmail();
+              }}
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
             >
               <span>📧</span>
               <span>Email</span>
@@ -114,7 +128,14 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
 
             <button
               onClick={copyToClipboard}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📋 [DEBUG] Touch end - Copy Code button');
+                copyToClipboard();
+              }}
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
             >
               <span>📋</span>
               <span>Copy Code</span>

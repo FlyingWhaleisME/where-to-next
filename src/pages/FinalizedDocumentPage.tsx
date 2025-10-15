@@ -111,74 +111,15 @@ const FinalizedDocumentPage: React.FC = () => {
       console.log('🔑 [DEBUG] Token being used:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
       console.log('🔑 [DEBUG] Full token for debugging:', token);
       
-      // --- START: More robust token validation ---
-      console.log('🔑 [DEBUG] Starting token validation...');
+      // Simple token check
       if (!token) {
-        console.error('🔑 [ERROR] No token found, forcing re-login');
-        // Only clear authentication data, not user documents
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        alert('Your session has expired. Please log in again.');
+        console.error('🔑 [ERROR] No token found');
+        alert('Please log in to share documents.');
         window.location.href = '/';
         return;
       }
-
-      console.log('🔑 [DEBUG] Token exists, checking structure...');
-      const parts = token.split('.');
-      console.log('🔑 [DEBUG] Token parts count:', parts.length);
-      if (parts.length !== 3) {
-        console.error('🔑 [ERROR] Token has incorrect number of parts, forcing re-login');
-        console.error('🔑 [ERROR] Token parts:', parts.length);
-        // Only clear authentication data, not user documents
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        alert('Your session has expired. Please log in again.');
-        window.location.href = '/';
-        return;
-      }
-
-      // Basic check for the header part (first part)
-      // A valid JWT header for HS256 is typically 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
-      // The corrupted one observed is 'eyJhbGci0iJIUzI1NiIs...' (with a '0' instead of 'O')
-      const expectedHeaderPrefix = 'eyJhbGciOiJIUzI1NiIs'; // Note the 'O'
-      console.log('🔑 [DEBUG] Checking header prefix...');
-      console.log('🔑 [DEBUG] Expected:', expectedHeaderPrefix);
-      console.log('🔑 [DEBUG] Actual:', parts[0].substring(0, expectedHeaderPrefix.length));
-      console.log('🔑 [DEBUG] Expected length:', expectedHeaderPrefix.length);
-      console.log('🔑 [DEBUG] Actual length:', parts[0].substring(0, expectedHeaderPrefix.length).length);
-      console.log('🔑 [DEBUG] Starts with expected?', parts[0].startsWith(expectedHeaderPrefix));
       
-      // More robust check - compare character by character
-      const actualPrefix = parts[0].substring(0, expectedHeaderPrefix.length);
-      console.log('🔑 [DEBUG] Starting character-by-character comparison...');
-      console.log('🔑 [DEBUG] Expected chars:', expectedHeaderPrefix.split('').map((c, i) => `${i}:${c}`).join(' '));
-      console.log('🔑 [DEBUG] Actual chars:  ', actualPrefix.split('').map((c, i) => `${i}:${c}`).join(' '));
-      
-      let isCorrupted = false;
-      for (let i = 0; i < expectedHeaderPrefix.length; i++) {
-        console.log(`🔑 [DEBUG] Comparing position ${i}: expected '${expectedHeaderPrefix[i]}' (${expectedHeaderPrefix.charCodeAt(i)}) vs actual '${actualPrefix[i]}' (${actualPrefix.charCodeAt(i)})`);
-        if (expectedHeaderPrefix[i] !== actualPrefix[i]) {
-          console.error(`🔑 [ERROR] Character mismatch at position ${i}: expected '${expectedHeaderPrefix[i]}', got '${actualPrefix[i]}'`);
-          isCorrupted = true;
-          break;
-        }
-      }
-      console.log('🔑 [DEBUG] Character comparison complete. isCorrupted:', isCorrupted);
-      
-      if (isCorrupted || !parts[0].startsWith(expectedHeaderPrefix)) {
-        console.error('🔑 [ERROR] Token header appears corrupted, forcing re-login');
-        console.error('🔑 [ERROR] Expected header starts with:', expectedHeaderPrefix);
-        console.error('🔑 [ERROR] Actual header starts with:', parts[0].substring(0, 20));
-        console.error('🔑 [ERROR] Full corrupted token:', token);
-        // Only clear authentication data, not user documents
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        alert('Your session has expired. Please log in again.');
-        window.location.href = '/';
-        return;
-      }
-      console.log('🔑 [DEBUG] Token validation passed!');
-      // --- END: More robust token validation ---
+      console.log('🔑 [DEBUG] Token found, proceeding with API call...');
 
       // Call backend API to create document share
       const response = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
@@ -194,19 +135,28 @@ const FinalizedDocumentPage: React.FC = () => {
       });
 
       const result = await response.json();
+      console.log('📝 [DEBUG] Backend response status:', response.status);
+      console.log('📝 [DEBUG] Backend response:', result);
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          console.error('🔑 [ERROR] Authentication failed, clearing session');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          alert('Your session has expired. Please log in again.');
+          window.location.href = '/';
+          return;
+        }
         throw new Error(result.error || 'Failed to create document share');
       }
 
-      console.log('📝 [DEBUG] FinalizedDocumentPage: Backend API response:', result);
-      
+      console.log('✅ [SUCCESS] Share code created:', result.shareCode);
       setShareCode(result.shareCode);
       setShowInviteModal(true);
       
     } catch (error) {
-      console.error('Error creating share code:', error);
-      alert('Failed to create share code. Please try again.');
+      console.error('❌ [ERROR] Failed to create share code:', error);
+      alert(`Failed to create share code: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -902,7 +852,14 @@ const FinalizedDocumentPage: React.FC = () => {
               {!isSharedView && (
             <button
                   onClick={handleInviteClick}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg"
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📤 [DEBUG] Touch end - Invite Others button');
+                    handleInviteClick();
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg touch-manipulation"
+                  style={{ touchAction: 'manipulation' }}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />

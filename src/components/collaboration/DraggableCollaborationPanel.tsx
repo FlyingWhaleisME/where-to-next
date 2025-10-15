@@ -517,7 +517,14 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           {/* Invite Button */}
           <button
             onClick={() => setShowInvite(true)}
-            className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('📤 [DEBUG] Touch end - Chatroom Invite button');
+              setShowInvite(true);
+            }}
+            className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors touch-manipulation"
+            style={{ touchAction: 'manipulation' }}
             title="Invite others to this room"
           >
             Invite
