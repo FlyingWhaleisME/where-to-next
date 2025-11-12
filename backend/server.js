@@ -793,8 +793,14 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   // On Render (or any cloud platform), attach WebSocket to HTTP server (same port)
   // In local development, use separate port 8080
   try {
-    // Check if we're on a cloud platform (Render sets PORT, and we're not on localhost)
-    const isCloudPlatform = process.env.PORT && process.env.PORT !== '3001';
+    // Check if we're on a cloud platform:
+    // - NODE_ENV is 'production' (Render sets this)
+    // - OR PORT is set and not the default 3001 (cloud platforms always set PORT)
+    const isProduction = process.env.NODE_ENV === 'production';
+    const hasCustomPort = process.env.PORT && process.env.PORT !== '3001';
+    const isCloudPlatform = isProduction || hasCustomPort;
+    
+    console.log(`🔍 [DEBUG] Environment check: NODE_ENV=${process.env.NODE_ENV}, PORT=${process.env.PORT}, isCloudPlatform=${isCloudPlatform}`);
     
     if (isCloudPlatform) {
       // Cloud platform (Render): attach WebSocket to HTTP server
