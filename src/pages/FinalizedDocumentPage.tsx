@@ -25,7 +25,7 @@ const FinalizedDocumentPage: React.FC = () => {
         
         // Check if this is a shared document view (via share code)
         if (shareCode) {
-          console.log('🔗 [DEBUG] Loading shared document with code:', shareCode);
+          console.log('[DEBUG] Loading shared document with code:', shareCode);
           setIsSharedView(true);
           
           // Retrieve shared document from backend API
@@ -43,12 +43,12 @@ const FinalizedDocumentPage: React.FC = () => {
                 throw new Error(result.error || 'Document not found');
               }
 
-              console.log('🔗 [DEBUG] Shared document retrieved from backend:', result);
+              console.log('[DEBUG] Shared document retrieved from backend:', result);
               setDocument(result.document.data);
               setCreatorName(result.document.creatorName || 'Unknown Creator');
               setIsCreator(false); // This is a shared view, not creator
             } catch (err) {
-              console.error('🔗 [ERROR] Failed to load shared document:', err);
+              console.error('[ERROR] Failed to load shared document:', err);
               setError(err instanceof Error ? err.message : 'Shared document not found or invalid share code');
             } finally {
               setLoading(false);
@@ -90,7 +90,7 @@ const FinalizedDocumentPage: React.FC = () => {
   }, [documentId, searchParams]);
 
   const handleInviteClick = async () => {
-    console.log('🔥 [DEBUG] BUTTON CLICKED! handleInviteClick function called!');
+    console.log('[DEBUG] BUTTON CLICKED! handleInviteClick function called!');
     try {
       const currentUser = getCurrentUser();
       if (!currentUser) {
@@ -103,23 +103,23 @@ const FinalizedDocumentPage: React.FC = () => {
         return;
       }
 
-      console.log('📝 [DEBUG] FinalizedDocumentPage: Creating document share via backend API');
-      console.log('📝 [DEBUG] FinalizedDocumentPage: Document ID:', document.id);
+      console.log('[DEBUG] FinalizedDocumentPage: Creating document share via backend API');
+      console.log('[DEBUG] FinalizedDocumentPage: Document ID:', document.id);
       
       // Debug: Check the token being used
       const token = localStorage.getItem('token');
-      console.log('🔑 [DEBUG] Token being used:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
-      console.log('🔑 [DEBUG] Full token for debugging:', token);
+      console.log('[DEBUG] Token being used:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
+      console.log('[DEBUG] Full token for debugging:', token);
       
       // Simple token check
       if (!token) {
-        console.error('🔑 [ERROR] No token found');
+        console.error('[ERROR] No token found');
         alert('Please log in to share documents.');
         window.location.href = '/';
         return;
       }
       
-      console.log('🔑 [DEBUG] Token found, proceeding with API call...');
+      console.log('[DEBUG] Token found, proceeding with API call...');
 
       // Call backend API to create document share
       const response = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
@@ -135,8 +135,8 @@ const FinalizedDocumentPage: React.FC = () => {
       });
 
       const result = await response.json();
-      console.log('📝 [DEBUG] Backend response status:', response.status);
-      console.log('📝 [DEBUG] Backend response:', result);
+      console.log('[DEBUG] Backend response status:', response.status);
+      console.log('[DEBUG] Backend response:', result);
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
@@ -197,7 +197,7 @@ const FinalizedDocumentPage: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            📄 {isGroupTravel ? 
+            {isGroupTravel ? 
               `${document.destinationName} - Finalized Travel Plan` : 
               `Travel Handbook of ${document.editableFields?.travelerName || 'Your Name'}`
             }
@@ -211,10 +211,10 @@ const FinalizedDocumentPage: React.FC = () => {
                   {isSharedView && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
                       <p className="text-blue-800 font-medium">
-                        👥 You're viewing a shared document. This document was created and shared by another user.
+                        You're viewing a shared document. This document was created and shared by another user.
                       </p>
                       <p className="text-blue-600 text-sm mt-2">
-                        📖 <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
+                        <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
                 </p>
               </div>
             )}
@@ -229,7 +229,7 @@ const FinalizedDocumentPage: React.FC = () => {
           className="mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            📅 Daily Itinerary Planner
+            Daily Itinerary Planner
             </h2>
 
           {document.editableFields?.dates?.startDate && document.editableFields?.dates?.endDate ? (

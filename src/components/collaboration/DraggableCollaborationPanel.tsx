@@ -130,6 +130,69 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
     }));
   }, [hasNewMessages, unreadMessageCount]);
 
+  // Create a stable callback that always reads current isVisible
+  const handleMessage = React.useCallback((message: CollaborationMessage) => {
+    console.log('💬 [DEBUG] Received message in panel:', message);
+    console.log('💬 [DEBUG] Message structure:', {
+      hasMessage: !!message,
+      hasUser: !!(message && message.user),
+      hasText: !!(message && message.text),
+      userId: message?.user?.id,
+      userName: message?.user?.name,
+      text: message?.text
+    });
+    
+    if (message && message.user && message.text) {
+      setMessages(prev => {
+        console.log('💬 [DEBUG] Adding message to state. Previous count:', prev.length);
+        
+        // Check if this exact message already exists (same ID)
+        const messageExists = prev.some(m => m.id === message.id);
+        if (messageExists) {
+          console.log('💬 [DEBUG] Duplicate message ID in UI state, skipping:', message.id);
+          return prev;
+        }
+        
+        const newMessages = [...prev, message];
+        console.log('💬 [DEBUG] New messages count:', newMessages.length);
+        return newMessages;
+      });
+      
+      // Show notification logic:
+      // 1. Only for messages from OTHER users (not your own)
+      // 2. Only when chatbox is closed (not visible)
+      const currentUser = getCurrentUser();
+      const isFromCurrentUser = currentUser && message.user.id === currentUser.id;
+      
+      // Check current visibility state - use ref for immediate value
+      const chatboxIsClosed = !isVisibleRef.current;
+      
+      // Only show notification badge if:
+      // - Message is from another user (not yourself)
+      // - Chatbox is closed (not visible)
+      if (!isFromCurrentUser && chatboxIsClosed) {
+        console.log('🔔 [DEBUG] Showing notification for message from:', message.user.name);
+        console.log('🔔 [DEBUG] Notification conditions:', {
+          isFromCurrentUser,
+          chatboxIsClosed,
+          messageFrom: message.user.name
+        });
+        
+        setHasNewMessages(true);
+        setUnreadMessageCount(prev => prev + 1);
+        
+        // Play ding sound for new message - only when chatbox is closed
+        playNotificationSound();
+      } else {
+        console.log('🔔 [DEBUG] Not showing notification. Reason:', 
+          isFromCurrentUser ? 'own message' : 'chatbox is open'
+        );
+      }
+    } else {
+      console.warn('❌ [DEBUG] Invalid message received:', message);
+    }
+  }, []); // Empty deps - we use ref for isVisible
+
   useEffect(() => {
     
     // Set up collaboration callbacks
@@ -160,80 +223,12 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       },
       onUserLeft: (user) => {
         console.log('👥 [DEBUG] User left:', user);
-        // Keep user in list but mark as offline (don't remove them)
-        setOnlineUsers(prev => prev.map(u => 
-          u.id === user.id ? { ...u, isOnline: false } : u
-        ));
-        // Mark user as offline
+        // Don't update state here - let onRoomUsers handle it with the complete list from backend
+        // The backend will broadcast room_users with all users (including offline ones)
+        // Mark user as offline in statuses for now
         setUserStatuses(prev => ({ ...prev, [user.id]: false }));
       },
-      onMessage: (message) => {
-        console.log('💬 [DEBUG] Received message in panel:', message);
-        console.log('💬 [DEBUG] Message structure:', {
-          hasMessage: !!message,
-          hasUser: !!(message && message.user),
-          hasText: !!(message && message.text),
-          userId: message?.user?.id,
-          userName: message?.user?.name,
-          text: message?.text
-        });
-        console.log('💬 [DEBUG] Current messages count:', messages.length);
-        console.log('💬 [DEBUG] Panel isVisible:', isVisible);
-        
-        if (message && message.user && message.text) {
-          setMessages(prev => {
-            console.log('💬 [DEBUG] Adding message to state. Previous count:', prev.length);
-            
-            // Check if this exact message already exists (same ID)
-            const messageExists = prev.some(m => m.id === message.id);
-            if (messageExists) {
-              console.log('💬 [DEBUG] Duplicate message ID in UI state, skipping:', message.id);
-              return prev;
-            }
-            
-            const newMessages = [...prev, message];
-            console.log('💬 [DEBUG] New messages count:', newMessages.length);
-            console.log('💬 [DEBUG] New message details:', {
-              id: message.id,
-              user: message.user?.name,
-              text: message.text,
-              timestamp: message.timestamp
-            });
-            return newMessages;
-          });
-          
-          // Show notification logic:
-          // 1. Only for messages from OTHER users (not your own)
-          // 2. Only when chatbox is closed (not visible)
-          const currentUser = getCurrentUser();
-          const isFromCurrentUser = currentUser && message.user.id === currentUser.id;
-          
-          // Only show notification badge if:
-          // - Message is from another user (not yourself)
-          // - Chatbox is closed (not visible) - use ref to get current value (avoids stale closure)
-          if (!isFromCurrentUser && !isVisibleRef.current) {
-            console.log('🔔 [DEBUG] Showing notification for message from:', message.user.name);
-            console.log('🔔 [DEBUG] Notification conditions:', {
-              isFromCurrentUser,
-              isVisible,
-              isChatboxVisible,
-              messageFrom: message.user.name
-            });
-            
-            setHasNewMessages(true);
-            setUnreadMessageCount(prev => prev + 1);
-            
-            // Play ding sound for new message - only when chatbox is closed
-            playNotificationSound();
-          } else {
-            console.log('🔔 [DEBUG] Not showing notification. Reason:', 
-              isFromCurrentUser ? 'own message' : 'chatbox is open'
-            );
-          }
-        } else {
-          console.warn('❌ [DEBUG] Invalid message received:', message);
-        }
-      },
+      onMessage: handleMessage,
       onChatHistory: (messages) => {
         console.log('📚 [DEBUG] Received chat history in panel:', messages.length, 'messages');
         setMessages(messages); // Replace messages, don't append
