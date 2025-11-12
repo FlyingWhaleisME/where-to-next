@@ -134,6 +134,14 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
 
   // Track last read message timestamp to calculate unread count
   const lastReadTimestampRef = useRef<number>(Date.now());
+  // Track if chatbox is open to prevent sound - use state for immediate updates
+  const [chatboxIsOpenState, setChatboxIsOpenState] = useState(isVisible);
+  
+  // Update chatbox open state immediately when isVisible changes
+  useEffect(() => {
+    setChatboxIsOpenState(isVisible);
+    isVisibleRef.current = isVisible;
+  }, [isVisible]);
   
   // Create a stable callback that always reads current isVisible
   const handleMessage = useCallback((message: CollaborationMessage) => {
@@ -158,15 +166,17 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       const currentUser = getCurrentUser();
       const isFromCurrentUser = currentUser && message.user.id === currentUser.id;
       
-      // Check current visibility state - use ref for immediate value
-      // Also check if chatbox is actually mounted and visible in DOM
-      const chatboxIsClosed = !isVisibleRef.current;
+      // Check current visibility state - use state variable for immediate, accurate value
+      // Also check DOM visibility as backup
+      const chatboxIsClosed = !chatboxIsOpenState;
       const chatboxElement = panelRef.current;
-      const isChatboxVisibleInDOM = chatboxElement && chatboxElement.offsetParent !== null;
+      const isChatboxVisibleInDOM = chatboxElement && 
+        window.getComputedStyle(chatboxElement).visibility !== 'hidden' &&
+        chatboxElement.offsetParent !== null;
       
       // Only show notification badge if:
       // - Message is from another user (not yourself)
-      // - Chatbox is closed (not visible) - check both ref and DOM
+      // - Chatbox is closed (not visible) - check state and DOM
       const shouldNotify = !isFromCurrentUser && chatboxIsClosed && !isChatboxVisibleInDOM;
       
       if (shouldNotify) {
@@ -174,7 +184,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         console.log('🔔 [DEBUG] Notification conditions:', {
           isFromCurrentUser,
           chatboxIsClosed,
-          isVisibleRef: isVisibleRef.current,
+          chatboxIsOpenState,
           isChatboxVisibleInDOM,
           messageFrom: message.user.name
         });
@@ -191,13 +201,13 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       } else {
         const reason = isFromCurrentUser 
           ? 'own message' 
-          : `chatbox is open (ref=${isVisibleRef.current}, DOM=${isChatboxVisibleInDOM})`;
+          : `chatbox is open (state=${chatboxIsOpenState}, DOM=${isChatboxVisibleInDOM})`;
         console.log('🔔 [DEBUG] Not showing notification. Reason:', reason);
       }
     } else {
       console.warn('❌ [DEBUG] Invalid message received:', message);
     }
-  }, []); // Empty deps - we use ref for isVisible
+  }, [chatboxIsOpenState]); // Include chatboxIsOpenState in deps for accurate value
 
   useEffect(() => {
     
@@ -228,11 +238,12 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         setUserStatuses(prev => ({ ...prev, [user.id]: true }));
       },
       onUserLeft: (user) => {
-        console.log('👥 [DEBUG] User left:', user);
-        // Don't update state here - let onRoomUsers handle it with the complete list from backend
+        console.log('👥 [DEBUG] User left event received:', user);
+        // Don't update onlineUsers state here - wait for room_users broadcast
         // The backend will broadcast room_users with all users (including offline ones)
-        // Mark user as offline in statuses for now
+        // Just mark user as offline in statuses for tracking
         setUserStatuses(prev => ({ ...prev, [user.id]: false }));
+        console.log('👥 [DEBUG] Waiting for room_users broadcast to update user list');
       },
       onMessage: handleMessage,
       onChatHistory: (messages) => {

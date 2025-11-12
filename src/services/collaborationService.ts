@@ -429,7 +429,13 @@ class CollaborationService {
   }
 
   private handleUserLeft(user: CollaborationUser) {
-    this.state.onlineUsers = this.state.onlineUsers.filter(u => u.id !== user.id);
+    // Don't remove user from state - mark as offline instead
+    // The backend will send room_users with all users (including offline ones)
+    const userIndex = this.state.onlineUsers.findIndex(u => u.id === user.id);
+    if (userIndex >= 0) {
+      this.state.onlineUsers[userIndex] = { ...this.state.onlineUsers[userIndex], isOnline: false };
+      console.log('👥 [DEBUG] Marked user as offline in service state:', user.id);
+    }
     this.callbacks.onUserLeft?.(user);
   }
 
