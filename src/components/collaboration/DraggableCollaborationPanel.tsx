@@ -137,19 +137,27 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       onUserJoined: (user) => {
         console.log('👥 [DEBUG] User joined:', user);
         setOnlineUsers(prev => {
-          if (!prev.find(u => u.id === user.id)) {
+          const existingUser = prev.find(u => u.id === user.id);
+          if (!existingUser) {
             console.log('👥 [DEBUG] Adding user to list:', user.name);
-            return [...prev, user];
+            return [...prev, { ...user, isOnline: true }];
+          } else {
+            // User already exists, just update their online status
+            console.log('👥 [DEBUG] User already in list, updating online status:', user.name);
+            return prev.map(u => 
+              u.id === user.id ? { ...u, isOnline: true } : u
+            );
           }
-          console.log('👥 [DEBUG] User already in list:', user.name);
-          return prev;
         });
         // Mark user as online
         setUserStatuses(prev => ({ ...prev, [user.id]: true }));
       },
       onUserLeft: (user) => {
         console.log('👥 [DEBUG] User left:', user);
-        setOnlineUsers(prev => prev.filter(u => u.id !== user.id));
+        // Keep user in list but mark as offline (don't remove them)
+        setOnlineUsers(prev => prev.map(u => 
+          u.id === user.id ? { ...u, isOnline: false } : u
+        ));
         // Mark user as offline
         setUserStatuses(prev => ({ ...prev, [user.id]: false }));
       },
@@ -196,8 +204,8 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           
           // Only show notification badge if:
           // - Message is from another user (not yourself)
-          // - Chatbox is closed (not visible)
-          if (!isFromCurrentUser && !isChatboxVisible) {
+          // - Chatbox is closed (not visible) - use isVisible directly for accuracy
+          if (!isFromCurrentUser && !isVisible) {
             console.log('🔔 [DEBUG] Showing notification for message from:', message.user.name);
             console.log('🔔 [DEBUG] Notification conditions:', {
               isFromCurrentUser,
@@ -209,7 +217,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
             setHasNewMessages(true);
             setUnreadMessageCount(prev => prev + 1);
             
-            // Play ding sound for new message
+            // Play ding sound for new message - only when chatbox is closed
             playNotificationSound();
           } else {
             console.log('🔔 [DEBUG] Not showing notification. Reason:', 
