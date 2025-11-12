@@ -805,7 +805,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     if (isCloudPlatform) {
       // Cloud platform (Render): attach WebSocket to HTTP server
       collaborationServer = new CollaborationServer(server);
-      console.log(`🔗 Collaboration server attached to HTTP server on port ${PORT}`);
+      console.log(`🔗 Collaboration server attached to HTTP server (WebSocket available on same port ${PORT})`);
     } else {
       // Local development: use separate port
       collaborationServer = new CollaborationServer(8080);
