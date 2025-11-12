@@ -234,13 +234,13 @@ class CollaborationServer {
       console.error('❌ Error loading chat history:', error);
     }
 
-    // Send all room members (both online and offline)
+    // Send all room members (both online and offline) - this is the source of truth
     const allRoomMembers = Array.from(this.roomMembers.get(roomId)?.values() || [])
       .map(member => ({
         id: member.id,
         name: member.name,
         email: member.email,
-        isOnline: member.isOnline,
+        isOnline: member.isOnline !== undefined ? member.isOnline : false, // Ensure isOnline is always set
         joinedAt: member.joinedAt,
         lastSeen: member.lastSeen,
         isCreator: this.roomCreators.get(roomId) === member.id
@@ -249,17 +249,20 @@ class CollaborationServer {
     console.log(`\n📊 ========== USER LIST BROADCAST (JOIN) ==========`);
     console.log(`📊 Room ID: ${roomId}`);
     console.log(`📊 Total members in room: ${allRoomMembers.length}`);
-    console.log(`📊 Members:`, JSON.stringify(allRoomMembers.map(m => ({ name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
+    console.log(`📊 Online members: ${allRoomMembers.filter(m => m.isOnline).length}`);
+    console.log(`📊 Offline members: ${allRoomMembers.filter(m => !m.isOnline).length}`);
+    console.log(`📊 Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
     console.log(`📊 Currently connected clients in this room: ${this.tripRooms.get(roomId)?.size || 0}`);
     console.log(`📊 ================================================\n`);
     
     // Broadcast updated user list to ALL users in the room (including the joining user)
+    // This is the authoritative source - includes ALL users who have ever joined (online and offline)
     this.broadcastToRoom(roomId, {
       type: 'room_users',
       users: allRoomMembers
     }, null); // null means send to everyone, including the sender
     
-    console.log(`✅ Broadcasted room_users to all clients in room ${roomId}`);
+    console.log(`✅ Broadcasted room_users to all clients in room ${roomId} with ${allRoomMembers.length} total users`);
 
     // Send room info to the joining user
     this.sendToClient(ws, {
@@ -541,23 +544,32 @@ class CollaborationServer {
       }
       
       // Room still has members, broadcast updated user list (including offline users)
+      // This is the authoritative source - includes ALL users who have ever joined
       const allRoomMembers = allMembers.map(member => ({
         id: member.id,
         name: member.name,
         email: member.email,
-        isOnline: member.isOnline,
+        isOnline: member.isOnline !== undefined ? member.isOnline : false, // Ensure isOnline is always set
         joinedAt: member.joinedAt,
         lastSeen: member.lastSeen,
         isCreator: this.roomCreators.get(roomId) === member.id
       }));
       
-      console.log(`📊 Broadcasting updated user list after ${ws.userName} went offline in room ${roomId}`);
-      console.log(`📊 Online: ${onlineMembers.length}, Total: ${allMembers.length}`);
+      console.log(`\n📊 ========== USER LIST BROADCAST (DISCONNECT) ==========`);
+      console.log(`📊 Room ID: ${roomId}`);
+      console.log(`📊 User ${ws.userName} went offline`);
+      console.log(`📊 Online members: ${onlineMembers.length}`);
+      console.log(`📊 Total members (including offline): ${allMembers.length}`);
+      console.log(`📊 Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
+      console.log(`📊 ================================================\n`);
       
+      // Broadcast to ALL users in the room - this is the source of truth
       this.broadcastToRoom(roomId, {
         type: 'room_users',
         users: allRoomMembers
       }, null); // Send to everyone
+      
+      console.log(`✅ Broadcasted room_users after disconnect with ${allRoomMembers.length} total users (${onlineMembers.length} online, ${allMembers.length - onlineMembers.length} offline)`);
     }
 
     // Notify other users in the room

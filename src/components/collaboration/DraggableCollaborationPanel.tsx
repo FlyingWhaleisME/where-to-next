@@ -134,18 +134,18 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
 
   // Track last read message timestamp to calculate unread count
   const lastReadTimestampRef = useRef<number>(Date.now());
-  // Track if chatbox is open to prevent sound - use state for immediate updates
-  const [chatboxIsOpenState, setChatboxIsOpenState] = useState(isVisible);
   
-  // Update chatbox open state immediately when isVisible changes
+  // Update ref immediately when isVisible changes (synchronous)
   useEffect(() => {
-    setChatboxIsOpenState(isVisible);
     isVisibleRef.current = isVisible;
   }, [isVisible]);
   
-  // Create a stable callback that always reads current isVisible
+  // Create a callback that checks isVisible prop directly (most reliable)
+  // Include isVisible in deps so callback is recreated when visibility changes
+  // This ensures the callback always has the current visibility state
   const handleMessage = useCallback((message: CollaborationMessage) => {
     console.log('💬 [DEBUG] Received message in panel:', message);
+    console.log('💬 [DEBUG] Current isVisible prop:', isVisible);
     
     if (message && message.user && message.text) {
       // Add message to state
@@ -166,17 +166,20 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       const currentUser = getCurrentUser();
       const isFromCurrentUser = currentUser && message.user.id === currentUser.id;
       
-      // Check current visibility state - use state variable for immediate, accurate value
-      // Also check DOM visibility as backup
-      const chatboxIsClosed = !chatboxIsOpenState;
+      // Check visibility - use prop directly (most reliable, always current)
+      // Also check DOM as backup for edge cases
+      const chatboxIsClosed = !isVisible; // Use prop directly - always current
       const chatboxElement = panelRef.current;
+      const computedStyle = chatboxElement ? window.getComputedStyle(chatboxElement) : null;
       const isChatboxVisibleInDOM = chatboxElement && 
-        window.getComputedStyle(chatboxElement).visibility !== 'hidden' &&
+        computedStyle && 
+        computedStyle.visibility !== 'hidden' &&
+        computedStyle.display !== 'none' &&
         chatboxElement.offsetParent !== null;
       
       // Only show notification badge if:
       // - Message is from another user (not yourself)
-      // - Chatbox is closed (not visible) - check state and DOM
+      // - Chatbox is closed (not visible) - check prop and DOM
       const shouldNotify = !isFromCurrentUser && chatboxIsClosed && !isChatboxVisibleInDOM;
       
       if (shouldNotify) {
@@ -184,7 +187,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         console.log('🔔 [DEBUG] Notification conditions:', {
           isFromCurrentUser,
           chatboxIsClosed,
-          chatboxIsOpenState,
+          isVisible,
           isChatboxVisibleInDOM,
           messageFrom: message.user.name
         });
@@ -201,13 +204,13 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       } else {
         const reason = isFromCurrentUser 
           ? 'own message' 
-          : `chatbox is open (state=${chatboxIsOpenState}, DOM=${isChatboxVisibleInDOM})`;
+          : `chatbox is open (isVisible=${isVisible}, DOM=${isChatboxVisibleInDOM})`;
         console.log('🔔 [DEBUG] Not showing notification. Reason:', reason);
       }
     } else {
       console.warn('❌ [DEBUG] Invalid message received:', message);
     }
-  }, [chatboxIsOpenState]); // Include chatboxIsOpenState in deps for accurate value
+  }, [isVisible]); // Include isVisible in deps - callback recreated when visibility changes
 
   useEffect(() => {
     
