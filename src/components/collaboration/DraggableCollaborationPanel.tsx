@@ -108,13 +108,15 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
     isVisibleRef.current = isVisible;
   }, [isVisible]);
 
-  // Clear notifications when chatbox becomes visible
+  // Clear notifications when chatbox becomes visible and mark all messages as read
   useEffect(() => {
     if (isVisible) {
-      console.log('🔔 [DEBUG] Chatbox opened - clearing notifications');
+      console.log('🔔 [DEBUG] Chatbox opened - clearing notifications and marking messages as read');
       setHasNewMessages(false);
       setUnreadMessageCount(0);
       setIsChatboxVisible(true); // Chatbox is now visible
+      // Update last read timestamp to now (all current messages are now read)
+      lastReadTimestampRef.current = Date.now();
     } else {
       setIsChatboxVisible(false); // Chatbox is now hidden
     }
@@ -130,22 +132,16 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
     }));
   }, [hasNewMessages, unreadMessageCount]);
 
+  // Track last read message timestamp to calculate unread count
+  const lastReadTimestampRef = useRef<number>(Date.now());
+  
   // Create a stable callback that always reads current isVisible
   const handleMessage = useCallback((message: CollaborationMessage) => {
     console.log('💬 [DEBUG] Received message in panel:', message);
-    console.log('💬 [DEBUG] Message structure:', {
-      hasMessage: !!message,
-      hasUser: !!(message && message.user),
-      hasText: !!(message && message.text),
-      userId: message?.user?.id,
-      userName: message?.user?.name,
-      text: message?.text
-    });
     
     if (message && message.user && message.text) {
+      // Add message to state
       setMessages(prev => {
-        console.log('💬 [DEBUG] Adding message to state. Previous count:', prev.length);
-        
         // Check if this exact message already exists (same ID)
         const messageExists = prev.some(m => m.id === message.id);
         if (messageExists) {
@@ -153,9 +149,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           return prev;
         }
         
-        const newMessages = [...prev, message];
-        console.log('💬 [DEBUG] New messages count:', newMessages.length);
-        return newMessages;
+        return [...prev, message];
       });
       
       // Show notification logic:
@@ -165,28 +159,40 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       const isFromCurrentUser = currentUser && message.user.id === currentUser.id;
       
       // Check current visibility state - use ref for immediate value
+      // Also check if chatbox is actually mounted and visible in DOM
       const chatboxIsClosed = !isVisibleRef.current;
+      const chatboxElement = panelRef.current;
+      const isChatboxVisibleInDOM = chatboxElement && chatboxElement.offsetParent !== null;
       
       // Only show notification badge if:
       // - Message is from another user (not yourself)
-      // - Chatbox is closed (not visible)
-      if (!isFromCurrentUser && chatboxIsClosed) {
+      // - Chatbox is closed (not visible) - check both ref and DOM
+      const shouldNotify = !isFromCurrentUser && chatboxIsClosed && !isChatboxVisibleInDOM;
+      
+      if (shouldNotify) {
         console.log('🔔 [DEBUG] Showing notification for message from:', message.user.name);
         console.log('🔔 [DEBUG] Notification conditions:', {
           isFromCurrentUser,
           chatboxIsClosed,
+          isVisibleRef: isVisibleRef.current,
+          isChatboxVisibleInDOM,
           messageFrom: message.user.name
         });
         
         setHasNewMessages(true);
-        setUnreadMessageCount(prev => prev + 1);
+        // Only increment unread count if message is newer than last read
+        const messageTime = new Date(message.timestamp).getTime();
+        if (messageTime > lastReadTimestampRef.current) {
+          setUnreadMessageCount(prev => prev + 1);
+        }
         
         // Play ding sound for new message - only when chatbox is closed
         playNotificationSound();
       } else {
-        console.log('🔔 [DEBUG] Not showing notification. Reason:', 
-          isFromCurrentUser ? 'own message' : 'chatbox is open'
-        );
+        const reason = isFromCurrentUser 
+          ? 'own message' 
+          : `chatbox is open (ref=${isVisibleRef.current}, DOM=${isChatboxVisibleInDOM})`;
+        console.log('🔔 [DEBUG] Not showing notification. Reason:', reason);
       }
     } else {
       console.warn('❌ [DEBUG] Invalid message received:', message);
@@ -232,11 +238,18 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       onChatHistory: (messages) => {
         console.log('📚 [DEBUG] Received chat history in panel:', messages.length, 'messages');
         setMessages(messages); // Replace messages, don't append
+        // Mark all loaded messages as read (they're old messages)
+        if (messages.length > 0) {
+          const lastMessageTime = new Date(messages[messages.length - 1].timestamp).getTime();
+          lastReadTimestampRef.current = Math.max(lastReadTimestampRef.current, lastMessageTime);
+        }
+        // Reset unread count when loading history (these are old messages)
+        setUnreadMessageCount(0);
       },
       onRoomUsers: (users) => {
         console.log('\n👥 ========== UI RECEIVED ROOM USERS ==========');
         console.log('👥 Total users received:', users?.length || 0);
-        console.log('👥 Users with creator info:', users.map(u => ({
+        console.log('👥 Users with status:', users.map(u => ({
           id: u.id,
           name: u.name,
           isCreator: u.isCreator,
@@ -245,16 +258,24 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         console.log('👥 Current onlineUsers state before update:', onlineUsers.length);
         console.log('👥 ================================================\n');
         
-        setOnlineUsers(users);
+        // Ensure all users have isOnline property (default to false if missing)
+        const usersWithStatus = (users || []).map(user => ({
+          ...user,
+          isOnline: user.isOnline !== undefined ? user.isOnline : false
+        }));
+        
+        setOnlineUsers(usersWithStatus);
         
         // Update user statuses based on the received users
         const newUserStatuses: { [userId: string]: boolean } = {};
-        users.forEach(user => {
+        usersWithStatus.forEach(user => {
           newUserStatuses[user.id] = user.isOnline || false;
         });
         setUserStatuses(newUserStatuses);
         
-        console.log('👥 setOnlineUsers called with', users.length, 'users');
+        console.log('👥 setOnlineUsers called with', usersWithStatus.length, 'users');
+        console.log('👥 Online users:', usersWithStatus.filter(u => u.isOnline).length);
+        console.log('👥 Offline users:', usersWithStatus.filter(u => !u.isOnline).length);
         console.log('👥 Updated userStatuses:', newUserStatuses);
       },
       onTypingChange: (userId, typing) => {
