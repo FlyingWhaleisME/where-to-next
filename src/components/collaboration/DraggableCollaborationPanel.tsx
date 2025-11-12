@@ -622,10 +622,18 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                 const currentUser = getCurrentUser();
                 if (currentUser && tripId) {
                   console.log('🔄 [DEBUG] Reconnecting to room:', tripId);
-                  console.log('🔄 [DEBUG] Current user:', currentUser.name);
+                  console.log('🔄 [DEBUG] Current user:', currentUser.name || currentUser.email);
                   
-                  // Force reconnection
-                  collaborationService.forceReconnect();
+                  // Determine if user is room creator
+                  const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
+                  
+                  // Force reconnection with room info
+                  collaborationService.forceReconnect(
+                    tripId,
+                    currentUser.id,
+                    currentUser.name || currentUser.email,
+                    isRoomCreator
+                  );
                   
                   // Check connection status after delay
                   setTimeout(() => {
@@ -655,7 +663,13 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                 // Trigger the same logic as onClick
                 const currentUser = getCurrentUser();
                 if (currentUser && tripId) {
-                  collaborationService.forceReconnect();
+                  const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
+                  collaborationService.forceReconnect(
+                    tripId,
+                    currentUser.id,
+                    currentUser.name || currentUser.email,
+                    isRoomCreator
+                  );
                 }
               }}
               className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors touch-manipulation"
@@ -705,13 +719,35 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               <button
                 onClick={() => {
                   console.log('🔄 [DEBUG] User clicked force reconnect');
-                  collaborationService.forceReconnect();
+                  const currentUser = getCurrentUser();
+                  if (currentUser && tripId) {
+                    const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
+                    collaborationService.forceReconnect(
+                      tripId,
+                      currentUser.id,
+                      currentUser.name || currentUser.email,
+                      isRoomCreator
+                    );
+                  } else {
+                    collaborationService.forceReconnect();
+                  }
                 }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🔄 [DEBUG] Touch end - Force Reconnect button');
-                  collaborationService.forceReconnect();
+                  const currentUser = getCurrentUser();
+                  if (currentUser && tripId) {
+                    const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
+                    collaborationService.forceReconnect(
+                      tripId,
+                      currentUser.id,
+                      currentUser.name || currentUser.email,
+                      isRoomCreator
+                    );
+                  } else {
+                    collaborationService.forceReconnect();
+                  }
                 }}
                 className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded touch-manipulation"
                 style={{ touchAction: 'manipulation' }}

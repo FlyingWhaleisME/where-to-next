@@ -297,6 +297,28 @@ class CollaborationService {
           console.log('🔄 [DEBUG] Executing pending room join:', this.pendingJoinRoom);
           this.sendJoinRoomMessage(this.pendingJoinRoom.roomId, this.pendingJoinRoom.userId, this.pendingJoinRoom.userName, this.pendingJoinRoom.isRoomCreator);
           this.pendingJoinRoom = null;
+        } else {
+          // If no pending join but we have a saved room ID, try to rejoin
+          const savedRoomId = localStorage.getItem('current-room-id');
+          if (savedRoomId) {
+            console.log('🔄 [DEBUG] No pending join but found saved room ID, attempting to rejoin:', savedRoomId);
+            // Try to get user info from token
+            try {
+              const token = localStorage.getItem('token');
+              if (token) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                  const user = JSON.parse(userStr);
+                  const isRoomCreator = localStorage.getItem('room-creator') === user.id;
+                  console.log('🔄 [DEBUG] Rejoining saved room with user info from localStorage');
+                  this.sendJoinRoomMessage(savedRoomId, user.id, user.name || user.email, isRoomCreator);
+                }
+              }
+            } catch (e) {
+              console.error('❌ [DEBUG] Failed to rejoin saved room:', e);
+            }
+          }
         }
         break;
 
@@ -868,10 +890,21 @@ class CollaborationService {
   }
 
   // Force reconnection method
-  public forceReconnect(): void {
+  public forceReconnect(roomId?: string, userId?: string, userName?: string, isRoomCreator?: boolean): void {
     console.log('🔄 [DEBUG] Force reconnection requested by user');
     console.log('🔄 [DEBUG] Current WebSocket state:', this.ws?.readyState);
     console.log('🔄 [DEBUG] Current connection state:', this.state.isConnected);
+    console.log('🔄 [DEBUG] Room to rejoin:', roomId || this.state.currentTripId || 'none');
+    
+    // Save room info for rejoining after reconnection
+    const roomToRejoin = roomId || this.state.currentTripId;
+    const savedRoomId = localStorage.getItem('current-room-id');
+    
+    // Use provided params or fall back to saved room info
+    const finalRoomId = roomToRejoin || savedRoomId;
+    const finalUserId = userId;
+    const finalUserName = userName;
+    const finalIsRoomCreator = isRoomCreator !== undefined ? isRoomCreator : (finalRoomId ? localStorage.getItem('room-creator') === finalUserId : false);
     
     // Reset attempt counter
     this.reconnectAttempts = 0;
@@ -879,7 +912,7 @@ class CollaborationService {
     // Force disconnect
     this.disconnect();
     
-    // Clear state
+    // Clear state but preserve room info if provided
     this.state.isConnected = false;
     this.state.lastError = null;
     
@@ -889,6 +922,21 @@ class CollaborationService {
     console.log('🔄 [DEBUG] Starting reconnection in 1 second...');
     setTimeout(() => {
       console.log('🔄 [DEBUG] Attempting reconnection...');
+      
+      // If we have room info, set up pending join
+      if (finalRoomId && finalUserId && finalUserName) {
+        console.log('🔄 [DEBUG] Setting up pending room join:', finalRoomId);
+        this.pendingJoinRoom = {
+          roomId: finalRoomId,
+          userId: finalUserId,
+          userName: finalUserName,
+          isRoomCreator: finalIsRoomCreator
+        };
+      } else if (finalRoomId) {
+        // If we only have roomId, we'll need to get user info from localStorage after connection
+        console.log('🔄 [DEBUG] Room ID provided but missing user info, will rejoin after connection');
+      }
+      
       this.connect();
     }, 1000);
   }
