@@ -1,6 +1,6 @@
 // ADVANCED TECHNIQUE 39: COMPREHENSIVE REACT IMPORTS WITH ADVANCED LIBRARIES
 // Multiple React hooks, animation library, DOM manipulation, and custom service imports
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // Advanced animation library
 import { createPortal } from 'react-dom'; // Portal rendering for modal overlays
 import collaborationService, { CollaborationUser, CollaborationMessage } from '../../services/collaborationService';
