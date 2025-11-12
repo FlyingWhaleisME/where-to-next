@@ -131,7 +131,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   }, [hasNewMessages, unreadMessageCount]);
 
   // Create a stable callback that always reads current isVisible
-  const handleMessage = React.useCallback((message: CollaborationMessage) => {
+  const handleMessage = useCallback((message: CollaborationMessage) => {
     console.log('💬 [DEBUG] Received message in panel:', message);
     console.log('💬 [DEBUG] Message structure:', {
       hasMessage: !!message,
