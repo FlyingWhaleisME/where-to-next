@@ -91,6 +91,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   
   const panelRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isVisibleRef = useRef(isVisible); // Ref to track current visibility state
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -101,6 +102,11 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
     // Auto-scroll when messages change
     scrollToBottom();
   }, [messages]);
+
+  // Update ref when visibility changes
+  useEffect(() => {
+    isVisibleRef.current = isVisible;
+  }, [isVisible]);
 
   // Clear notifications when chatbox becomes visible
   useEffect(() => {
@@ -204,8 +210,8 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           
           // Only show notification badge if:
           // - Message is from another user (not yourself)
-          // - Chatbox is closed (not visible) - use isVisible directly for accuracy
-          if (!isFromCurrentUser && !isVisible) {
+          // - Chatbox is closed (not visible) - use ref to get current value (avoids stale closure)
+          if (!isFromCurrentUser && !isVisibleRef.current) {
             console.log('🔔 [DEBUG] Showing notification for message from:', message.user.name);
             console.log('🔔 [DEBUG] Notification conditions:', {
               isFromCurrentUser,

@@ -510,15 +510,19 @@ class CollaborationServer {
       }
     }
 
-    // Remove user from room members
+    // Mark user as offline instead of removing them from room members
     if (this.roomMembers.has(roomId) && this.roomMembers.get(roomId).has(ws.userId)) {
-      this.roomMembers.get(roomId).delete(ws.userId);
-      console.log(`👥 User ${ws.userName} removed from room ${roomId} members`);
+      const member = this.roomMembers.get(roomId).get(ws.userId);
+      member.isOnline = false;
+      member.lastSeen = new Date();
+      console.log(`👥 User ${ws.userName} marked as offline in room ${roomId} (kept in members list)`);
       
-      // Check if room is now completely empty (no members left)
-      const remainingMembers = this.roomMembers.get(roomId);
-      if (!remainingMembers || remainingMembers.size === 0) {
-        console.log(`🗑️ Room ${roomId} is now empty - cleaning up all room data`);
+      // Check if room is now completely empty (no online members left)
+      const allMembers = Array.from(this.roomMembers.get(roomId)?.values() || []);
+      const onlineMembers = allMembers.filter(m => m.isOnline);
+      
+      if (onlineMembers.length === 0) {
+        console.log(`🗑️ Room ${roomId} has no online members - cleaning up all room data`);
         
         // Clean up all room data
         this.roomMembers.delete(roomId);
@@ -536,19 +540,19 @@ class CollaborationServer {
         return; // Early return since room is deleted
       }
       
-      // Room still has members, broadcast updated user list
-      const allRoomMembers = Array.from(this.roomMembers.get(roomId)?.values() || [])
-        .map(member => ({
-          id: member.id,
-          name: member.name,
-          email: member.email,
-          isOnline: member.isOnline,
-          joinedAt: member.joinedAt,
-          lastSeen: member.lastSeen,
-          isCreator: this.roomCreators.get(roomId) === member.id
-        }));
+      // Room still has members, broadcast updated user list (including offline users)
+      const allRoomMembers = allMembers.map(member => ({
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        isOnline: member.isOnline,
+        joinedAt: member.joinedAt,
+        lastSeen: member.lastSeen,
+        isCreator: this.roomCreators.get(roomId) === member.id
+      }));
       
-      console.log(`📊 Broadcasting updated user list after ${ws.userName} left room ${roomId}`);
+      console.log(`📊 Broadcasting updated user list after ${ws.userName} went offline in room ${roomId}`);
+      console.log(`📊 Online: ${onlineMembers.length}, Total: ${allMembers.length}`);
       
       this.broadcastToRoom(roomId, {
         type: 'room_users',
