@@ -14,9 +14,19 @@ const ChatMessage = require('./models/ChatMessage');
 // ADVANCED TECHNIQUE 17: CLASS-BASED OBJECT-ORIENTED ARCHITECTURE
 // ES6 class implementation with constructor initialization and state management
 class CollaborationServer {
-  constructor(port = 8080) {
-    this.port = port;
-    this.wss = new WebSocket.Server({ port });
+  constructor(portOrServer = 8080) {
+    // Support both port number (for local dev) and HTTP server (for production)
+    if (typeof portOrServer === 'number') {
+      // Local development: create WebSocket server on separate port
+      this.port = portOrServer;
+      this.wss = new WebSocket.Server({ port: portOrServer });
+      console.log(`🔗 Collaboration server running on port ${portOrServer}`);
+    } else {
+      // Production (Render): attach WebSocket server to existing HTTP server
+      this.wss = new WebSocket.Server({ server: portOrServer });
+      console.log(`🔗 Collaboration server attached to HTTP server`);
+    }
+    
     // ADVANCED TECHNIQUE 18: MAP-BASED STATE MANAGEMENT
     // Multiple Map data structures for efficient key-value lookups and state tracking
     this.tripRooms = new Map(); // Track active trip collaborations
@@ -24,8 +34,6 @@ class CollaborationServer {
     this.roomMembers = new Map(); // Track all room members (persistent)
     this.roomCreators = new Map(); // Track room creators
     this.setupEventHandlers();
-    
-    console.log(`🔗 Collaboration server running on port ${port}`);
   }
 
   // ADVANCED TECHNIQUE 19: EVENT-DRIVEN PROGRAMMING WITH CALLBACK PATTERNS

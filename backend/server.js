@@ -782,7 +782,7 @@ let collaborationServer = null;
 
 // ADVANCED TECHNIQUE 14: MULTI-SERVICE APPLICATION BOOTSTRAPPING
 // Main server startup with secondary service initialization
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🧪 Test endpoint: http://localhost:${PORT}/api/test`);
@@ -790,9 +790,21 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Network access: http://where-to-next.local:${PORT}`);
   
   // Start collaboration server
+  // On Render (or any cloud platform), attach WebSocket to HTTP server (same port)
+  // In local development, use separate port 8080
   try {
-    collaborationServer = new CollaborationServer(8080);
-    console.log(`🔗 Collaboration server started on port 8080`);
+    // Check if we're on a cloud platform (Render sets PORT, and we're not on localhost)
+    const isCloudPlatform = process.env.PORT && process.env.PORT !== '3001';
+    
+    if (isCloudPlatform) {
+      // Cloud platform (Render): attach WebSocket to HTTP server
+      collaborationServer = new CollaborationServer(server);
+      console.log(`🔗 Collaboration server attached to HTTP server on port ${PORT}`);
+    } else {
+      // Local development: use separate port
+      collaborationServer = new CollaborationServer(8080);
+      console.log(`🔗 Collaboration server started on port 8080`);
+    }
   } catch (error) {
     console.error('❌ Failed to start collaboration server:', error);
   }
