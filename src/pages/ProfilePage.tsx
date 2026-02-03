@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { DocumentData } from '../types';
 import promptService from '../services/promptService';
 import AIPromptDisplay from '../components/AIPromptDisplay';
+import { getCurrentUser, isAuthenticated } from '../services/apiService';
+import { getUserData, setUserData } from '../utils/userDataStorage';
 
 // Tooltip component
 const Tooltip: React.FC<{ children: React.ReactNode; text: string }> = ({ children, text }) => {
@@ -27,9 +29,13 @@ const Tooltip: React.FC<{ children: React.ReactNode; text: string }> = ({ childr
   );
 };
 
+// Functional component receives props via destructuring
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Multiple useState hooks manage different pieces of component state
+  // Each hook returns [value, setterFunction] pair
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [tripPreferences, setTripPreferences] = useState<any>(null);
   const [selectedDestination, setSelectedDestination] = useState<string>('');
@@ -99,6 +105,8 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // useEffect hook loads data when component mounts
+  // Empty dependency array [] means this runs only once
   useEffect(() => {
     // Check if we should focus on documents section after Trip Tracing
     const urlParams = new URLSearchParams(location.search);
@@ -117,33 +125,66 @@ const ProfilePage: React.FC = () => {
 
   // Helper function to load all user data
   const loadUserData = () => {
+    // Check authentication first
+    const currentUser = getCurrentUser();
+    if (!isAuthenticated() || !currentUser) {
+      console.log('🔒 [DEBUG] ProfilePage: User not authenticated, cannot load data');
+      setDocuments([]);
+      setTripPreferences(null);
+      setSavedTripPreferences([]);
+      setFlightStrategies([]);
+      setExpensePolicySets([]);
+      return;
+    }
+
+    // Log user ID for debugging
+    console.log('📄 [DEBUG] ProfilePage: Loading data for user ID:', currentUser.id);
+
     try {
+      // Load documents from localStorage
       const savedDocs = localStorage.getItem('destinationDocuments');
       if (savedDocs) {
         const allDocs = JSON.parse(savedDocs);
-        console.log('ProfilePage: All documents loaded:', allDocs);
-        // Show ALL documents on profile page (including auto-created ones)
-        setDocuments(allDocs);
+        // Filter documents to only show those created by current user
+        const userDocs = allDocs.filter((doc: DocumentData) => {
+          if (!doc.creatorId) {
+            console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
+            return false; // Don't show documents without creatorId
+          }
+          return doc.creatorId === currentUser.id;
+        });
+        console.log('📄 [DEBUG] ProfilePage: User documents loaded. Total docs:', allDocs.length, 'User docs:', userDocs.length, 'User ID:', currentUser.id);
+        // Update state with filtered documents, triggers re-render
+        setDocuments(userDocs);
       }
 
-      const savedPrefs = localStorage.getItem('tripPreferences');
+      // Load user-specific data (only if user is authenticated)
+      // CRITICAL: Double-check authentication before loading any data
+      const currentUserCheck = getCurrentUser();
+      if (!currentUserCheck || currentUserCheck.id !== currentUser.id) {
+        console.log('🔒 [DEBUG] ProfilePage: User changed or logged out during data load, aborting');
+        return;
+      }
+
+      // Use userDataStorage utility to load user-specific preferences
+      const savedPrefs = getUserData('tripPreferences');
       if (savedPrefs) {
-        setTripPreferences(JSON.parse(savedPrefs));
+        setTripPreferences(savedPrefs);
       }
 
-      const savedStrategies = localStorage.getItem('flightStrategies');
-      if (savedStrategies) {
-        setFlightStrategies(JSON.parse(savedStrategies));
+      const savedStrategies = getUserData<any[]>('flightStrategies');
+      if (savedStrategies && Array.isArray(savedStrategies)) {
+        setFlightStrategies(savedStrategies);
       }
 
-      const savedPolicySets = localStorage.getItem('expensePolicySets');
-      if (savedPolicySets) {
-        setExpensePolicySets(JSON.parse(savedPolicySets));
+      const savedPolicySets = getUserData<any[]>('expensePolicySets');
+      if (savedPolicySets && Array.isArray(savedPolicySets)) {
+        setExpensePolicySets(savedPolicySets);
       }
 
-      const savedTripPrefs = localStorage.getItem('savedTripPreferences');
-      if (savedTripPrefs) {
-        setSavedTripPreferences(JSON.parse(savedTripPrefs));
+      const savedTripPrefs = getUserData<any[]>('savedTripPreferences');
+      if (savedTripPrefs && Array.isArray(savedTripPrefs)) {
+        setSavedTripPreferences(savedTripPrefs);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -151,18 +192,54 @@ const ProfilePage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Load user data on mount
+    console.log('🔍 [PROFILE PAGE] ==========================================');
+    console.log('🔍 [PROFILE PAGE] Component mounted/updated');
+    console.log('🔍 [PROFILE PAGE] Timestamp:', new Date().toISOString());
+    
+    // CRITICAL: Check authentication FIRST before doing anything
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    const currentUser = getCurrentUser();
+    const authenticated = isAuthenticated();
+    
+    console.log('🔍 [PROFILE PAGE] Authentication state:', {
+      hasToken: !!token,
+      hasUserStr: !!userStr,
+      authenticated,
+      hasCurrentUser: !!currentUser,
+      userId: currentUser?.id,
+      userEmail: currentUser?.email
+    });
+    
+    if (!authenticated || !currentUser) {
+      console.log('❌ [PROFILE PAGE] User not authenticated on mount, redirecting');
+      console.log('🔍 [PROFILE PAGE] ==========================================');
+      navigate('/', { replace: true });
+      return;
+    }
+
+    const initialUserId = currentUser.id;
+    console.log('✅ [PROFILE PAGE] User authenticated:', {
+      userId: initialUserId,
+      userEmail: currentUser.email,
+      userName: currentUser.name
+    });
+    
+    // Load user data on mount (only if authenticated)
     loadUserData();
 
     // Listen for user login to reload data
     const handleUserLogin = () => {
       console.log('ProfilePage: User logged in, reloading data');
-      loadUserData();
+      const user = getCurrentUser();
+      if (user) {
+        loadUserData();
+      }
     };
 
-    // Listen for user logout to clear all data
+    // Listen for user logout to clear all data and redirect
     const handleUserLogout = () => {
-      console.log('ProfilePage: User logged out, clearing all data');
+      console.log('🔒 [DEBUG] ProfilePage: User logged out, clearing all data and redirecting');
       setDocuments([]);
       setTripPreferences(null);
       setSelectedDestination('');
@@ -171,19 +248,63 @@ const ProfilePage: React.FC = () => {
       setExpensePolicySets([]);
       setShowAIPrompt(false);
       setAiPrompt(null);
+      // Force redirect
+      navigate('/', { replace: true });
     };
+
+    // Periodic auth check every 1 second
+    const authCheckInterval = setInterval(() => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      const user = getCurrentUser();
+      const authenticated = isAuthenticated();
+      
+      console.log('🔍 [PROFILE PAGE] Periodic check:', {
+        hasToken: !!token,
+        hasUserStr: !!userStr,
+        authenticated,
+        hasUser: !!user,
+        userId: user?.id,
+        initialUserId,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (!authenticated || !user) {
+        console.log('❌ [PROFILE PAGE] Periodic check - user logged out, redirecting');
+        navigate('/', { replace: true });
+      } else {
+        // Verify user ID matches (in case of user switch)
+        if (user.id !== initialUserId) {
+          console.log('❌ [PROFILE PAGE] User ID changed:', {
+            initial: initialUserId,
+            current: user.id,
+            redirecting: true
+          });
+          navigate('/', { replace: true });
+        } else {
+          console.log('✅ [PROFILE PAGE] Periodic check - user still authenticated:', user.id);
+        }
+      }
+    }, 1000);
 
     window.addEventListener('userLogin', handleUserLogin);
     window.addEventListener('userLogout', handleUserLogout);
 
     // Cleanup
     return () => {
+      clearInterval(authCheckInterval);
       window.removeEventListener('userLogin', handleUserLogin);
       window.removeEventListener('userLogout', handleUserLogout);
     };
-  }, []);
+  }, [navigate]);
 
   const handleCreateDocument = () => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to create documents');
+      navigate('/');
+      return;
+    }
+
     if (!selectedDestination.trim()) return;
 
     // Check if document already exists for this destination
@@ -198,21 +319,60 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleEditDocument = (document: DocumentData) => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to edit documents');
+      navigate('/');
+      return;
+    }
+
+    // Verify user owns this document
+    const currentUser = getCurrentUser();
+    if (currentUser && document.creatorId !== currentUser.id) {
+      alert('You do not have permission to edit this document');
+      return;
+    }
+
     navigate(`/edit-document/${document.id}`);
   };
 
-
+  // Function updates state when document is deleted
   const handleDeleteDocument = (documentId: string) => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to delete documents');
+      navigate('/');
+      return;
+    }
+
+    // Verify user owns this document
+    const currentUser = getCurrentUser();
+    const doc = documents.find(d => d.id === documentId);
+    if (currentUser && doc && doc.creatorId !== currentUser.id) {
+      alert('You do not have permission to delete this document');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
       const updatedDocs = documents.filter(doc => doc.id !== documentId);
+      // Update state: filter removes document from array
+    // Component re-renders automatically with updated list
       setDocuments(updatedDocs);
-      localStorage.setItem('destinationDocuments', JSON.stringify(updatedDocs));
+      
+      // Also update localStorage
+      const allDocs = JSON.parse(localStorage.getItem('destinationDocuments') || '[]');
+      const updatedAllDocs = allDocs.filter((doc: DocumentData) => doc.id !== documentId);
+      localStorage.setItem('destinationDocuments', JSON.stringify(updatedAllDocs));
     }
   };
 
   const resumeFromSavedPreferences = (preferenceSet: any) => {
-    // Load the saved preferences into current trip preferences
-    localStorage.setItem('tripPreferences', JSON.stringify(preferenceSet.preferences));
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to resume preferences');
+      navigate('/');
+      return;
+    }
+
+    // Load the saved preferences into current trip preferences (user-specific)
+    setUserData('tripPreferences', preferenceSet.preferences);
     
     // Check if the user has completed the Big Idea survey
     const preferences = preferenceSet.preferences;
@@ -244,14 +404,25 @@ const ProfilePage: React.FC = () => {
   };
 
   const deleteSavedPreferences = (preferenceId: string) => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to delete preferences');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this saved preference set?')) {
       const updated = savedTripPreferences.filter(pref => pref.id !== preferenceId);
       setSavedTripPreferences(updated);
-      localStorage.setItem('savedTripPreferences', JSON.stringify(updated));
+      setUserData('savedTripPreferences', updated);
     }
   };
 
   const generateAIPrompt = (preferences: any) => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to generate AI prompts');
+      navigate('/');
+      return;
+    }
+
     try {
       const prompt = promptService.generateBigPicturePrompt({
         type: 'big-picture',
@@ -271,6 +442,19 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleFinalizeDocument = (document: DocumentData) => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to view finalized documents');
+      navigate('/');
+      return;
+    }
+
+    // Verify user owns this document
+    const currentUser = getCurrentUser();
+    if (currentUser && document.creatorId !== currentUser.id) {
+      alert('You do not have permission to view this document');
+      return;
+    }
+
     // Open the finalized document page in a new tab
     window.open(`/finalized-document/${document.id}`, '_blank');
   };
@@ -299,10 +483,10 @@ const ProfilePage: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            👤 Profile & Documents
+            Profile
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            Manage your travel planning documents and organize AI responses
+            Manage your travel preferences and planning documents
           </p>
         </motion.div>
 
@@ -315,7 +499,7 @@ const ProfilePage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              💾 Your Saved Trip Preferences
+              Your Saved Trip Preferences
             </h2>
             <p className="text-gray-600 text-center mb-6">
               Resume from any of your saved Big Idea survey preferences (up to 4 most recent)
@@ -345,7 +529,7 @@ const ProfilePage: React.FC = () => {
                           onClick={() => generateAIPrompt(preferenceSet.preferences)}
                           className="text-purple-500 hover:text-purple-700 transition-colors text-xl"
                         >
-                          🤖
+                          💬
                         </button>
                       </Tooltip>
                       <Tooltip text="Delete preference set">
@@ -353,7 +537,7 @@ const ProfilePage: React.FC = () => {
                           onClick={() => deleteSavedPreferences(preferenceSet.id)}
                           className="text-red-500 hover:text-red-700 transition-colors text-xl"
                         >
-                          🗑️
+                          ❌
                         </button>
                       </Tooltip>
                     </div>
@@ -388,7 +572,7 @@ const ProfilePage: React.FC = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold text-gray-800">
-                🎯 Latest Big Idea Survey Results
+                Latest Big Idea Survey Results
               </h2>
               <div className="flex space-x-2">
                 <Tooltip text="Continue to Trip Tracing">
@@ -396,7 +580,7 @@ const ProfilePage: React.FC = () => {
                     onClick={() => navigate('/trip-tracing')}
                     className="text-green-500 hover:text-green-700 transition-colors text-xl"
                   >
-                    🚀
+                    ▶️
                   </button>
                 </Tooltip>
                 <Tooltip text="Get AI Prompt">
@@ -404,7 +588,7 @@ const ProfilePage: React.FC = () => {
                     onClick={() => generateAIPrompt(tripPreferences)}
                     className="text-purple-500 hover:text-purple-700 transition-colors text-xl"
                   >
-                    🤖
+                    💬
                   </button>
                 </Tooltip>
               </div>
@@ -604,7 +788,7 @@ const ProfilePage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              🎯 Continue from Last Big Idea Survey
+              Continue from Last Big Idea Survey
             </h2>
             <div className="text-center py-8">
               <div className="text-6xl mb-4">📝</div>
@@ -616,7 +800,7 @@ const ProfilePage: React.FC = () => {
                 onClick={() => navigate('/big-picture')}
                 className="btn-primary text-lg px-8 py-4"
               >
-                Start Big Idea Survey 🚀
+                Start Big Idea Survey
               </button>
             </div>
           </motion.div>
@@ -630,7 +814,7 @@ const ProfilePage: React.FC = () => {
           className="bg-white rounded-3xl shadow-xl p-8 mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            📝 Create New Document
+            Create New Document
           </h2>
           
           <div className="max-w-md mx-auto">
@@ -656,7 +840,7 @@ const ProfilePage: React.FC = () => {
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              Create Document 📋
+              Create Document
             </button>
           </div>
         </motion.div>
@@ -670,7 +854,7 @@ const ProfilePage: React.FC = () => {
           className="bg-white rounded-3xl shadow-xl p-8 mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            📚 Your Documents
+            Your Documents
           </h2>
           
           {/* Trip Tracing Completion Banner */}
@@ -732,7 +916,7 @@ const ProfilePage: React.FC = () => {
                         className="text-red-600 hover:text-red-800 transition-colors"
                         title="Delete document"
                       >
-                        🗑️
+                        ❌
                       </button>
                     </div>
                   </div>
@@ -814,13 +998,11 @@ const ProfilePage: React.FC = () => {
           className="bg-white rounded-3xl shadow-xl p-8 mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            ✈️ Your Flight Booking Strategies
+            Flight Booking Strategies
           </h2>
           
           {flightStrategies.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No flight strategies yet</h3>
               <p className="text-gray-600">
                 Create custom flight booking strategies during Trip Tracing to reuse them later!
               </p>
@@ -839,16 +1021,20 @@ const ProfilePage: React.FC = () => {
                     </h3>
                     <button
                       onClick={() => {
+                        if (!isAuthenticated() || !getCurrentUser()) {
+                          alert('Please log in to delete strategies');
+                          return;
+                        }
                         if (window.confirm('Are you sure you want to delete this strategy?')) {
                           const updatedStrategies = flightStrategies.filter(s => s.id !== strategy.id);
                           setFlightStrategies(updatedStrategies);
-                          localStorage.setItem('flightStrategies', JSON.stringify(updatedStrategies));
+                          setUserData('flightStrategies', updatedStrategies);
                         }
                       }}
                       className="text-red-600 hover:text-red-800 transition-colors"
                       title="Delete strategy"
                     >
-                      🗑️
+                      ❌
                     </button>
                   </div>
                   
@@ -877,13 +1063,11 @@ const ProfilePage: React.FC = () => {
           className="bg-white rounded-3xl shadow-xl p-8 mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            💰 Your Expense Sharing Policy Sets
+            Expense Sharing Policy Sets
           </h2>
           
           {expensePolicySets.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No expense policy sets yet</h3>
               <p className="text-gray-600">
                 Create custom expense sharing policies during Trip Tracing to reuse them later!
               </p>
@@ -902,16 +1086,20 @@ const ProfilePage: React.FC = () => {
                     </h3>
                     <button
                       onClick={() => {
+                        if (!isAuthenticated() || !getCurrentUser()) {
+                          alert('Please log in to delete policy sets');
+                          return;
+                        }
                         if (window.confirm('Are you sure you want to delete this policy set?')) {
                           const updatedPolicySets = expensePolicySets.filter(p => p.id !== policySet.id);
                           setExpensePolicySets(updatedPolicySets);
-                          localStorage.setItem('expensePolicySets', JSON.stringify(updatedPolicySets));
+                          setUserData('expensePolicySets', updatedPolicySets);
                         }
                       }}
                       className="text-red-600 hover:text-red-800 transition-colors"
                       title="Delete policy set"
                     >
-                      🗑️
+                      ❌
                     </button>
                   </div>
                   
