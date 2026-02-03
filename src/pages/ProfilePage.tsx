@@ -144,7 +144,7 @@ const ProfilePage: React.FC = () => {
       // Load documents from localStorage
       const savedDocs = localStorage.getItem('destinationDocuments');
       if (savedDocs) {
-        const allDocs = JSON.parse(savedDocs);
+        const allDocs = JSON.parse(savedDocs) as DocumentData[];
         // Filter documents to only show those created by current user
         const userDocs = allDocs.filter((doc: DocumentData) => {
           if (!doc.creatorId) {
@@ -358,7 +358,7 @@ const ProfilePage: React.FC = () => {
       setDocuments(updatedDocs);
       
       // Also update localStorage
-      const allDocs = JSON.parse(localStorage.getItem('destinationDocuments') || '[]');
+      const allDocs = JSON.parse(localStorage.getItem('destinationDocuments') || '[]') as DocumentData[];
       const updatedAllDocs = allDocs.filter((doc: DocumentData) => doc.id !== documentId);
       localStorage.setItem('destinationDocuments', JSON.stringify(updatedAllDocs));
     }

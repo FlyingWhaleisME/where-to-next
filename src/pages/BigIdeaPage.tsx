@@ -1,3 +1,4 @@
+// Third-party libraries - React, React Router, Framer Motion
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -5,6 +6,9 @@ import AIPromptDisplay from '../components/AIPromptDisplay';
 import promptService from '../services/promptService';
 import { TripPreferences, GeneratedPrompt } from '../types';
 import { useSurveyProgress } from '../hooks/useSurveyProgress';
+import { getUserData, setUserData, migrateUserData } from '../utils/userDataStorage';
+import { getCurrentUser, isAuthenticated } from '../services/apiService';
+// Reusable components 
 import Question1GroupSize from '../components/bigIdea/Question1GroupSize';
 import Question2Duration from '../components/bigIdea/Question2Duration';
 import Question3Budget from '../components/bigIdea/Question3Budget';
@@ -15,8 +19,12 @@ import Question7Activities from '../components/bigIdea/Question7Activities';
 import Question8PlanningStyle from '../components/bigIdea/Question8PlanningStyle';
 import Question9Priorities from '../components/bigIdea/Question9Priorities';
 
+// React functional component with hooks
 const BigIdeaPage: React.FC = () => {
+  // React Router hook for navigation
   const navigate = useNavigate();
+  
+  // useState hooks for component state
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [tripPreferences, setTripPreferences] = useState<Partial<TripPreferences>>({});
   const [showAIPrompt, setShowAIPrompt] = useState(false);
@@ -24,21 +32,35 @@ const BigIdeaPage: React.FC = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [showSavePreferences, setShowSavePreferences] = useState(false);
   const [preferencesName, setPreferencesName] = useState('');
+  
+  // Custom hook for reusable logic
   const { updateProgress, markCompleted } = useSurveyProgress();
 
   const totalQuestions = 9;
 
+  // useEffect hook - runs when component mounts 
   useEffect(() => {
-    // Load trip preferences from localStorage
-    const saved = localStorage.getItem('tripPreferences');
-    if (saved) {
-      try {
-        setTripPreferences(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error parsing trip preferences:', error);
-      }
+    // JSON key-value structure - Retrieve user-specific data from localStorage
+    const { getUserData, migrateUserData } = require('../utils/userDataStorage');
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    
+    if (!isAuthenticated()) {
+      return;
     }
-  }, []);
+    
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      return;
+    }
+    
+    migrateUserData(currentUser.id);
+    
+    // getUserData retrieves JSON from localStorage
+    const saved = getUserData('tripPreferences');
+    if (saved) {
+      setTripPreferences(saved);  // Update component state with loaded data
+    }
+  }, []);  // Empty array means this runs only once on mount
 
   useEffect(() => {
     // Update survey progress
@@ -70,7 +92,7 @@ const BigIdeaPage: React.FC = () => {
       // Keep only the 4 most recent (remove oldest if necessary)
       const updatedPreferences = [newPreferenceSet, ...savedPreferences].slice(0, 4);
       
-      localStorage.setItem('savedTripPreferences', JSON.stringify(updatedPreferences));
+      setUserData('savedTripPreferences', updatedPreferences);
       
       // Clear form and close modal
       setPreferencesName('');
@@ -307,8 +329,16 @@ const BigIdeaPage: React.FC = () => {
     
     setTripPreferences(newPreferences);
     
-    // Save to localStorage after each answer
-    localStorage.setItem('tripPreferences', JSON.stringify(newPreferences));
+    // Save to user-specific storage after each answer
+    const { setUserData } = require('../utils/userDataStorage');
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    
+    if (isAuthenticated()) {
+      const currentUser = getCurrentUser();
+      if (currentUser && currentUser.id) {
+        setUserData('tripPreferences', newPreferences);
+      }
+    }
     
     // Debug logging
     console.log(`Question ${questionNumber} answered:`, answer);
@@ -374,16 +404,22 @@ const BigIdeaPage: React.FC = () => {
   console.log('Total Questions:', totalQuestions);
   console.log('Can Proceed:', isComplete());
 
+  // Function that conditionally renders question components based on state
+  // Returns different component based on currentQuestion value
   const renderQuestion = () => {
+    // Common props object shared by all question components
+    // Spread operator (...) passes all props to child component
     const commonProps = {
-      onAnswer: handleAnswer,
-      onNext: handleNext,
-      onPrevious: handlePrevious,
+      onAnswer: handleAnswer, // Parent function updates tripPreferences state
+      onNext: handleNext,  // Function to navigate to next question
+      onPrevious: handlePrevious,  // Function to navigate to previous question
       currentQuestion,
       totalQuestions,
-      canProceed: true
+      canProceed: true 
     };
 
+    // Switch statement selects which component to render
+    // Each case returns a different question component with same props
     switch (currentQuestion) {
       case 1:
         return <Question1GroupSize {...commonProps} />;
