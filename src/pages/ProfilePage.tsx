@@ -38,7 +38,6 @@ const ProfilePage: React.FC = () => {
   // Each hook returns [value, setterFunction] pair
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [tripPreferences, setTripPreferences] = useState<any>(null);
-  const [selectedDestination, setSelectedDestination] = useState<string>('');
   const [savedTripPreferences, setSavedTripPreferences] = useState<any[]>([]);
   const [flightStrategies, setFlightStrategies] = useState<any[]>([]);
   const [expensePolicySets, setExpensePolicySets] = useState<any[]>([]);
@@ -145,29 +144,14 @@ const ProfilePage: React.FC = () => {
       const savedDocs = localStorage.getItem('destinationDocuments');
       if (savedDocs) {
         const allDocs = JSON.parse(savedDocs) as DocumentData[];
-        
-        // RECOVERY: Add creatorId to documents that don't have it (for existing documents)
-        let needsSave = false;
-        const recoveredDocs = allDocs.map((doc: DocumentData) => {
-          if (!(doc as any).creatorId) {
-            // If document doesn't have creatorId, assign it to current user
-            // This recovers documents created before the fix
-            (doc as any).creatorId = currentUser.id;
-            needsSave = true;
-            console.log('🔧 [RECOVERY] Added creatorId to document:', doc.id);
-          }
-          return doc;
-        });
-        
-        // Save recovered documents back to localStorage if any were fixed
-        if (needsSave) {
-          localStorage.setItem('destinationDocuments', JSON.stringify(recoveredDocs));
-          console.log('✅ [RECOVERY] Saved documents with creatorId');
-        }
-        
         // Filter documents to only show those created by current user
-        const userDocs = recoveredDocs.filter((doc: DocumentData) => {
+        const userDocs = allDocs.filter((doc: DocumentData) => {
+          // Type assertion to access optional creatorId property
           const creatorId = (doc as any).creatorId;
+          if (!creatorId) {
+            console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
+            return false; // Don't show documents without creatorId
+          }
           return creatorId === currentUser.id;
         });
         console.log('📄 [DEBUG] ProfilePage: User documents loaded. Total docs:', allDocs.length, 'User docs:', userDocs.length, 'User ID:', currentUser.id);
@@ -259,7 +243,6 @@ const ProfilePage: React.FC = () => {
       console.log('🔒 [DEBUG] ProfilePage: User logged out, clearing all data and redirecting');
       setDocuments([]);
       setTripPreferences(null);
-      setSelectedDestination('');
       setSavedTripPreferences([]);
       setFlightStrategies([]);
       setExpensePolicySets([]);
@@ -314,26 +297,6 @@ const ProfilePage: React.FC = () => {
       window.removeEventListener('userLogout', handleUserLogout);
     };
   }, [navigate]);
-
-  const handleCreateDocument = () => {
-    if (!isAuthenticated() || !getCurrentUser()) {
-      alert('Please log in to create documents');
-      navigate('/');
-      return;
-    }
-
-    if (!selectedDestination.trim()) return;
-
-    // Check if document already exists for this destination
-    const existingDoc = documents.find(doc => doc.destinationName === selectedDestination.trim());
-    if (existingDoc) {
-      navigate(`/edit-document/${existingDoc.id}`);
-      return;
-    }
-
-    // Pass the destination name as a URL parameter
-    navigate(`/edit-document/new?destination=${encodeURIComponent(selectedDestination.trim())}`);
-  };
 
   const handleEditDocument = (document: DocumentData) => {
     if (!isAuthenticated() || !getCurrentUser()) {
@@ -822,45 +785,6 @@ const ProfilePage: React.FC = () => {
             </div>
           </motion.div>
         )}
-
-        {/* Create New Document Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-white rounded-3xl shadow-xl p-8 mb-8"
-        >
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            Create New Document
-          </h2>
-          
-          <div className="max-w-md mx-auto">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Destination Name
-              </label>
-              <input
-                type="text"
-                value={selectedDestination}
-                onChange={(e) => setSelectedDestination(e.target.value)}
-                placeholder="e.g., Tokyo, Japan"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            
-            <button
-              onClick={handleCreateDocument}
-              disabled={!selectedDestination.trim()}
-              className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                selectedDestination.trim()
-                  ? 'btn-primary'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              Create Document
-            </button>
-          </div>
-        </motion.div>
 
         {/* Documents List */}
               <motion.div
