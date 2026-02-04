@@ -145,14 +145,29 @@ const ProfilePage: React.FC = () => {
       const savedDocs = localStorage.getItem('destinationDocuments');
       if (savedDocs) {
         const allDocs = JSON.parse(savedDocs) as DocumentData[];
-        // Filter documents to only show those created by current user
-        const userDocs = allDocs.filter((doc: DocumentData) => {
-          // Type assertion to access optional creatorId property
-          const creatorId = (doc as any).creatorId;
-          if (!creatorId) {
-            console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
-            return false; // Don't show documents without creatorId
+        
+        // RECOVERY: Add creatorId to documents that don't have it (for existing documents)
+        let needsSave = false;
+        const recoveredDocs = allDocs.map((doc: DocumentData) => {
+          if (!(doc as any).creatorId) {
+            // If document doesn't have creatorId, assign it to current user
+            // This recovers documents created before the fix
+            (doc as any).creatorId = currentUser.id;
+            needsSave = true;
+            console.log('🔧 [RECOVERY] Added creatorId to document:', doc.id);
           }
+          return doc;
+        });
+        
+        // Save recovered documents back to localStorage if any were fixed
+        if (needsSave) {
+          localStorage.setItem('destinationDocuments', JSON.stringify(recoveredDocs));
+          console.log('✅ [RECOVERY] Saved documents with creatorId');
+        }
+        
+        // Filter documents to only show those created by current user
+        const userDocs = recoveredDocs.filter((doc: DocumentData) => {
+          const creatorId = (doc as any).creatorId;
           return creatorId === currentUser.id;
         });
         console.log('📄 [DEBUG] ProfilePage: User documents loaded. Total docs:', allDocs.length, 'User docs:', userDocs.length, 'User ID:', currentUser.id);

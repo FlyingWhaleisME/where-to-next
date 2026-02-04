@@ -16,16 +16,31 @@ const SummaryPage: React.FC = () => {
   const [documents, setDocuments] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load trip preferences from localStorage
-    const saved = localStorage.getItem('tripPreferences');
+    // Load trip preferences from user-specific storage
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    const { getUserData, migrateUserData } = require('../utils/userDataStorage');
     
+    // Check authentication first
+    if (!isAuthenticated()) {
+      console.log('🔒 [DEBUG] SummaryPage: Not authenticated, redirecting');
+      navigate('/');
+      return;
+    }
+    
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      console.log('🔒 [DEBUG] SummaryPage: No user ID, redirecting');
+      navigate('/');
+      return;
+    }
+    
+    // Try to migrate old data on first load
+    migrateUserData(currentUser.id);
+    
+    // Load user-specific preferences
+    const saved = getUserData('tripPreferences');
     if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setTripPreferences(parsed);
-      } catch (error) {
-        console.error('Error parsing trip preferences:', error);
-      }
+      setTripPreferences(saved);
     }
     
     // Load documents from localStorage
@@ -186,9 +201,18 @@ const SummaryPage: React.FC = () => {
       const surveyDate = new Date().toISOString();
       const surveyName = `Big Idea Survey - ${new Date().toLocaleDateString()}`;
       
+      // Get current user to set creatorId
+      const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+      const currentUser = isAuthenticated() ? getCurrentUser() : null;
+      if (!currentUser || !currentUser.id) {
+        console.error('Cannot create documents: User not authenticated');
+        return;
+      }
+      
       const destinationDocs = chosenDestinations.map(dest => ({
         id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         destinationName: dest.trim(),
+        creatorId: currentUser.id, // Set creator ID so documents show up in profile
         isAutoCreated: true, // Flag to identify auto-created docs for hiding from profile
         // Include survey data from Big Picture
         surveyData: {

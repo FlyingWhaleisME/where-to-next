@@ -1,14 +1,19 @@
-// Third-party libraries - React, React Router, Framer Motion
+// Import of React library and hooks for component functionality
 import React, { useState, useEffect } from 'react';
+// Import of React Router for navigation
 import { useNavigate } from 'react-router-dom';
+// Import of Framer Motion for animations
 import { motion, AnimatePresence } from 'framer-motion';
+
 import AIPromptDisplay from '../components/AIPromptDisplay';
 import promptService from '../services/promptService';
 import { TripPreferences, GeneratedPrompt } from '../types';
+
+// Import of custom React hook for reusable logic
 import { useSurveyProgress } from '../hooks/useSurveyProgress';
+
 import { getUserData, setUserData, migrateUserData } from '../utils/userDataStorage';
 import { getCurrentUser, isAuthenticated } from '../services/apiService';
-// Reusable components 
 import Question1GroupSize from '../components/bigIdea/Question1GroupSize';
 import Question2Duration from '../components/bigIdea/Question2Duration';
 import Question3Budget from '../components/bigIdea/Question3Budget';
@@ -105,6 +110,14 @@ const BigIdeaPage: React.FC = () => {
   const createDestinationDocuments = (destinationNames: string[], preferences: Partial<TripPreferences>) => {
     console.log('Creating destination documents for:', destinationNames);
     
+    // Get current user to set creatorId
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    const currentUser = isAuthenticated() ? getCurrentUser() : null;
+    if (!currentUser || !currentUser.id) {
+      console.error('Cannot create documents: User not authenticated');
+      return;
+    }
+    
     const surveyId = `big_idea_${Date.now()}`;
     const surveyDate = new Date().toISOString();
     const surveyName = `Big Idea Survey - ${new Date().toLocaleDateString()}`;
@@ -112,6 +125,7 @@ const BigIdeaPage: React.FC = () => {
     const destinationDocs = destinationNames.map(dest => ({
       id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       destinationName: dest.trim(),
+      creatorId: currentUser.id, // Set creator ID so documents show up in profile
       isAutoCreated: true, // Flag to identify auto-created docs
       // Include survey data from Big Picture (legacy support)
       surveyData: {
