@@ -329,7 +329,7 @@ const ProfilePage: React.FC = () => {
 
     // Verify user owns this document
     const currentUser = getCurrentUser();
-    if (currentUser && document.creatorId !== currentUser.id) {
+    if (currentUser && (document as any).creatorId !== currentUser.id) {
       alert('You do not have permission to edit this document');
       return;
     }
@@ -452,7 +452,7 @@ const ProfilePage: React.FC = () => {
 
     // Verify user owns this document
     const currentUser = getCurrentUser();
-    if (currentUser && document.creatorId !== currentUser.id) {
+    if (currentUser && (document as any).creatorId !== currentUser.id) {
       alert('You do not have permission to view this document');
       return;
     }
