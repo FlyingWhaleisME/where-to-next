@@ -285,15 +285,137 @@ export const healthApi = {
 
 // Utility functions
 export const isAuthenticated = (): boolean => {
-  return !!localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  const hasToken = !!token;
+  
+  console.log('🔍 [AUTH CHECK] isAuthenticated() called:', {
+    hasToken,
+    tokenExists: !!token,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
+    timestamp: new Date().toISOString(),
+    stackTrace: new Error().stack?.split('\n')[2]?.trim()
+  });
+  
+  return hasToken;
 };
 
 export const getCurrentUser = (): User | null => {
   const userStr = localStorage.getItem('user');
-  return userStr ? JSON.parse(userStr) : null;
+  const token = localStorage.getItem('token');
+  
+  console.log('🔍 [USER CHECK] getCurrentUser() called:', {
+    hasUserStr: !!userStr,
+    hasToken: !!token,
+    timestamp: new Date().toISOString(),
+    stackTrace: new Error().stack?.split('\n')[2]?.trim()
+  });
+  
+  if (!userStr) {
+    console.log('❌ [USER CHECK] No user string in localStorage');
+    return null;
+  }
+  
+  try {
+    const user = JSON.parse(userStr);
+    console.log('✅ [USER CHECK] User found:', {
+      userId: user?.id,
+      email: user?.email,
+      name: user?.name,
+      fullUser: user
+    });
+    return user;
+  } catch (e) {
+    console.error('❌ [USER CHECK] Error parsing user:', e);
+    return null;
+  }
 };
 
-export const logout = (): void => {
+export const logout = (clearAllUserData: boolean = true): void => {
+  console.log('🚪 [LOGOUT API] ==========================================');
+  console.log('🚪 [LOGOUT API] logout() function called');
+  console.log('🚪 [LOGOUT API] clearAllUserData:', clearAllUserData);
+  console.log('🚪 [LOGOUT API] Timestamp:', new Date().toISOString());
+  
+  // CRITICAL: Get current user ID BEFORE clearing anything
+  const userStr = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  const userId = userStr ? JSON.parse(userStr).id : null;
+  
+  console.log('🚪 [LOGOUT API] Current state before clearing:', {
+    hasUserStr: !!userStr,
+    hasToken: !!token,
+    userId: userId,
+    userStrPreview: userStr ? JSON.parse(userStr) : null
+  });
+  
+  // Clear ALL user-specific data FIRST (while we still have the user ID)
+  if (clearAllUserData && userId) {
+    console.log('🚪 [LOGOUT API] Clearing all user-specific data for user ID:', userId);
+    
+    // Use the userDataStorage utility to clear all user data
+    try {
+      const { clearAllUserData: clearUserData } = require('../utils/userDataStorage');
+      console.log('🚪 [LOGOUT API] Calling clearAllUserData utility...');
+      clearUserData(userId);
+      console.log('✅ [LOGOUT API] Used userDataStorage utility to clear data');
+    } catch (e) {
+      // Fallback: Manual clearing
+      console.log('⚠️ [LOGOUT API] Using fallback data clearing (utility failed):', e);
+      
+      // Clear documents created by this user
+      const savedDocs = localStorage.getItem('destinationDocuments');
+      if (savedDocs) {
+        try {
+          const docs = JSON.parse(savedDocs);
+          const otherUsersDocs = docs.filter((doc: any) => doc.creatorId !== userId);
+          localStorage.setItem('destinationDocuments', JSON.stringify(otherUsersDocs));
+          console.log('🚪 [DEBUG] apiService.logout: Cleared user documents. Remaining:', otherUsersDocs.length);
+        } catch (err) {
+          console.error('Error clearing user documents:', err);
+        }
+      }
+      
+      // Clear user-specific data (new format with user ID)
+      const userKeys = [
+        'tripPreferences',
+        'savedTripPreferences',
+        'tripTracingState',
+        'flightStrategies',
+        'expensePolicySets',
+      ];
+      
+      userKeys.forEach(key => {
+        const userKey = `${key}_${userId}`;
+        localStorage.removeItem(userKey);
+        // Also clear old format (without user ID) for backward compatibility
+        localStorage.removeItem(key);
+      });
+      
+      // Clear collaboration data
+      localStorage.removeItem('current-room-id');
+      localStorage.removeItem('room-creator');
+      localStorage.removeItem('chatbox-stay-open');
+    }
+    
+    console.log('🚪 [DEBUG] apiService.logout: Cleared all user-specific data (preferences, surveys, collaboration)');
+  } else {
+    console.log('🚪 [DEBUG] apiService.logout: Keeping user data (partial logout)');
+  }
+  
+  // Clear authentication tokens LAST (after data is cleared)
+  console.log('🚪 [LOGOUT API] Clearing authentication tokens...');
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  
+  // Verify tokens are cleared
+  const verifyToken = localStorage.getItem('token');
+  const verifyUser = localStorage.getItem('user');
+  console.log('🚪 [LOGOUT API] Verification after clearing tokens:', {
+    tokenStillExists: !!verifyToken,
+    userStillExists: !!verifyUser,
+    timestamp: new Date().toISOString()
+  });
+  
+  console.log('✅ [LOGOUT API] Logout process complete');
+  console.log('🚪 [LOGOUT API] ==========================================');
 };

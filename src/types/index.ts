@@ -212,6 +212,7 @@ export interface TimeSlot {
 export interface DocumentData {
   id: string;
   destinationName: string;
+  creatorId?: string; // ID of the user who created this document
   surveyData?: any; // Legacy support
   bigIdeaSurveyData?: TripPreferences; // Big Idea survey results
   tripTracingSurveyData?: TripTracingState; // Trip Tracing survey results

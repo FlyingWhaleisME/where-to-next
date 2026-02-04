@@ -1,5 +1,4 @@
-// ADVANCED TECHNIQUE 16: WEBSOCKET REAL-TIME COMMUNICATION ARCHITECTURE
-// WebSocket server implementation for bidirectional real-time communication
+// WebSocket server for real-time collaboration (Tool 3: Event Handlers)
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -11,8 +10,7 @@ const TripTracingState = require('./models/TripTracingState');
 const Document = require('./models/Document');
 const ChatMessage = require('./models/ChatMessage');
 
-// ADVANCED TECHNIQUE 17: CLASS-BASED OBJECT-ORIENTED ARCHITECTURE
-// ES6 class implementation with constructor initialization and state management
+// WebSocket server class for managing real-time connections
 class CollaborationServer {
   constructor(portOrServer = 8080) {
     // Support both port number (for local dev) and HTTP server (for production)
@@ -20,90 +18,68 @@ class CollaborationServer {
       // Local development: create WebSocket server on separate port
       this.port = portOrServer;
       this.wss = new WebSocket.Server({ port: portOrServer });
-      console.log(`🔗 Collaboration server running on port ${portOrServer}`);
+      console.log('Collaboration server running on port', portOrServer);
     } else {
       // Production (Render): attach WebSocket server to existing HTTP server
       this.wss = new WebSocket.Server({ server: portOrServer });
-      console.log(`🔗 Collaboration server attached to HTTP server`);
+      console.log(` Collaboration server attached to HTTP server`);
     }
     
-    // ADVANCED TECHNIQUE 18: MAP-BASED STATE MANAGEMENT
-    // Multiple Map data structures for efficient key-value lookups and state tracking
-    this.tripRooms = new Map(); // Track active trip collaborations
-    this.userSessions = new Map(); // Track user sessions
-    this.roomMembers = new Map(); // Track all room members (persistent)
-    this.roomCreators = new Map(); // Track room creators
+    // Map data structures for managing room and user state
+    this.tripRooms = new Map();
+    this.userSessions = new Map();
+    this.roomMembers = new Map();
+    this.roomCreators = new Map();
     this.setupEventHandlers();
   }
 
-  // ADVANCED TECHNIQUE 19: EVENT-DRIVEN PROGRAMMING WITH CALLBACK PATTERNS
-  // Event handler setup for WebSocket server lifecycle management
+  // Setup WebSocket event handlers (Tool 3: Event Handlers)
   setupEventHandlers() {
     this.wss.on('connection', (ws, req) => {
-      console.log('📡 New WebSocket connection attempt');
+      console.log(' New WebSocket connection attempt');
       this.handleConnection(ws, req);
     });
 
     this.wss.on('error', (error) => {
-      console.error('❌ WebSocket server error:', error);
+      console.error(' WebSocket server error:', error);
     });
   }
 
-  // ADVANCED TECHNIQUE 20: ASYNC AUTHENTICATION WITH URL PARSING AND JWT VERIFICATION
-  // Complex authentication flow with URL parameter extraction and database validation
+  // Handle new WebSocket connection with authentication (Tool 3: async/await)
   async handleConnection(ws, req) {
-    console.log('📡 [DEBUG] Handling new WebSocket connection');
-    console.log('📡 [DEBUG] Request URL:', req.url);
-    
     try {
-      // ADVANCED TECHNIQUE 21: URL PARSING AND QUERY PARAMETER EXTRACTION
-      // Dynamic URL construction and parameter extraction for authentication
+      // Extract JWT token from URL query parameters
       const url = new URL(req.url, `http://${req.headers.host}`);
       const token = url.searchParams.get('token');
       
-      console.log('📡 [DEBUG] Extracted token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
-      
       if (!token) {
-        console.log('❌ [DEBUG] No token provided, closing connection');
         ws.close(1008, 'Authentication token required');
         return;
       }
 
-      // ADVANCED TECHNIQUE 22: JWT TOKEN VERIFICATION WITH ERROR HANDLING
-      // Synchronous JWT verification with comprehensive error handling
-      console.log('🔍 [DEBUG] Verifying JWT token...');
+      // Verify JWT token and get user from database (Tool 1: Database query)
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      console.log('🔍 [DEBUG] Token decoded successfully, userId:', decoded.userId);
-      
       const user = await User.findById(decoded.userId).select('-password');
-      console.log('🔍 [DEBUG] User found:', user ? `${user.name || user.email}` : 'NO USER');
       
       if (!user) {
-        console.log('❌ [DEBUG] User not found, closing connection');
         ws.close(1008, 'User not found');
         return;
       }
 
-      // ADVANCED TECHNIQUE 23: DYNAMIC OBJECT PROPERTY ASSIGNMENT
-      // Runtime property assignment to WebSocket object for state management
+      // Store user info on WebSocket object for later use
       ws.userId = user._id.toString();
       ws.userName = user.name || user.email;
       ws.userEmail = user.email;
       ws.isAuthenticated = true;
       ws.currentTripId = null;
-      
-      console.log('✅ [DEBUG] WebSocket connection authenticated for user:', ws.userName);
 
-      // ADVANCED TECHNIQUE 24: SESSION STATE MANAGEMENT WITH MAP STORAGE
-      // Complex session object creation with nested data structures
+      // Store session in Map for quick lookup
       this.userSessions.set(ws.userId, {
         ws,
         user: { id: user._id, name: user.name, email: user.email },
         connectedAt: new Date(),
         currentTripId: null
       });
-
-      console.log(`✅ User ${ws.userName} connected to collaboration server`);
 
       // Send welcome message
       this.sendToClient(ws, {
@@ -112,72 +88,86 @@ class CollaborationServer {
         user: { id: user._id, name: user.name, email: user.email }
       });
 
-      // ADVANCED TECHNIQUE 25: EVENT LISTENER CHAINING FOR WEBSOCKET LIFECYCLE
-      // Multiple event handlers for different WebSocket states and message types
+      // Event handlers for WebSocket connection lifecycle (Tool 3: Event Handlers)
+      // on('message') - fires when client sends data (explained in Tool 3, case B)
       ws.on('message', (data) => {
         this.handleMessage(ws, data);
       });
 
+      // on('close') - fires when connection closes
       ws.on('close', () => {
         this.handleDisconnection(ws);
       });
 
+      // on('error') - fires on connection errors
       ws.on('error', (error) => {
-        console.error(`❌ WebSocket error for user ${ws.userName}:`, error);
+        console.error('WebSocket error for user', ws.userName, error);
         this.handleDisconnection(ws);
       });
 
     } catch (error) {
-      console.error('❌ Connection authentication failed:', error);
+      console.error(' Connection authentication failed:', error);
       ws.close(1008, 'Authentication failed');
     }
   }
 
-  // ADVANCED TECHNIQUE 26: MESSAGE ROUTING WITH SWITCH STATEMENT AND JSON PARSING
-  // Complex message handling with type-based routing and error recovery
   handleMessage(ws, data) {
     try {
+      // Parse JSON message from client
       const message = JSON.parse(data);
-      console.log(`📨 Message from ${ws.userName}:`, message.type);
-      console.log(`📨 Full message content:`, JSON.stringify(message, null, 2));
+      console.log(` Message from ${ws.userName}:`, message.type);
+      console.log(` Full message content:`, JSON.stringify(message, null, 2));
 
-      // ADVANCED TECHNIQUE 27: SWITCH-BASED MESSAGE DISPATCHING
-      // Pattern matching for different message types with corresponding handler methods
+      // Switch statement: Route message based on type
       switch (message.type) {
         case 'join_room':
+          // Handle user joining a chatroom
           this.handleJoinRoom(ws, message);
           break;
+          
         case 'leave_room':
+          // Handle user leaving a chatroom
           this.handleLeaveRoom(ws, message);
           break;
+
         case 'chat_message':
+          // Handle incoming chat message
           this.handleChatMessage(ws, message);
           break;
+
         case 'update_preferences':
+          // Handle trip preferences update
           this.handleUpdatePreferences(ws, message);
           break;
+          
         case 'update_trip_tracing':
+          // Handle trip tracing update
           this.handleUpdateTripTracing(ws, message);
           break;
+          
         case 'typing_status':
+          // Handle typing status update
           this.handleTypingStatus(ws, message);
-          break;
+          break;  
+
         case 'ping':
-          // ADVANCED TECHNIQUE 28: HEARTBEAT MECHANISM FOR CONNECTION MONITORING
-          // Ping-pong pattern for maintaining WebSocket connection health
-          console.log('💓 [DEBUG] Received ping from', ws.userName);
+          // Heartbeat: Client checking if server is alive
+          console.log(' [DEBUG] Received ping from', ws.userName);
           this.sendToClient(ws, {
             type: 'pong'
           });
           break;
+
         default:
+          // Unknown message type: send error
           this.sendToClient(ws, {
             type: 'error',
             message: `Unknown message type: ${message.type}`
           });
       }
     } catch (error) {
-      console.error('❌ Error handling message:', error);
+      // Handle JSON parsing errors
+      console.error(' Error handling message:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Invalid message format'
@@ -185,10 +175,11 @@ class CollaborationServer {
     }
   }
 
+  // Asynchronous function to handle user joining a chatroom
   async handleJoinRoom(ws, message) {
     const { roomId, shareCode, isRoomCreator } = message;
-    console.log(`📨 Message from ${ws.userName}: join_room`);
-    console.log(`📨 Room ID: ${roomId}, Is Room Creator: ${isRoomCreator}`);
+    console.log(` Message from ${ws.userName}: join_room`);
+    console.log(` Room ID: ${roomId}, Is Room Creator: ${isRoomCreator}`);
     
     if (!roomId) {
       this.sendToClient(ws, {
@@ -202,9 +193,9 @@ class CollaborationServer {
     const existingCreator = this.roomCreators.get(roomId);
     if (isRoomCreator || existingCreator === ws.userId) {
       this.roomCreators.set(roomId, ws.userId);
-      console.log(`👑 User ${ws.userName} is the creator of room ${roomId}`);
+      console.log(` User ${ws.userName} is the creator of room ${roomId}`);
     } else if (existingCreator) {
-      console.log(`👑 Room ${roomId} already has a creator: ${existingCreator}`);
+      console.log(` Room ${roomId} already has a creator: ${existingCreator}`);
     }
 
     // Leave current room if any
@@ -215,12 +206,15 @@ class CollaborationServer {
     // Join new room
     this.joinRoom(ws, roomId);
 
-    // Load and send chat history
+    // Load chat history from database (Tool 1: Database, Tool 3: async/await)
     try {
+      // Query MongoDB using Mongoose (explained in Tool 1, case H)
+      // await pauses until query completes (explained in Tool 3, case D)
       const chatHistory = await ChatMessage.find({ roomId })
         .sort({ timestamp: 1 })
-        .limit(50); // Last 50 messages
+        .limit(50);
 
+      // Send history to client via WebSocket
       this.sendToClient(ws, {
         type: 'chat_history',
         messages: chatHistory.map(msg => ({
@@ -231,7 +225,7 @@ class CollaborationServer {
         }))
       });
     } catch (error) {
-      console.error('❌ Error loading chat history:', error);
+      console.error(' Error loading chat history:', error);
     }
 
     // Send all room members (both online and offline) - this is the source of truth
@@ -246,14 +240,14 @@ class CollaborationServer {
         isCreator: this.roomCreators.get(roomId) === member.id
       }));
     
-    console.log(`\n📊 ========== USER LIST BROADCAST (JOIN) ==========`);
-    console.log(`📊 Room ID: ${roomId}`);
-    console.log(`📊 Total members in room: ${allRoomMembers.length}`);
-    console.log(`📊 Online members: ${allRoomMembers.filter(m => m.isOnline).length}`);
-    console.log(`📊 Offline members: ${allRoomMembers.filter(m => !m.isOnline).length}`);
-    console.log(`📊 Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
-    console.log(`📊 Currently connected clients in this room: ${this.tripRooms.get(roomId)?.size || 0}`);
-    console.log(`📊 ================================================\n`);
+    console.log(`\n� ========== USER LIST BROADCAST (JOIN) ==========`);
+    console.log(`� Room ID: ${roomId}`);
+    console.log(`� Total members in room: ${allRoomMembers.length}`);
+    console.log(`� Online members: ${allRoomMembers.filter(m => m.isOnline).length}`);
+    console.log(`� Offline members: ${allRoomMembers.filter(m => !m.isOnline).length}`);
+    console.log(`� Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
+    console.log(`� Currently connected clients in this room: ${this.tripRooms.get(roomId)?.size || 0}`);
+    console.log(`� ================================================\n`);
     
     // Broadcast updated user list to ALL users in the room (including the joining user)
     // This is the authoritative source - includes ALL users who have ever joined (online and offline)
@@ -262,7 +256,7 @@ class CollaborationServer {
       users: allRoomMembers
     }, null); // null means send to everyone, including the sender
     
-    console.log(`✅ Broadcasted room_users to all clients in room ${roomId} with ${allRoomMembers.length} total users`);
+    console.log(` Broadcasted room_users to all clients in room ${roomId} with ${allRoomMembers.length} total users`);
 
     // Send room info to the joining user
     this.sendToClient(ws, {
@@ -279,18 +273,18 @@ class CollaborationServer {
   }
 
   async handleChatMessage(ws, message) {
-    console.log('💬 [DEBUG] handleChatMessage called with message:', message);
+    console.log(' [DEBUG] handleChatMessage called with message:', message);
     const { roomId, tripId, text } = message;
     
     // Accept both roomId and tripId for backward compatibility
     const actualRoomId = roomId || tripId;
     
-    console.log('💬 [DEBUG] Handling chat message:', { roomId, tripId, text, actualRoomId });
-    console.log('💬 [DEBUG] User current room:', ws.currentTripId);
-    console.log('💬 [DEBUG] User info:', { userId: ws.userId, userName: ws.userName });
+    console.log(' [DEBUG] Handling chat message:', { roomId, tripId, text, actualRoomId });
+    console.log(' [DEBUG] User current room:', ws.currentTripId);
+    console.log(' [DEBUG] User info:', { userId: ws.userId, userName: ws.userName });
     
     if (!actualRoomId || !text) {
-      console.log('❌ [DEBUG] Missing room ID or text:', { actualRoomId, text });
+      console.log(' [DEBUG] Missing room ID or text:', { actualRoomId, text });
       this.sendToClient(ws, {
         type: 'error',
         message: 'Room ID and message text required'
@@ -299,30 +293,28 @@ class CollaborationServer {
     }
 
     try {
-      // Save message to database
+      // Create new chat message instance
       const chatMessage = new ChatMessage({
-        roomId: actualRoomId,
-        userId: ws.userId,
-        userName: ws.userName,
-        message: text
+        roomId: actualRoomId,               // Room ID for message
+        userId: ws.userId,                  // User ID of the user who sent the message
+        userName: ws.userName,              // Display name of the user who sent the message
+        message: text                       // Message text
       });
-      await chatMessage.save();
 
-      console.log(`💬 Broadcasting chat message to room ${actualRoomId}`);
-      
-      // Broadcast to all users in the room INCLUDING the sender
+      // await pauses until save operation completes
+      await chatMessage.save();             // Prevents sending broadcast before message is saved
+
+      // Broadcast chat message to all users in the room (see WebSocket section)
+      console.log(` Broadcasting chat message to room ${actualRoomId}`);
       this.broadcastToRoom(actualRoomId, {
         type: 'chat_message',
-        id: chatMessage._id,
-        text: text,
-        user: { id: ws.userId, name: ws.userName },
-        timestamp: chatMessage.timestamp
-      }, null); // null = send to everyone including sender
-      
-      console.log(`✅ Chat message broadcast complete`);
-
+        id: chatMessage._id,                // Message ID for message
+        text: text,                         // Message text
+        user: { id: ws.userId, name: ws.userName }, // User who sent the message
+        timestamp: chatMessage.timestamp    // Timestamp of the message
+      }, null);                             // null means send to everyone, including the sender
     } catch (error) {
-      console.error('❌ Error saving chat message:', error);
+      console.error(' Error saving chat message:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Failed to send message'
@@ -372,7 +364,7 @@ class CollaborationServer {
       }, ws);
 
     } catch (error) {
-      console.error('❌ Error updating preferences:', error);
+      console.error(' Error updating preferences:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Failed to update preferences'
@@ -422,7 +414,7 @@ class CollaborationServer {
       }, ws);
 
     } catch (error) {
-      console.error('❌ Error updating trip tracing:', error);
+      console.error(' Error updating trip tracing:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Failed to update trip tracing'
@@ -475,7 +467,7 @@ class CollaborationServer {
         isOnline: true,
         lastSeen: new Date()
       });
-      console.log(`👥 User ${ws.userName} added to room members for ${roomId}`);
+      console.log(`� User ${ws.userName} added to room members for ${roomId}`);
     } else {
       // Update online status and last seen for existing member
       const member = this.roomMembers.get(roomId).get(ws.userId);
@@ -483,10 +475,10 @@ class CollaborationServer {
       member.lastSeen = new Date();
       // Update name in case it changed
       member.name = ws.userName;
-      console.log(`👥 User ${ws.userName} marked as online in room ${roomId}`);
+      console.log(`� User ${ws.userName} marked as online in room ${roomId}`);
     }
 
-    console.log(`👥 User ${ws.userName} joined room ${roomId}`);
+    console.log(`� User ${ws.userName} joined room ${roomId}`);
     
     // Notify the joining user about their own join (for UI updates)
     this.sendToClient(ws, {
@@ -518,14 +510,14 @@ class CollaborationServer {
       const member = this.roomMembers.get(roomId).get(ws.userId);
       member.isOnline = false;
       member.lastSeen = new Date();
-      console.log(`👥 User ${ws.userName} marked as offline in room ${roomId} (kept in members list)`);
+      console.log(`� User ${ws.userName} marked as offline in room ${roomId} (kept in members list)`);
       
       // Check if room is now completely empty (no online members left)
       const allMembers = Array.from(this.roomMembers.get(roomId)?.values() || []);
       const onlineMembers = allMembers.filter(m => m.isOnline);
       
       if (onlineMembers.length === 0) {
-        console.log(`🗑️ Room ${roomId} has no online members - cleaning up all room data`);
+        console.log(` Room ${roomId} has no online members - cleaning up all room data`);
         
         // Clean up all room data
         this.roomMembers.delete(roomId);
@@ -538,7 +530,7 @@ class CollaborationServer {
           message: `Room ${roomId} has been deleted because it's empty`
         });
         
-        console.log(`✅ Room ${roomId} completely cleaned up and deletion broadcasted`);
+        console.log(` Room ${roomId} completely cleaned up and deletion broadcasted`);
         ws.currentTripId = null;
         return; // Early return since room is deleted
       }
@@ -555,13 +547,13 @@ class CollaborationServer {
         isCreator: this.roomCreators.get(roomId) === member.id
       }));
       
-      console.log(`\n📊 ========== USER LIST BROADCAST (DISCONNECT) ==========`);
-      console.log(`📊 Room ID: ${roomId}`);
-      console.log(`📊 User ${ws.userName} went offline`);
-      console.log(`📊 Online members: ${onlineMembers.length}`);
-      console.log(`📊 Total members (including offline): ${allMembers.length}`);
-      console.log(`📊 Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
-      console.log(`📊 ================================================\n`);
+      console.log(`\n� ========== USER LIST BROADCAST (DISCONNECT) ==========`);
+      console.log(`� Room ID: ${roomId}`);
+      console.log(`� User ${ws.userName} went offline`);
+      console.log(`� Online members: ${onlineMembers.length}`);
+      console.log(`� Total members (including offline): ${allMembers.length}`);
+      console.log(`� Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
+      console.log(`� ================================================\n`);
       
       // Broadcast to ALL users in the room - this is the source of truth
       this.broadcastToRoom(roomId, {
@@ -569,7 +561,7 @@ class CollaborationServer {
         users: allRoomMembers
       }, null); // Send to everyone
       
-      console.log(`✅ Broadcasted room_users after disconnect with ${allRoomMembers.length} total users (${onlineMembers.length} online, ${allMembers.length - onlineMembers.length} offline)`);
+      console.log(` Broadcasted room_users after disconnect with ${allRoomMembers.length} total users (${onlineMembers.length} online, ${allMembers.length - onlineMembers.length} offline)`);
     }
 
     // Notify other users in the room
@@ -589,44 +581,44 @@ class CollaborationServer {
   }
 
   broadcastToRoom(roomId, message, senderWs = null) {
-    console.log(`\n📢 ========== BROADCAST TO ROOM ==========`);
-    console.log(`📢 Room ID: ${roomId}`);
-    console.log(`📢 Message Type: ${message.type}`);
-    console.log(`📢 Sender WebSocket: ${senderWs ? senderWs.userName : 'null (send to all)'}`);
+    console.log(`\n� ========== BROADCAST TO ROOM ==========`);
+    console.log(`� Room ID: ${roomId}`);
+    console.log(`� Message Type: ${message.type}`);
+    console.log(`� Sender WebSocket: ${senderWs ? senderWs.userName : 'null (send to all)'}`);
     
     if (!this.tripRooms.has(roomId)) {
-      console.log(`❌ Room ${roomId} not found in tripRooms`);
-      console.log(`📢 ========================================\n`);
+      console.log(` Room ${roomId} not found in tripRooms`);
+      console.log(`� ========================================\n`);
       return;
     }
 
     const room = this.tripRooms.get(roomId);
-    console.log(`📢 Total clients in room: ${room.size}`);
+    console.log(`� Total clients in room: ${room.size}`);
     
     let sentCount = 0;
     let skippedCount = 0;
     
     room.forEach(ws => {
       const shouldSend = (senderWs === null || ws !== senderWs) && ws.readyState === WebSocket.OPEN;
-      console.log(`📢 Client ${ws.userName}: shouldSend=${shouldSend}, isOpen=${ws.readyState === WebSocket.OPEN}, isSender=${ws === senderWs}`);
+      console.log(`� Client ${ws.userName}: shouldSend=${shouldSend}, isOpen=${ws.readyState === WebSocket.OPEN}, isSender=${ws === senderWs}`);
       
       if (shouldSend) {
         this.sendToClient(ws, message);
         sentCount++;
-        console.log(`✅ Sent ${message.type} to ${ws.userName}`);
+        console.log(` Sent ${message.type} to ${ws.userName}`);
       } else {
         skippedCount++;
-        console.log(`⏭️  Skipped ${ws.userName} (reason: ${ws === senderWs ? 'is sender' : 'not open'})`);
+        console.log(`  Skipped ${ws.userName} (reason: ${ws === senderWs ? 'is sender' : 'not open'})`);
       }
     });
     
-    console.log(`📢 Broadcast complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
-    console.log(`📢 ========================================\n`);
+    console.log(`� Broadcast complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
+    console.log(`� ========================================\n`);
   }
 
   broadcastToAllClients(message) {
-    console.log(`\n📢 ========== BROADCAST TO ALL CLIENTS ==========`);
-    console.log(`📢 Message Type: ${message.type}`);
+    console.log(`\n� ========== BROADCAST TO ALL CLIENTS ==========`);
+    console.log(`� Message Type: ${message.type}`);
     
     let sentCount = 0;
     let skippedCount = 0;
@@ -635,25 +627,25 @@ class CollaborationServer {
       if (ws.readyState === WebSocket.OPEN) {
         this.sendToClient(ws, message);
         sentCount++;
-        console.log(`✅ Sent ${message.type} to ${ws.userName || 'unknown'}`);
+        console.log(` Sent ${message.type} to ${ws.userName || 'unknown'}`);
       } else {
         skippedCount++;
-        console.log(`⏭️  Skipped client (not open)`);
+        console.log(`  Skipped client (not open)`);
       }
     });
     
-    console.log(`📢 Broadcast to all complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
-    console.log(`📢 ================================================\n`);
+    console.log(`� Broadcast to all complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
+    console.log(`� ================================================\n`);
   }
 
   handleDisconnection(ws) {
-    console.log(`👋 [DEBUG] User ${ws.userName} disconnected`);
-    console.log(`👋 [DEBUG] User ID: ${ws.userId}`);
-    console.log(`👋 [DEBUG] Current trip ID: ${ws.currentTripId}`);
+    console.log(`� [DEBUG] User ${ws.userName} disconnected`);
+    console.log(`� [DEBUG] User ID: ${ws.userId}`);
+    console.log(`� [DEBUG] Current trip ID: ${ws.currentTripId}`);
     
     // Leave current room if any
     if (ws.currentTripId) {
-      console.log(`👋 [DEBUG] Leaving room: ${ws.currentTripId}`);
+      console.log(`� [DEBUG] Leaving room: ${ws.currentTripId}`);
       this.leaveRoom(ws, ws.currentTripId);
     }
     
@@ -668,7 +660,7 @@ class CollaborationServer {
   }
 
   shutdown() {
-    console.log('🛑 Shutting down collaboration server...');
+    console.log('� Shutting down collaboration server...');
     
     // Close all WebSocket connections
     this.wss.clients.forEach(ws => {
@@ -678,7 +670,7 @@ class CollaborationServer {
     // Close the WebSocket server
     this.wss.close();
     
-    console.log('✅ Collaboration server shut down');
+    console.log(' Collaboration server shut down');
   }
 }
 

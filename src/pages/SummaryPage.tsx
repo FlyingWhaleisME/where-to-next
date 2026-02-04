@@ -895,61 +895,6 @@ const SummaryPage: React.FC = () => {
         </motion.div>
         )}
 
-        {/* Documents Section for Debugging */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="bg-white rounded-3xl shadow-xl p-8 mb-8"
-        >
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            📚 Your Documents (Debug View)
-          </h2>
-          
-          {documents.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📭</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No documents yet</h3>
-              <p className="text-gray-600">
-                Documents should be created automatically when you click "Continue to Trip Tracing"
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {documents.map((doc) => (
-                <motion.div
-                  key={doc.id}
-                  whileHover={{ scale: 1.02 }}
-                  className="bg-gray-50 rounded-2xl p-6 border border-gray-200"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800">
-                      {doc.destinationName}
-                    </h3>
-                    {doc.isAutoCreated && (
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                        Auto-Created
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div>
-                      <strong>Created:</strong> {formatDate(doc.createdAt)}
-                    </div>
-                    <div>
-                      <strong>Last Modified:</strong> {formatDate(doc.lastModified)}
-                    </div>
-                    <div>
-                      <strong>Auto-Created:</strong> {doc.isAutoCreated ? 'Yes' : 'No'}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
-
         {/* Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

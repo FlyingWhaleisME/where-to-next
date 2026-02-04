@@ -1,12 +1,23 @@
-// ADVANCED TECHNIQUE 1: MODULAR DEPENDENCY MANAGEMENT
-// Importing multiple specialized libraries for different functionalities
-const express = require('express'); // Web framework for RESTful API architecture
-const cors = require('cors'); // Cross-Origin Resource Sharing middleware for security
-const mongoose = require('mongoose'); // Object Document Mapper (ODM) for MongoDB
-const jwt = require('jsonwebtoken'); // JSON Web Token library for stateless authentication
-const { body, validationResult } = require('express-validator'); // Input validation middleware
-const OpenAI = require('openai'); // AI service integration for external API calls
-require('dotenv').config(); // Environment variable management for configuration
+// Import Express framework for creating HTTP server and API routes
+const express = require('express');
+// Import CORS middleware to allow frontend-backend communication
+const cors = require('cors');
+// Import Mongoose library for MongoDB database operations
+const mongoose = require('mongoose');
+// Import JWT library for user authentication token generation and verification
+const jwt = require('jsonwebtoken');
+// Import express-validator for input validation middleware
+// Validates and sanitizes user input before processing
+const { body, validationResult } = require('express-validator');
+// Import dotenv for loading environment variables
+// Stores sensitive configuration (database URI, API keys)
+require('dotenv').config();
+
+// Create Express application instance
+const app = express();
+
+
+const PORT = process.env.PORT || 3001;
 
 // Import models
 const User = require('./models/User');
@@ -25,41 +36,38 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-// ADVANCED TECHNIQUE 3: ASYNC/AWAIT ERROR HANDLING WITH FALLBACK VALUES
-// Async function with comprehensive error handling and fallback configuration
-// Uses environment variables with default values for development flexibility
+// Asynchronous function to establish MongoDB database connection
+// Uses environment variable for cloud database or local fallback
 const connectDB = async () => {
   try {
+    // Retrieve MongoDB connection URI (string) from environment variables
+    // Falls back to local MongoDB if environment variable not set
     const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/where-to-next';
-    console.log('🔗 Attempting to connect to MongoDB...');
-    console.log('📍 URI:', mongoURI);
+    console.log('Attempting to connect to MongoDB...');
+    console.log('URI:', mongoURI);
     
-    // Simple connection without complex options
+    // Establish connection to MongoDB using Mongoose
+    // await pauses execution until connection is established
     await mongoose.connect(mongoURI);
     
-    console.log('✅ Connected to MongoDB successfully!');
+    console.log('Connected to MongoDB successfully!');
     return true;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    console.log('💡 Make sure MongoDB is running: brew services start mongodb-community');
+    // Handle connection errors without crashing server
+    console.error('MongoDB connection failed:', error.message);
+    console.log('Make sure MongoDB is running: brew services start mongodb-community');
     return false;
   }
 };
 
-// Connect to database
+// Initialize database connection when server starts
 connectDB();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// ADVANCED TECHNIQUE 4: MIDDLEWARE PATTERN WITH JWT AUTHENTICATION
-// Custom middleware function that implements JWT token validation
-// Uses callback-based JWT verification with error handling
-// Modifies request object to attach user data for downstream routes
+// Middleware to verify JWT authentication token (Tool 2: JWT library)
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -108,42 +116,48 @@ app.get('/api/test', (req, res) => {
 
 // ===== AUTHENTICATION ENDPOINTS =====
 
-// ADVANCED TECHNIQUE 5: INPUT VALIDATION MIDDLEWARE CHAINING
-// Multiple middleware functions chained together for comprehensive validation
-// Express-validator provides declarative validation rules with custom error messages
+// POST endpoint for user registration
+// Array contains validation middleware functions
 app.post('/api/auth/register', [
+  // Validate email format using express-validator
   body('email').isEmail().withMessage('Please provide a valid email'),
+  // Validate password length using express-validator
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+  // Optional name field with whitespace trimming
   body('name').optional().trim()
 ], async (req, res) => {
   try {
-    // Validation result processing with error aggregation
+    // Check if validation passed
     const errors = validationResult(req);
+    
+    // If validation failed, return error response
     if (!errors.isEmpty()) {
       return res.status(400).json({ error: errors.array()[0].msg });
     }
     
+    // Extract validated data from request body
     const { email, password, name } = req.body;
-    
-    // ADVANCED TECHNIQUE 6: DATABASE QUERY OPTIMIZATION
-    // Check if user already exists before creating new user
+
+    // Query database to check if user already exists
+    // Prevents duplicate account creation
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists with this email' });
     }
     
-    // Create new user
     const user = new User({ email, password, name });
+    // Save user to MongoDB database
     await user.save();
     
-    // ADVANCED TECHNIQUE 7: JWT TOKEN GENERATION WITH EXPIRATION
-    // Generate JWT token with user payload and configurable expiration
+    // Generate JWT authentication token
+    // Token contains user ID and email, expires in 24 hours
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
     
+    // Return success response with token and user data
     res.status(201).json({
       message: 'User created successfully',
       token,
@@ -222,15 +236,24 @@ app.get('/api/preferences/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// POST endpoint: Create a new trip preference
 app.post('/api/preferences', authenticateToken, async (req, res) => {
   try {
+    // Create new TripPreferences instance using Mongoose model
     const preference = new TripPreferences({
-      ...req.body,
-      userId: req.user.userId
+      ...req.body, // Spread operator copies all preferences data from request body (frontend)
+      userId: req.user.userId // Add userId from JWT token for ownership
     });
-    await preference.save();
+
+    // Save the TripPreferences instance to MongoDB database
+    await preference.save(); // await pauses execution until save completes
+    // Returns Promise that resolves to the saved preference
+
+    // Return the created preference as JSON success response
     res.status(201).json(preference);
   } catch (error) {
+    // Return what went wrong as a JSON error response if preference creation fails
+    // 400 status code is a bad request error
     res.status(400).json({ error: error.message });
   }
 });
@@ -277,61 +300,91 @@ app.get('/api/documents', authenticateToken, async (req, res) => {
   }
 });
 
+// GET endpoint: Retrieve a specific document by ID
 app.get('/api/documents/:id', authenticateToken, async (req, res) => {
   try {
+    // Query MongoDB for document matching IDs for privacy and ownership
     const document = await Document.findOne({ 
-      _id: req.params.id, 
-      userId: req.user.userId 
+      _id: req.params.id,                     // Document ID from URL parameter
+      userId: req.user.userId                 // User ID from JWT authentication token
     });
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Return the found document as JSON success response
     res.json(document);
   } catch (error) {
+    // Return what went wrong (database query) as a JSON error response if document not found
+    // 500 status code is a generic server error
     res.status(500).json({ error: error.message });
   }
 });
 
+// POST endpoint: Create and save a new trip document
 app.post('/api/documents', authenticateToken, async (req, res) => {
   try {
+    // Create new Document instance using Mongoose model
     const document = new Document({
-      ...req.body,
-      userId: req.user.userId
+      ...req.body,              // Spread operator copies all document properties from request body (frontend)
+      userId: req.user.userId   // Add userId from JWT token for ownership
     });
+
+    // Save the Document instance to MongoDB database
+    // await pauses execution until save completes
+    // Returns Promise that resolves to the saved document
     await document.save();
+
+    // Return the created document as JSON success response
     res.status(201).json(document);
   } catch (error) {
+    // Return what went wrong (validation or database) as a JSON error response if document creation fails
     res.status(400).json({ error: error.message });
   }
 });
 
+// PUT endpoint: Update an existing document
 app.put('/api/documents/:id', authenticateToken, async (req, res) => {
   try {
+    // Find and update document in one operation, ensuring privacy and ownership
     const document = await Document.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user.userId },
-      req.body,
-      { new: true, runValidators: true }
+      { _id: req.params.id,               // Document ID for search and update
+        userId: req.user.userId },        // User ID for security
+      req.body,                           // New data to update from request body (frontend)
+      { new: true, runValidators: true }  // Return updated document and validate data before saving
     );
+
+    // Return what went wrong (database query) as a JSON error response if document not found
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Return the updated document as JSON success response
     res.json(document);
   } catch (error) {
+    // Return what went wrong (validation or database) as a JSON error response if document update fails
     res.status(400).json({ error: error.message });
   }
 });
 
+// DELETE endpoint: Remove document from database
 app.delete('/api/documents/:id', authenticateToken, async (req, res) => {
   try {
+    // Find and delete document in one operation, ensuring privacy and ownership
     const document = await Document.findOneAndDelete({ 
-      _id: req.params.id, 
-      userId: req.user.userId 
+      _id: req.params.id,                 // Document ID for search and delete
+      userId: req.user.userId             // User ID for security
     });
+
+    // Return what went wrong (database query) as a JSON error response if document not found
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Return success response with message as a JSON success response
     res.json({ message: 'Document deleted successfully' });
   } catch (error) {
+    // Return what went wrong (validation or database) as a JSON error response if document deletion fails
     res.status(500).json({ error: error.message });
   }
 });
@@ -783,11 +836,11 @@ let collaborationServer = null;
 // ADVANCED TECHNIQUE 14: MULTI-SERVICE APPLICATION BOOTSTRAPPING
 // Main server startup with secondary service initialization
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🧪 Test endpoint: http://localhost:${PORT}/api/test`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📱 Network access: http://where-to-next.local:${PORT}`);
+  console.log(`� Backend server running on port ${PORT}`);
+  console.log(`� Health check: http://localhost:${PORT}/api/health`);
+  console.log(`� Test endpoint: http://localhost:${PORT}/api/test`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`� Network access: http://where-to-next.local:${PORT}`);
   
   // Start collaboration server
   // On Render (or any cloud platform), attach WebSocket to HTTP server (same port)
@@ -800,19 +853,19 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     const hasCustomPort = process.env.PORT && process.env.PORT !== '3001';
     const isCloudPlatform = isProduction || hasCustomPort;
     
-    console.log(`🔍 [DEBUG] Environment check: NODE_ENV=${process.env.NODE_ENV}, PORT=${process.env.PORT}, isCloudPlatform=${isCloudPlatform}`);
+    console.log(` [DEBUG] Environment check: NODE_ENV=${process.env.NODE_ENV}, PORT=${process.env.PORT}, isCloudPlatform=${isCloudPlatform}`);
     
     if (isCloudPlatform) {
       // Cloud platform (Render): attach WebSocket to HTTP server
       collaborationServer = new CollaborationServer(server);
-      console.log(`🔗 Collaboration server attached to HTTP server (WebSocket available on same port ${PORT})`);
+      console.log(` Collaboration server attached to HTTP server (WebSocket available on same port ${PORT})`);
     } else {
       // Local development: use separate port
       collaborationServer = new CollaborationServer(8080);
-      console.log(`🔗 Collaboration server started on port 8080`);
+      console.log(` Collaboration server started on port 8080`);
     }
   } catch (error) {
-    console.error('❌ Failed to start collaboration server:', error);
+    console.error(' Failed to start collaboration server:', error);
   }
 });
 
@@ -820,7 +873,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 // Process signal handlers for clean application termination
 // Ensures proper resource cleanup and prevents data corruption
 process.on('SIGINT', () => {
-  console.log('🛑 Shutting down servers...');
+  console.log('� Shutting down servers...');
   if (collaborationServer) {
     collaborationServer.shutdown();
   }
@@ -828,7 +881,7 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-  console.log('🛑 Shutting down servers...');
+  console.log('� Shutting down servers...');
   if (collaborationServer) {
     collaborationServer.shutdown();
   }

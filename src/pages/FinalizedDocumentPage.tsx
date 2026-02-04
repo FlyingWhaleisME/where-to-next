@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { DocumentData } from '../types';
 import DailyPlanner from '../components/DailyPlanner';
-import { getCurrentUser } from '../services/apiService';
+import { getCurrentUser, isAuthenticated } from '../services/apiService';
 
 const FinalizedDocumentPage: React.FC = () => {
   const { documentId } = useParams<{ documentId: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [document, setDocument] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +18,67 @@ const FinalizedDocumentPage: React.FC = () => {
   const [shareCode, setShareCode] = useState<string | null>(null);
   const [creatorName, setCreatorName] = useState<string>('Unknown Creator');
 
+  // Check authentication - allow share code access without login, but require login for direct access
+  useEffect(() => {
+    const shareCodeParam = searchParams.get('code');
+    
+    // If no share code, require authentication
+    if (!shareCodeParam) {
+      if (!isAuthenticated() || !getCurrentUser()) {
+        console.log('🔒 [DEBUG] FinalizedDocumentPage: No share code and user not authenticated, redirecting');
+        navigate('/', { replace: true });
+        return;
+      }
+    }
+    
+    // Listen for logout events (only if not using share code)
+    if (!shareCodeParam) {
+      const handleLogout = () => {
+        console.log('🔒 [DEBUG] FinalizedDocumentPage: Logout detected, redirecting');
+        navigate('/', { replace: true });
+      };
+
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'token' && !e.newValue) {
+          console.log('🔒 [DEBUG] FinalizedDocumentPage: Token removed, redirecting');
+          navigate('/', { replace: true });
+        }
+      };
+
+      // Periodic check
+      const authCheckInterval = setInterval(() => {
+        if (!isAuthenticated() || !getCurrentUser()) {
+          console.log('🔒 [DEBUG] FinalizedDocumentPage: Periodic check - user logged out');
+          navigate('/', { replace: true });
+        }
+      }, 2000);
+
+      window.addEventListener('userLogout', handleLogout);
+      window.addEventListener('storage', handleStorageChange);
+
+      return () => {
+        clearInterval(authCheckInterval);
+        window.removeEventListener('userLogout', handleLogout);
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }
+  }, [searchParams, navigate]);
+
   useEffect(() => {
     if (documentId) {
       try {
         const currentUser = getCurrentUser();
         const shareCode = searchParams.get('code');
+        
+        // If no share code, require authentication immediately
+        if (!shareCode) {
+          if (!isAuthenticated() || !currentUser) {
+            console.log('🔒 [DEBUG] FinalizedDocumentPage: No share code and user not authenticated, redirecting');
+            navigate('/', { replace: true });
+            return;
+          }
+          console.log('✅ [DEBUG] FinalizedDocumentPage: User authenticated, user ID:', currentUser.id);
+        }
         
         // Check if this is a shared document view (via share code)
         if (shareCode) {
@@ -47,28 +104,55 @@ const FinalizedDocumentPage: React.FC = () => {
               setDocument(result.document.data);
               setCreatorName(result.document.creatorName || 'Unknown Creator');
               setIsCreator(false); // This is a shared view, not creator
-            } catch (err) {
+    } catch (err) {
               console.error('[ERROR] Failed to load shared document:', err);
               setError(err instanceof Error ? err.message : 'Shared document not found or invalid share code');
-            } finally {
-              setLoading(false);
-            }
-          };
-          
+    } finally {
+      setLoading(false);
+    }
+  };
+
           loadSharedDocument();
         } else {
           // This is a direct access (likely from Finalize button)
           console.log('📄 [DEBUG] Loading document directly for creator');
           setIsSharedView(false);
           
+          // Verify authentication before loading
+          if (!isAuthenticated() || !currentUser) {
+            console.log('🔒 [DEBUG] FinalizedDocumentPage: User not authenticated for direct access');
+            setError('Please log in to view this document');
+            setLoading(false);
+            navigate('/', { replace: true });
+            return;
+          }
+          
           const savedDocs = localStorage.getItem('destinationDocuments');
           if (savedDocs) {
             const docs = JSON.parse(savedDocs);
             const foundDoc = docs.find((doc: DocumentData) => doc.id === documentId);
             if (foundDoc) {
+              // Verify user owns this document
+              if (foundDoc.creatorId && foundDoc.creatorId !== currentUser.id) {
+                console.log('🔒 [DEBUG] FinalizedDocumentPage: User does not own this document. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
+                setError('You do not have permission to view this document');
+                setLoading(false);
+                navigate('/', { replace: true });
+                return;
+              }
+              
+              if (!foundDoc.creatorId) {
+                console.warn('⚠️ [DEBUG] FinalizedDocumentPage: Document missing creatorId, cannot verify ownership');
+                setError('Document is missing creator information');
+                setLoading(false);
+                navigate('/', { replace: true });
+                return;
+              }
+              
+              console.log('✅ [DEBUG] FinalizedDocumentPage: Document ownership verified. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
               setDocument(foundDoc);
               // Check if current user is the creator
-              setIsCreator(currentUser ? foundDoc.creatorId === currentUser.id : false);
+              setIsCreator(foundDoc.creatorId === currentUser.id);
             } else {
               setError('Document not found');
             }
@@ -92,14 +176,27 @@ const FinalizedDocumentPage: React.FC = () => {
   const handleInviteClick = async () => {
     console.log('[DEBUG] BUTTON CLICKED! handleInviteClick function called!');
     try {
+      if (!isAuthenticated()) {
+        alert('Please log in to share documents');
+        navigate('/', { replace: true });
+        return;
+      }
+
       const currentUser = getCurrentUser();
       if (!currentUser) {
         alert('Please log in to share documents');
+        navigate('/', { replace: true });
         return;
       }
 
       if (!document) {
         alert('Document not found');
+        return;
+      }
+
+      // Verify user owns this document (unless it's a shared view)
+      if (!isSharedView && document.creatorId && document.creatorId !== currentUser.id) {
+        alert('You do not have permission to share this document');
         return;
       }
 
@@ -243,11 +340,30 @@ const FinalizedDocumentPage: React.FC = () => {
               planningStyle={typeof document.bigIdeaSurveyData?.planningStyle === 'number' ? document.bigIdeaSurveyData.planningStyle : 50}
               initialTimeSlots={document.calendarPlanner?.timeSlots || []}
               onTimeSlotUpdate={async (timeSlots) => {
+                // Check authentication before allowing updates
+                if (!isAuthenticated() || !getCurrentUser()) {
+                  alert('Please log in to save changes');
+                  navigate('/', { replace: true });
+                  return;
+                }
+
+                const currentUser = getCurrentUser();
+                if (!currentUser) {
+                  navigate('/', { replace: true });
+                  return;
+                }
+
                 // Update document with new time slots
                 console.log('Time slots updated:', timeSlots);
                 
                 // Save the updated time slots to the document
                 if (!isSharedView && document) {
+                  // Verify user owns this document
+                  if (document.creatorId && document.creatorId !== currentUser.id) {
+                    alert('You do not have permission to edit this document');
+                    return;
+                  }
+
                   const updatedDocument = {
                     ...document,
                     calendarPlanner: {

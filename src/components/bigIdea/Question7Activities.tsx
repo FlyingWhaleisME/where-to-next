@@ -29,8 +29,15 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
         const preferences = JSON.parse(savedPreferences);
         if (preferences.tripVibe) {
           // Parse the comma-separated tripVibe string back to array
-          const vibes = preferences.tripVibe.split(',').map((v: string) => v.trim());
-          setSelectedVibes(vibes);
+          // Only include valid vibe values (max 3 as per Question 6)
+          const validVibes = ['relaxation', 'entertainment', 'educational', 'adventure', 'culinary', 'cultural', 'nature', 'shopping', 'photography', 'wellness', 'shared'];
+          const vibes = preferences.tripVibe.split(',').map((v: string) => v.trim()).filter((v: string) => validVibes.includes(v));
+          // Ensure we only show up to 3 vibes (as per Question 6 limit)
+          setSelectedVibes(vibes.slice(0, 3));
+        }
+        // Load saved activities if they exist
+        if (preferences.vibeActivities) {
+          setVibeActivities(preferences.vibeActivities);
         }
       } catch (error) {
         console.error('Error parsing saved preferences:', error);
@@ -98,6 +105,22 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
       'wellness': '🧘'
     };
     return emojiMap[vibe] || '🎯';
+  };
+
+  const getVibePlaceholder = (vibe: string) => {
+    const placeholderMap: {[key: string]: string} = {
+      'relaxation': 'e.g., Visit local hot springs and spa treatments (relaxing and authentic)',
+      'entertainment': 'e.g., Attend a live music performance at a local venue (energetic and memorable)',
+      'educational': 'e.g., Explore historical museums and landmarks (learn about local culture)',
+      'adventure': 'e.g., Go hiking in mountain trails (challenging and scenic)',
+      'culinary': 'e.g., Take a cooking class with local chefs (authentic food experience)',
+      'cultural': 'e.g., Participate in a traditional festival (immerse in local customs)',
+      'nature': 'e.g., Visit national parks and wildlife reserves (connect with nature)',
+      'shopping': 'e.g., Explore local markets and artisan shops (find unique souvenirs)',
+      'photography': 'e.g., Capture sunrise at iconic viewpoints (scenic photo opportunities)',
+      'wellness': 'e.g., Join a yoga retreat or meditation session (mindful relaxation)'
+    };
+    return placeholderMap[vibe] || 'e.g., Describe your activity idea';
   };
 
   const canProceedToNext = () => {
@@ -188,7 +211,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
                           type="text"
                           value={activity}
                           onChange={(e) => updateActivity(vibe, activityIndex, e.target.value)}
-                          placeholder={`e.g., Visit local hot springs and spa treatments (relaxing and authentic)`}
+                          placeholder={getVibePlaceholder(vibe)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>

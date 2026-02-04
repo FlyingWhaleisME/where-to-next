@@ -131,10 +131,10 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
           Imagine the vibe of your trip
         </h2>
         <p className="text-lg text-gray-600 mb-4">
-          Choose up to 3 vibes that resonate with you. Mix comfort and growth zones for balance!
+          Choose 1 to 3 vibes that resonate with you. Mix comfort and growth zones for balance!
         </p>
         <p className="text-sm text-gray-500">
-          Selected: {selectedVibes.length}/3
+          Selected: {selectedVibes.length}/3 {selectedVibes.length === 0 && <span className="text-red-500 font-semibold">(At least 1 required)</span>}
         </p>
       </div>
 

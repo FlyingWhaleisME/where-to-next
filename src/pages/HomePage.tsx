@@ -25,12 +25,20 @@ const HomePage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Check if user has trip preferences
-    const latestPrefs = localStorage.getItem('tripPreferences');
-    const savedPrefs = localStorage.getItem('savedTripPreferences');
+    // Check if user has trip preferences (user-specific)
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    const { getUserData } = require('../utils/userDataStorage');
     
-    if (latestPrefs || (savedPrefs && JSON.parse(savedPrefs).length > 0)) {
-      setHasTripPreferences(true);
+    if (isAuthenticated()) {
+      const currentUser = getCurrentUser();
+      if (currentUser && currentUser.id) {
+        const latestPrefs = getUserData('tripPreferences');
+        const savedPrefs = getUserData('savedTripPreferences');
+        
+        if (latestPrefs || (savedPrefs && Array.isArray(savedPrefs) && savedPrefs.length > 0)) {
+          setHasTripPreferences(true);
+        }
+      }
     }
 
     // Load current user

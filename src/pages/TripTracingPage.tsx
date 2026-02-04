@@ -25,34 +25,39 @@ const TripTracingPage: React.FC = () => {
 
   useEffect(() => {
     console.log('🎯 TRIP TRACING PAGE LOADED');
-    // Load trip preferences from localStorage
-    const saved = localStorage.getItem('tripPreferences');
-    const savedPrefs = localStorage.getItem('savedTripPreferences');
+    
+    // Check authentication first
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    const { getUserData, migrateUserData } = require('../utils/userDataStorage');
+    
+    if (!isAuthenticated()) {
+      console.log('🔒 [DEBUG] TripTracingPage: Not authenticated, redirecting');
+      navigate('/');
+      return;
+    }
+    
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      console.log('🔒 [DEBUG] TripTracingPage: No user ID, redirecting');
+      navigate('/');
+      return;
+    }
+    
+    // Try to migrate old data on first load
+    migrateUserData(currentUser.id);
+    
+    // Load trip preferences from user-specific storage
+    const saved = getUserData('tripPreferences');
+    const savedPrefs = getUserData('savedTripPreferences');
     
     if (saved) {
-      try {
-        const preferences = JSON.parse(saved);
-        console.log('✅ Trip preferences loaded:', preferences);
-        setTripPreferences(preferences);
-      } catch (error) {
-        console.error('Error parsing trip preferences:', error);
-      }
-    } else if (savedPrefs) {
-      try {
-        const parsed = JSON.parse(savedPrefs);
-        if (parsed.length > 0) {
-          console.log('✅ Using saved trip preferences:', parsed[0]);
-          setTripPreferences(parsed[0].preferences);
-        } else {
-          console.log('❌ No trip preferences found, redirecting to Big Picture');
-          navigate('/big-picture');
-        }
-      } catch (error) {
-        console.error('Error parsing saved preferences:', error);
-        navigate('/big-picture');
-      }
+      console.log('✅ Trip preferences loaded for user:', currentUser.id);
+      setTripPreferences(saved);
+    } else if (savedPrefs && Array.isArray(savedPrefs) && savedPrefs.length > 0) {
+      console.log('✅ Using saved trip preferences for user:', currentUser.id);
+      setTripPreferences(savedPrefs[0].preferences);
     } else {
-      console.log('❌ No trip preferences found, redirecting to Big Picture');
+      console.log('❌ No trip preferences found for user:', currentUser.id, 'redirecting to Big Picture');
       navigate('/big-picture');
     }
 
@@ -155,13 +160,21 @@ const TripTracingPage: React.FC = () => {
     console.log(`Section ${sectionNumber} answered with:`, answer);
     setTripTracingState(prev => {
       const newState = {
-        ...prev,
+          ...prev,
         ...answer
       };
       console.log('Updated tripTracingState:', newState);
       
-      // Save to localStorage immediately for navigation logic
-      localStorage.setItem('tripTracingState', JSON.stringify(newState));
+      // Save to user-specific storage immediately for navigation logic
+      const { setUserData } = require('../utils/userDataStorage');
+      const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+      
+      if (isAuthenticated()) {
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.id) {
+          setUserData('tripTracingState', newState);
+        }
+      }
       
       
       return newState;
@@ -225,8 +238,16 @@ const TripTracingPage: React.FC = () => {
       sectionsCompleted
     };
 
-    // Save to localStorage as latest Trip Tracing survey
-    localStorage.setItem('tripTracingState', JSON.stringify(enhancedSurveyData));
+    // Save to user-specific storage as latest Trip Tracing survey
+    const { setUserData } = require('../utils/userDataStorage');
+    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+    
+    if (isAuthenticated()) {
+      const currentUser = getCurrentUser();
+      if (currentUser && currentUser.id) {
+        setUserData('tripTracingState', enhancedSurveyData);
+      }
+    }
 
     // Also save to saved surveys list
     const savedSurveys = JSON.parse(localStorage.getItem('savedTripTracingSurveys') || '[]');
@@ -330,7 +351,7 @@ const TripTracingPage: React.FC = () => {
             window.dispatchEvent(new CustomEvent('documentShared', {
               detail: { shareCode: result.shareCode, documentId: mainDocument.id }
             }));
-          } else {
+    } else {
             console.error('Failed to create shared document');
           }
         }

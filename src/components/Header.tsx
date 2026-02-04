@@ -120,36 +120,174 @@ const Header: React.FC = () => {
   }, []);
 
   const handleAuth = async (email: string, password: string, name?: string) => {
+    console.log('🔐 [AUTH] handleAuth called:', {
+      isLogin,
+      email,
+      hasName: !!name,
+      timestamp: new Date().toISOString()
+    });
+    
     try {
       const result = isLogin 
         ? await authApi.login(email, password)
         : await authApi.register(email, password, name);
       
+      console.log('🔐 [AUTH] Backend response:', {
+        hasData: !!result.data,
+        hasError: !!result.error,
+        userId: result.data?.user?.id,
+        userEmail: result.data?.user?.email,
+        hasToken: !!result.data?.token
+      });
+      
       if (result.data) {
-        setUser(result.data.user);
-        localStorage.setItem('user', JSON.stringify(result.data.user));
-        localStorage.setItem('token', result.data.token);
+        const userData = result.data.user;
+        const token = result.data.token;
+        
+        console.log('✅ [AUTH] Login/Register successful:', {
+          userId: userData.id,
+          userEmail: userData.email,
+          userName: userData.name,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
+          timestamp: new Date().toISOString()
+        });
+        
+        // Store user and token
+        console.log('💾 [AUTH] Storing user data in localStorage:', {
+          userId: userData.id,
+          storageKey: 'user',
+          storageValue: JSON.stringify(userData)
+        });
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        console.log('💾 [AUTH] Storing token in localStorage:', {
+          storageKey: 'token',
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
+        });
+        localStorage.setItem('token', token);
+        
+        setUser(userData);
         setShowAuthModal(false);
         alert(`${isLogin ? 'Login' : 'Registration'} successful!`);
         
+        // Migrate old data to user-specific storage on login
+        try {
+          const { migrateUserData } = require('../utils/userDataStorage');
+          console.log('🔄 [AUTH] Migrating old data for user:', userData.id);
+          migrateUserData(userData.id);
+        } catch (e) {
+          console.error('❌ [AUTH] Error migrating user data:', e);
+        }
+        
+        // Verify storage after setting
+        const verifyUser = localStorage.getItem('user');
+        const verifyToken = localStorage.getItem('token');
+        console.log('✅ [AUTH] Verification after storage:', {
+          userStored: !!verifyUser,
+          tokenStored: !!verifyToken,
+          storedUserId: verifyUser ? JSON.parse(verifyUser).id : null
+        });
+        
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('userLogin', {
-          detail: { user: result.data.user }
+          detail: { user: userData }
         }));
+        console.log('📢 [AUTH] userLogin event dispatched');
       } else {
+        console.error('❌ [AUTH] Login/Register failed:', result.error);
         alert(`Error: ${result.error}`);
       }
     } catch (error) {
+      console.error('❌ [AUTH] Network error:', error);
       alert('Network error. Please try again.');
     }
   };
 
   const handleLogout = () => {
+    console.log('🚪 [LOGOUT] ==========================================');
+    console.log('🚪 [LOGOUT] Logout button clicked');
+    console.log('🚪 [LOGOUT] Current pathname:', location.pathname);
+    console.log('🚪 [LOGOUT] Timestamp:', new Date().toISOString());
+    
+    // Get user info BEFORE any clearing
+    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    const currentUser = userStr ? JSON.parse(userStr) : null;
+    
+    console.log('🚪 [LOGOUT] Current authentication state:', {
+      hasUserStr: !!userStr,
+      hasToken: !!token,
+      userId: currentUser?.id,
+      userEmail: currentUser?.email,
+      userName: currentUser?.name
+    });
+    
+    // Check if user is on a survey page or has unsaved data
+    const isOnSurveyPage = location.pathname.includes('/big-picture') || 
+                           location.pathname.includes('/trip-tracing') ||
+                           location.pathname.includes('/summary');
+    
+    const { getUserData } = require('../utils/userDataStorage');
+    const hasUnsavedData = getUserData('tripPreferences') || 
+                          getUserData('tripTracingState') ||
+                          getUserData('savedTripPreferences');
+    
+    console.log('🚪 [LOGOUT] Survey/unsaved data check:', {
+      isOnSurveyPage,
+      hasUnsavedData: !!hasUnsavedData
+    });
+    
+    // Show confirmation dialog, especially if on survey page or has unsaved data
+    let confirmMessage = 'Are you sure you want to log out?';
+    if (isOnSurveyPage || hasUnsavedData) {
+      confirmMessage = '⚠️ WARNING: You are in the middle of completing a survey.\n\n' +
+                      'If you log out now, your unsaved progress will be lost and will NOT be saved.\n\n' +
+                      'Are you sure you want to log out?';
+    }
+    
+    const confirmed = window.confirm(confirmMessage);
+    if (!confirmed) {
+      console.log('🚪 [LOGOUT] Logout cancelled by user');
+      return;
+    }
+    
+    console.log('🚪 [LOGOUT] User confirmed logout, proceeding...');
+    console.log('🚪 [LOGOUT] User ID to clear:', currentUser?.id);
+    
+    // Get user ID BEFORE clearing
+    const userId = currentUser?.id || null;
+    
+    if (!userId) {
+      console.warn('⚠️ [LOGOUT] No user ID found - user may already be logged out');
+    }
+    
+    // Clear ALL user data FIRST (including surveys and preferences)
+    // This must happen BEFORE clearing auth tokens to ensure we have the user ID
+    console.log('🚪 [LOGOUT] Calling apiLogout(true) to clear all user data...');
+    apiLogout(true); // true = clear all user data
+    
+    // Verify data was cleared
+    const verifyUser = localStorage.getItem('user');
+    const verifyToken = localStorage.getItem('token');
+    console.log('🚪 [LOGOUT] Verification after apiLogout:', {
+      userStillExists: !!verifyUser,
+      tokenStillExists: !!verifyToken,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear authentication AFTER clearing data
     setUser(null);
-    apiLogout();
+    console.log('🚪 [LOGOUT] User state cleared in component');
     
     // Dispatch custom event to notify collaboration system
     window.dispatchEvent(new CustomEvent('userLogout'));
+    console.log('📢 [LOGOUT] userLogout event dispatched');
+    
+    // Force immediate redirect to home page (full page reload)
+    // This ensures no data can be accessed after logout
+    console.log('🚪 [LOGOUT] Forcing redirect to home page...');
+    console.log('🚪 [LOGOUT] ==========================================');
+    window.location.href = '/';
   };
 
 

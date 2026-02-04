@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DocumentData } from '../types';
+import { getCurrentUser, isAuthenticated } from '../services/apiService';
 
 const DocumentEditingPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +43,16 @@ const DocumentEditingPage: React.FC = () => {
   const [selectedPreference, setSelectedPreference] = useState<any>(null);
 
   useEffect(() => {
+    // CRITICAL: Check authentication FIRST before doing anything
+    const currentUser = getCurrentUser();
+    if (!isAuthenticated() || !currentUser) {
+      console.log('🔒 [DEBUG] DocumentEditingPage: User not authenticated, redirecting');
+      navigate('/', { replace: true });
+      return;
+    }
+
+    console.log('✅ [DEBUG] DocumentEditingPage: User authenticated, user ID:', currentUser.id);
+
     if (!id) {
       navigate('/profile');
       return;
@@ -89,32 +100,35 @@ const DocumentEditingPage: React.FC = () => {
         const foundDoc = docs.find(doc => doc.id === id);
         
         if (foundDoc) {
+          // Verify user owns this document
+          if (foundDoc.creatorId && foundDoc.creatorId !== currentUser.id) {
+            console.log('🔒 [DEBUG] DocumentEditingPage: User does not own this document. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
+            alert('You do not have permission to edit this document');
+            navigate('/profile', { replace: true });
+            return;
+          }
+          
+          console.log('✅ [DEBUG] DocumentEditingPage: Document ownership verified. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
           setDocument(foundDoc);
           
-          // Initialize document name
           setDocumentName(foundDoc.destinationName || '');
-          
-          // Initialize form with existing data or Big Idea survey defaults
+
           const editableFields = foundDoc.editableFields || {};
           const bigIdeaData = foundDoc.bigIdeaSurveyData;
-          
-          // Dates and Duration - use editable fields first, then survey data
+
           let surveyStartDate = '';
           let surveyEndDate = '';
           let surveyDuration = '';
           
           if (bigIdeaData?.duration) {
-            // Handle complex duration structure
             if (typeof bigIdeaData.duration === 'object') {
               const durationData = bigIdeaData.duration;
               
-              // Use dates if they were decided
               if (durationData.dates?.status === 'decided' && durationData.dates.startDate && durationData.dates.endDate) {
                 surveyStartDate = durationData.dates.startDate;
                 surveyEndDate = durationData.dates.endDate;
               }
               
-              // Use duration if it was decided
               if (durationData.duration?.status === 'decided') {
                 const days = parseInt(durationData.duration.days) || 0;
                 const weeks = parseInt(durationData.duration.weeks) || 0;
@@ -204,36 +218,27 @@ const DocumentEditingPage: React.FC = () => {
       navigate('/profile');
     }
     
-    // Load saved preferences and latest preferences
-    const savedPrefs = localStorage.getItem('savedTripPreferences');
-    const latestPrefs = localStorage.getItem('tripPreferences');
+    // Load saved preferences and latest preferences (user-specific)
+    const { getUserData } = require('../utils/userDataStorage');
+    const savedPrefs = getUserData('savedTripPreferences');
+    const latestPrefs = getUserData('tripPreferences');
     
     let allPreferences = [];
     
-    // Add latest preferences first
+    // Add latest preferences first (already parsed from getUserData)
     if (latestPrefs) {
-      try {
-        const latest = JSON.parse(latestPrefs);
-        allPreferences.push({
-          id: 'latest',
-          name: 'Latest Big Idea Survey',
-          preferences: latest,
-          createdAt: new Date().toISOString(),
-          isLatest: true
-        });
-      } catch (error) {
-        console.error('Error loading latest preferences:', error);
-      }
+      allPreferences.push({
+        id: 'latest',
+        name: 'Latest Big Idea Survey',
+        preferences: latestPrefs,
+        createdAt: new Date().toISOString(),
+        isLatest: true
+      });
     }
     
-    // Add saved preferences
-    if (savedPrefs) {
-      try {
-        const saved = JSON.parse(savedPrefs);
-        allPreferences = [...allPreferences, ...saved];
-      } catch (error) {
-        console.error('Error loading saved preferences:', error);
-      }
+    // Add saved preferences (already parsed from getUserData)
+    if (savedPrefs && Array.isArray(savedPrefs)) {
+      allPreferences = [...allPreferences, ...savedPrefs];
     }
     
     setSavedPreferences(allPreferences);
@@ -301,9 +306,11 @@ const DocumentEditingPage: React.FC = () => {
         console.log('Document updated successfully');
       } else {
         // Create new document
+        const currentUser = getCurrentUser();
         const newDocument: DocumentData = {
           ...document,
           destinationName: documentName,
+          creatorId: currentUser?.id, // Set creator ID
           editableFields: {
             dates: {
               startDate,
@@ -347,6 +354,16 @@ const DocumentEditingPage: React.FC = () => {
         
         docs.push(newDocument);
         console.log('Document created successfully');
+      }
+      
+      // Ensure existing documents have creatorId if missing
+      const currentUser = getCurrentUser();
+      if (currentUser && existingDocIndex >= 0) {
+        const existingDoc = docs[existingDocIndex];
+        if (!existingDoc.creatorId) {
+          docs[existingDocIndex] = { ...existingDoc, creatorId: currentUser.id };
+          console.log('Added creatorId to existing document');
+        }
       }
       
       localStorage.setItem('destinationDocuments', JSON.stringify(docs));

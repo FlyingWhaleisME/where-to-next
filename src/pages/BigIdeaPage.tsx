@@ -375,7 +375,8 @@ const BigIdeaPage: React.FC = () => {
       tripPreferences.destinationApproach &&
       tripPreferences.destinationApproach.travelType &&
       tripPreferences.destinationApproach.destinationStatus &&
-      tripPreferences.tripVibe &&
+      tripPreferences.tripVibe && 
+      (typeof tripPreferences.tripVibe === 'string' && tripPreferences.tripVibe.trim().length > 0) &&
       tripPreferences.planningStyle &&
       tripPreferences.priorities &&
       tripPreferences.priorities.length > 0

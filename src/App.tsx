@@ -1,5 +1,4 @@
-// ADVANCED TECHNIQUE 54: COMPREHENSIVE ROUTING ARCHITECTURE WITH PROTECTED ROUTES
-// Complex React Router setup with multiple routes, protected routes, and navigation components
+// Tool 2: Third-party libraries - React Router for client-side navigation
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -16,19 +15,20 @@ import DocumentEditingPage from './pages/DocumentEditingPage';
 import { DraggableCollaborationPanel } from './components/collaboration';
 import { getCurrentUser } from './services/apiService';
 
-// ADVANCED TECHNIQUE 55: ROUTE CHANGE DETECTION WITH CUSTOM HOOK PATTERN
-// Custom component using useLocation hook to detect route changes and trigger callbacks
+// Custom component using React Router's useLocation hook (Tool 4: React hooks)
 function RouteChangeHandler({ onRouteChange }: { onRouteChange: (pathname: string) => void }) {
-  const location = useLocation();
+  const location = useLocation();  // React Router hook to get current route
   
-  useEffect(() => {
+  useEffect(() => {  // Tool 4: useEffect hook (explained in Tool 4, case B)
     onRouteChange(location.pathname);
   }, [location.pathname, onRouteChange]);
   
   return null;
 }
 
+// Tool 4: React Framework - Main App component with routing
 function App() {
+  // Tool 4: useState hooks for component state management (explained in Tool 4, case B)
   const [showGlobalChatbox, setShowGlobalChatbox] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -40,10 +40,31 @@ function App() {
   };
 
   useEffect(() => {
+    console.log('🔍 [APP] App component mounted/updated');
+    console.log('🔍 [APP] Timestamp:', new Date().toISOString());
+    
     // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
     const currentUser = getCurrentUser();
+    const { isAuthenticated } = require('./services/apiService');
+    const authenticated = isAuthenticated();
+    
+    console.log('🔍 [APP] Initial authentication check:', {
+      hasToken: !!token,
+      hasUserStr: !!userStr,
+      authenticated,
+      hasCurrentUser: !!currentUser,
+      userId: currentUser?.id,
+      userEmail: currentUser?.email
+    });
+    
     if (currentUser) {
+      console.log('✅ [APP] User found, setting user state:', currentUser.id);
       setUser(currentUser);
+    } else {
+      console.log('❌ [APP] No user found - user is NOT logged in');
+      setUser(null);
     }
 
     // Check if there's an active room and chatbox state
@@ -156,6 +177,7 @@ function App() {
             };
   }, []);
 
+  // Tool 4: React Router setup - BrowserRouter enables client-side routing
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
@@ -164,10 +186,10 @@ function App() {
         <main className="flex-1">
           <AnimatePresence mode="wait">
             <Routes>
-              {/* Homepage - Always accessible */}
+              {/* Route maps URL path to React component (Tool 4: React Router) */}
               <Route path="/" element={<HomePage />} />
               
-              {/* Protected Routes */}
+              {/* Protected routes require authentication before rendering */}
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <ProfilePage />
@@ -209,7 +231,7 @@ function App() {
         </main>
         <Footer />
         
-        {/* Global Collaboration Panel - Always mounted when room exists */}
+        {/* Tool 4: Conditional rendering - only render if roomId exists */}
         {roomId && (
           <DraggableCollaborationPanel
             tripId={roomId}
