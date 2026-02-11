@@ -1,7 +1,7 @@
 // Import of React library and hooks (useState, useEffect) for component functionality
 import React, { useState, useEffect } from 'react';
 // Import of React Router for navigation between pages
-import { useNavigate, useBlocker } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 // Import of Framer Motion for animations and transition
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -82,16 +82,8 @@ const BigIdeaPage: React.FC = () => {
     updateProgress(currentQuestion, totalQuestions);
   }, [currentQuestion, totalQuestions, updateProgress]);
 
-  // Block navigation if user has started the survey but hasn't completed it in this session
-  // Uses surveyCompletedInSession instead of isComplete() to avoid false negatives
-  // when old completed data exists in localStorage from a previous session
-  const shouldBlock = !surveyCompletedInSession && currentQuestion > 1;
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      shouldBlock && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  // Warn user before leaving page (browser close/refresh) if survey is in progress
+  // Warn user before leaving page (browser close/refresh/navigation) if survey is in progress
+  // Uses beforeunload event which is compatible with all router setups
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!surveyCompletedInSession && currentQuestion > 1) {
@@ -107,18 +99,6 @@ const BigIdeaPage: React.FC = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [currentQuestion, surveyCompletedInSession]);
-
-  // Handle blocked navigation
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      const confirmed = window.confirm('You have unsaved survey progress. Are you sure you want to leave? Your progress will be lost.');
-      if (confirmed) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
-    }
-  }, [blocker]);
 
   const savePreferencesSet = () => {
     if (preferencesName.trim() && tripPreferences) {
