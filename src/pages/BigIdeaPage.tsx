@@ -433,11 +433,14 @@ const BigIdeaPage: React.FC = () => {
   // Validates survey completion with conditional requirements based on user choices
   const isComplete = (): boolean => {
     // 1. Check base requirements, always required regardless of user choices
+    // Note: duration and budget are optional — users can choose "undecided"/"not sure"
+    //   so we only require that the user has VISITED Q2 (duration can be undefined if undecided)
+    //   and budget can be 0 (when "not sure" is selected)
     const baseComplete = !!(
       tripPreferences.groupSize &&
-      tripPreferences.duration &&
-      // Validate data types - budget can be 0
-      (tripPreferences.budget !== undefined && tripPreferences.budget !== null) &&
+      // duration is optional — user can choose "undecided" which may leave it undefined
+      // budget can be 0 when "not sure" is selected
+      ((tripPreferences.budget !== undefined && tripPreferences.budget !== null) || tripPreferences.isNotSure) &&
       tripPreferences.destinationApproach &&
       tripPreferences.destinationApproach.travelType &&
       tripPreferences.destinationApproach.destinationStatus &&
