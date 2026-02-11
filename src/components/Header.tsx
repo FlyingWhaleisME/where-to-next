@@ -160,10 +160,11 @@ const Header: React.FC = () => {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <button onClick={() => safeNavigate('/')}>
+            <button onClick={() => safeNavigate('/')} className="flex items-center space-x-2">
+              <img src="/logo512.png" alt="Logo" className="h-9 w-9 rounded-lg" />
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-rose-500 bg-clip-text text-transparent"
+                className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-hawaii-coral bg-clip-text text-transparent"
               >
                 Where To Next?
               </motion.div>
@@ -243,9 +244,12 @@ const Header: React.FC = () => {
               
               <button 
                 onClick={() => safeNavigate('/profile')}
-                className="text-gray-600 hover:text-emerald-600 transition-colors duration-200 font-medium"
+                className="text-gray-600 hover:text-emerald-600 transition-colors duration-200 font-medium flex items-center space-x-1"
               >
-                Profile
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>Profile</span>
               </button>
             </nav>
           </div>

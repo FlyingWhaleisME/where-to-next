@@ -82,7 +82,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-500 to-rose-500 text-white p-6">
+        <div className="bg-gradient-to-r from-hawaii-green to-hawaii-coral text-white p-6">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold">{prompt.title}</h2>

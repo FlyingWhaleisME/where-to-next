@@ -356,7 +356,7 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
           disabled={!canProceedToNext()}
           className={`btn-primary text-lg px-8 py-4 ${
             canProceedToNext()
-              ? 'bg-gradient-to-r from-emerald-600 to-rose-500 hover:from-emerald-700 hover:to-rose-600'
+              ? 'bg-gradient-to-r from-emerald-600 to-hawaii-coral hover:from-emerald-700 hover:to-rose-600'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >

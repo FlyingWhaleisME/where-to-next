@@ -386,7 +386,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
             disabled={!canProceedToNext() || selectedVibes.length === 0}
             className={`px-6 py-3 rounded-xl font-medium transition-colors ${
               canProceedToNext() && selectedVibes.length > 0
-                ? 'bg-gradient-to-r from-emerald-500 to-rose-500 text-white hover:from-emerald-600 hover:to-rose-600'
+                ? 'bg-gradient-to-r from-hawaii-green to-hawaii-coral text-white hover:from-emerald-600 hover:to-rose-600'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >

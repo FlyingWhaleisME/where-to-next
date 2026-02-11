@@ -358,7 +358,7 @@ const SummaryPage: React.FC = () => {
 
   if (!tripPreferences) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
+      <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white rounded-3xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h2>
@@ -370,7 +370,7 @@ const SummaryPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -100,7 +100,7 @@ const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-8 sm:py-12 lg:py-20">
+    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 py-8 sm:py-12 lg:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

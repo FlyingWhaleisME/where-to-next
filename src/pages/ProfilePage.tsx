@@ -630,7 +630,7 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -665,7 +665,7 @@ const ProfilePage: React.FC = () => {
               {savedTripPreferences.map((preferenceSet) => (
                 <motion.div
                   key={preferenceSet.id}
-                  className="bg-gradient-to-r from-emerald-50 to-rose-50 rounded-2xl p-6 border border-emerald-100"
+                  className="bg-gradient-to-r from-hawaii-mint to-rose-50 rounded-2xl p-6 border border-emerald-100"
                   whileHover={{ scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >

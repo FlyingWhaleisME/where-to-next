@@ -6,30 +6,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
+        // Override rose with user's coral/salmon palette (based on #EF7F7F, #F1ABA5)
+        rose: {
+          50: '#FEF5F4',
+          100: '#FDEAE8',
+          200: '#F1ABA5',
+          300: '#F09590',
+          400: '#EF7F7F',
+          500: '#E45A5A',
+          600: '#D04040',
+          700: '#B33030',
+          800: '#922525',
+          900: '#711D1D',
         },
-        secondary: {
-          50: '#fff1f2',
-          100: '#ffe4e6',
-          200: '#fecdd3',
-          300: '#fda4af',
-          400: '#fb7185',
-          500: '#f43f5e',
-          600: '#e11d48',
-          700: '#be123c',
-          800: '#9f1239',
-          900: '#881337',
-        }
+        // User's custom green hex codes (complement to emerald)
+        hawaii: {
+          mint: '#D5F9D6',
+          light: '#B2F4B3',
+          green: '#90EF91',
+          peach: '#F1ABA5',
+          coral: '#EF7F7F',
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -157,7 +157,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
 
             {/* Header with Gradient */}
             <div className="relative mb-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-rose-500 rounded-t-2xl -mx-6 -mt-6 h-24 opacity-80"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-hawaii-green to-hawaii-coral rounded-t-2xl -mx-6 -mt-6 h-24 opacity-80"></div>
               <h2 className="relative text-3xl font-bold text-white text-center pt-6 pb-4 z-10">
                 Start Collaborating
               </h2>

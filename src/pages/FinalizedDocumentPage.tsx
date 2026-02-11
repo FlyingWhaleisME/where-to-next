@@ -299,7 +299,7 @@ const FinalizedDocumentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Loading...</h2>
@@ -311,7 +311,7 @@ const FinalizedDocumentPage: React.FC = () => {
 
   if (error || !document) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl mb-4 font-bold text-red-400">Error</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
@@ -324,7 +324,7 @@ const FinalizedDocumentPage: React.FC = () => {
   const isGroupTravel = (document.bigIdeaSurveyData?.groupSize || document.surveyData?.groupSize) !== 'solo';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
