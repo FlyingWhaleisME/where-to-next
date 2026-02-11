@@ -8,6 +8,7 @@ interface Question6TripVibeProps {
   currentQuestion: number;
   totalQuestions: number;
   canProceed: boolean;
+  tripPreferences?: any; // Add tripPreferences prop
 }
 
 const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
@@ -16,26 +17,35 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
   onPrevious,
   currentQuestion,
   totalQuestions,
-  canProceed
+  canProceed,
+  tripPreferences: tripPreferencesProp
 }) => {
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
 
-  // Load previous answers on component mount
+  // Load previous answers on component mount and when tripPreferences prop changes
   useEffect(() => {
-    const savedPreferences = localStorage.getItem('tripPreferences');
-    if (savedPreferences) {
-      try {
-        const preferences = JSON.parse(savedPreferences);
-        if (preferences.tripVibe) {
-          // Parse the comma-separated tripVibe string back to array
-          const vibes = preferences.tripVibe.split(',').map((v: string) => v.trim());
-          setSelectedVibes(vibes);
-        }
-      } catch (error) {
-        console.error('Error parsing saved preferences:', error);
-      }
+    // First try to use prop (most up-to-date), then fallback to localStorage
+    const preferences = tripPreferencesProp || (() => {
+      const { getUserData } = require('../../utils/userDataStorage');
+      return getUserData('tripPreferences');
+    })();
+    
+    if (preferences && preferences.tripVibe) {
+      // Parse the comma-separated tripVibe string back to array
+      const vibes = typeof preferences.tripVibe === 'string' 
+        ? preferences.tripVibe.split(',').map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        : Array.isArray(preferences.tripVibe) 
+          ? preferences.tripVibe 
+          : [];
+      console.log('Question6: Loaded vibes from preferences:', vibes, 'Original tripVibe:', preferences.tripVibe);
+      console.log('Question6: selectedVibes.length (loaded) =', vibes.length);
+      setSelectedVibes(vibes);
+    } else {
+      console.log('Question6: No tripVibe found in preferences');
+      console.log('Question6: selectedVibes.length (loaded) = 0');
+      setSelectedVibes([]);
     }
-  }, []);
+  }, [tripPreferencesProp, currentQuestion]); // Re-run when tripPreferences prop changes or question changes
 
   const tripVibes = [
     { 
@@ -98,22 +108,32 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
     setSelectedVibes(prev => {
       if (prev.includes(vibeValue)) {
         const newSelection = prev.filter(v => v !== vibeValue);
+        console.log('Question6: TOGGLE OFF', vibeValue, '=> selectedVibes.length =', newSelection.length, 'values =', newSelection);
         onAnswer(6, { tripVibe: newSelection.join(', ') });
         return newSelection;
       } else if (prev.length < 3) {
         const newSelection = [...prev, vibeValue];
+        console.log('Question6: TOGGLE ON', vibeValue, '=> selectedVibes.length =', newSelection.length, 'values =', newSelection);
         onAnswer(6, { tripVibe: newSelection.join(', ') });
         return newSelection;
       } else {
+        console.log('Question6: TOGGLE BLOCKED (already 3 selected). selectedVibes.length =', prev.length, 'values =', prev);
         return prev;
       }
     });
   };
 
   const handleNext = () => {
-    if (selectedVibes.length > 0) {
-      onNext();
+    if (selectedVibes.length === 0) {
+      // Prevent navigation if no vibes selected
+      console.log('Question6: Next blocked. selectedVibes.length = 0');
+      return;
     }
+    // Re-send the latest vibes right before navigating to Q7.
+    // This prevents timing issues where Q7 mounts before parent state is updated.
+    console.log('🟢🟢🟢 Q6 NEXT CLICKED: selectedVibes.length =', selectedVibes.length, 'values =', selectedVibes, '🟢🟢🟢');
+    onAnswer(6, { tripVibe: selectedVibes.join(', ') });
+    onNext();
   };
 
   const getZoneVibes = (zone: 'comfort' | 'growth') => {
@@ -264,9 +284,6 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
           Previous
         </button>
 
-        <div className="text-gray-500">
-          {currentQuestion} of {totalQuestions}
-        </div>
 
         <button
           onClick={handleNext}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DocumentData } from '../types';
-import { getCurrentUser, isAuthenticated } from '../services/apiService';
+import { getCurrentUser, isAuthenticated, documentsApi } from '../services/apiService';
 
 const DocumentEditingPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -100,11 +100,27 @@ const DocumentEditingPage: React.FC = () => {
         const foundDoc = docs.find(doc => doc.id === id);
         
         if (foundDoc) {
+          // Re-verify authentication before setting document state (prevents showing data after logout)
+          const verifyUser = getCurrentUser();
+          if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
+            console.log('🔒 [DEBUG] DocumentEditingPage: User logged out during document load, redirecting');
+            window.location.href = '/';
+            return;
+          }
+          
           // Verify user owns this document
           if (foundDoc.creatorId && foundDoc.creatorId !== currentUser.id) {
             console.log('🔒 [DEBUG] DocumentEditingPage: User does not own this document. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
             alert('You do not have permission to edit this document');
             navigate('/profile', { replace: true });
+            return;
+          }
+          
+          // Final check before setting state
+          const finalCheck = getCurrentUser();
+          if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) {
+            console.log('🔒 [DEBUG] DocumentEditingPage: User logged out before setting document, redirecting');
+            window.location.href = '/';
             return;
           }
           
@@ -246,22 +262,126 @@ const DocumentEditingPage: React.FC = () => {
 
     
     setLoading(false);
+    
+    // Listen for logout events to redirect immediately
+    const handleUserLogout = () => {
+      console.log('🔒 [DEBUG] DocumentEditingPage: User logged out, redirecting');
+      window.location.href = '/';
+    };
+    
+    // Listen for storage changes (detects logout from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if ((e.key === 'token' && !e.newValue) || (e.key === 'user' && !e.newValue)) {
+        console.log('🔒 [DEBUG] DocumentEditingPage: Logout detected via storage event, redirecting');
+        handleUserLogout();
+      }
+    };
+    
+    // Periodic auth check every 1 second
+    const authCheckInterval = setInterval(() => {
+      if (!isAuthenticated() || !getCurrentUser()) {
+        console.log('🔒 [DEBUG] DocumentEditingPage: Periodic check - user logged out, redirecting');
+        handleUserLogout();
+      }
+    }, 1000);
+    
+    window.addEventListener('userLogout', handleUserLogout);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(authCheckInterval);
+      window.removeEventListener('userLogout', handleUserLogout);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [id, navigate]);
 
+  // Handles saving the document to MongoDB and localStorage
   const handleSave = async () => {
     if (!document) return;
     
     setSaving(true);
     
     try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        alert('Please log in to save documents');
+        return;
+      }
+      
+      // Prepare document data for MongoDB
+      const documentToSave = {
+        ...document,
+        destinationName: documentName,
+        creatorId: currentUser.id,
+        editableFields: {
+          dates: {
+            startDate,
+            endDate,
+            duration
+          },
+          budget: {
+            amount: budgetAmount || undefined,
+            perDay: budgetPerDay,
+            currency: budgetCurrency,
+            notes: budgetNotes
+          },
+          transportation: {
+            toDestination: transportationTo,
+            withinDestination: transportationWithin,
+            toNotes: transportationToNotes,
+            withinNotes: transportationWithinNotes
+          },
+          expenseSharing: {
+            policy: expenseSharingPolicy,
+            customPolicies: expenseSharingPolicy === 'custom' ? customExpensePolicies : undefined
+          },
+          groupMembers: groupMembers,
+          groupRules: {
+            rules: showGroupRules ? groupRules : []
+          },
+          travelerName: travelerName,
+        },
+        optionsOrganizer: {
+          accommodation: accommodationOptions,
+          meals: mealOptions,
+          activities: activityOptions
+        },
+        calendarPlanner: {
+          ...document.calendarPlanner
+        },
+        lastModified: new Date().toISOString()
+      };
+      
+      // Save to MongoDB (persistent cloud storage)
+      let savedDocId = document.id;
+      if (document.id && document.id.startsWith('doc_')) {
+        // New document - create in MongoDB
+        const result = await documentsApi.create(documentToSave);
+        if (result.data) {
+          savedDocId = result.data._id || result.data.id;
+          console.log('✅ Document saved to MongoDB:', savedDocId);
+        } else {
+          console.error('Failed to save document to MongoDB:', result.error);
+          alert('Failed to save document to cloud storage. Saving locally only.');
+        }
+      } else {
+        // Existing document - update in MongoDB
+        const result = await documentsApi.update(document.id, documentToSave);
+        if (result.error) {
+          console.error('Failed to update document in MongoDB:', result.error);
+          alert('Failed to update document in cloud storage. Saving locally only.');
+        } else {
+          console.log('✅ Document updated in MongoDB:', document.id);
+        }
+      }
+      
+      // Also save to localStorage as cache
       const savedDocs = localStorage.getItem('destinationDocuments');
       let docs: DocumentData[] = savedDocs ? JSON.parse(savedDocs) : [];
-      
-      // Check if this is a new document (not in localStorage yet)
       const existingDocIndex = docs.findIndex(doc => doc.id === document.id);
       
       if (existingDocIndex >= 0) {
-        // Update existing document
+        // Create or update document object with complex nested key-value structure
         docs[existingDocIndex] = {
           ...docs[existingDocIndex],
           destinationName: documentName,

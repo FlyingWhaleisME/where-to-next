@@ -1,19 +1,19 @@
-// Import of React library and hooks for component functionality
+// Import of React library and hooks (useState, useEffect) for component functionality
 import React, { useState, useEffect } from 'react';
-// Import of React Router for navigation
-import { useNavigate } from 'react-router-dom';
-// Import of Framer Motion for animations
+// Import of React Router for navigation between pages
+import { useNavigate, useBlocker } from 'react-router-dom';
+// Import of Framer Motion for animations and transition
 import { motion, AnimatePresence } from 'framer-motion';
 
 import AIPromptDisplay from '../components/AIPromptDisplay';
 import promptService from '../services/promptService';
 import { TripPreferences, GeneratedPrompt } from '../types';
 
-// Import of custom React hook for reusable logic
+// Import of custom React hook for survey progress checking
 import { useSurveyProgress } from '../hooks/useSurveyProgress';
 
 import { getUserData, setUserData, migrateUserData } from '../utils/userDataStorage';
-import { getCurrentUser, isAuthenticated } from '../services/apiService';
+import { getCurrentUser, isAuthenticated, documentsApi } from '../services/apiService';
 import Question1GroupSize from '../components/bigIdea/Question1GroupSize';
 import Question2Duration from '../components/bigIdea/Question2Duration';
 import Question3Budget from '../components/bigIdea/Question3Budget';
@@ -26,10 +26,11 @@ import Question9Priorities from '../components/bigIdea/Question9Priorities';
 
 // React functional component with hooks
 const BigIdeaPage: React.FC = () => {
-  // React Router hook for navigation
+  // React Router hook - useNavigate provides navigation function
   const navigate = useNavigate();
   
-  // useState hooks for component state
+  // React useState hooks for component state management
+  // Each useState returns [value, setterFunction]
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [tripPreferences, setTripPreferences] = useState<Partial<TripPreferences>>({});
   const [showAIPrompt, setShowAIPrompt] = useState(false);
@@ -37,40 +38,87 @@ const BigIdeaPage: React.FC = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [showSavePreferences, setShowSavePreferences] = useState(false);
   const [preferencesName, setPreferencesName] = useState('');
+  // Track whether the survey has been completed in THIS session
+  // (prevents blocking navigation when old completed data exists in localStorage)
+  const [surveyCompletedInSession, setSurveyCompletedInSession] = useState(false);
   
-  // Custom hook for reusable logic
+  // Custom React hook for functionality shared across components
   const { updateProgress, markCompleted } = useSurveyProgress();
 
   const totalQuestions = 9;
 
-  // useEffect hook - runs when component mounts 
+  // React useEffect hook - runs when component mounts (empty dependency array [])
   useEffect(() => {
     // JSON key-value structure - Retrieve user-specific data from localStorage
     const { getUserData, migrateUserData } = require('../utils/userDataStorage');
     const { getCurrentUser, isAuthenticated } = require('../services/apiService');
     
+    // Checks if user is authenticated
     if (!isAuthenticated()) {
       return;
     }
     
+    // Retrieves current user
     const currentUser = getCurrentUser();
+    // Checks if current user exists and has an ID
     if (!currentUser || !currentUser.id) {
       return;
     }
     
+    // Migrates old data to new format
     migrateUserData(currentUser.id);
     
-    // getUserData retrieves JSON from localStorage
+    // Retrieves saved JSON trip preferences from user-specific storage
     const saved = getUserData('tripPreferences');
+    // Checks if saved trip preferences exist
     if (saved) {
       setTripPreferences(saved);  // Update component state with loaded data
     }
-  }, []);  // Empty array means this runs only once on mount
+  }, []);
 
+  // React useEffect hook - runs when component mounts (dependency array [currentQuestion, totalQuestions, updateProgress])
   useEffect(() => {
     // Update survey progress
     updateProgress(currentQuestion, totalQuestions);
   }, [currentQuestion, totalQuestions, updateProgress]);
+
+  // Block navigation if user has started the survey but hasn't completed it in this session
+  // Uses surveyCompletedInSession instead of isComplete() to avoid false negatives
+  // when old completed data exists in localStorage from a previous session
+  const shouldBlock = !surveyCompletedInSession && currentQuestion > 1;
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      shouldBlock && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // Warn user before leaving page (browser close/refresh) if survey is in progress
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!surveyCompletedInSession && currentQuestion > 1) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved survey progress. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentQuestion, surveyCompletedInSession]);
+
+  // Handle blocked navigation
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const confirmed = window.confirm('You have unsaved survey progress. Are you sure you want to leave? Your progress will be lost.');
+      if (confirmed) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
 
   const savePreferencesSet = () => {
     if (preferencesName.trim() && tripPreferences) {
@@ -107,10 +155,11 @@ const BigIdeaPage: React.FC = () => {
     }
   };
 
-  const createDestinationDocuments = (destinationNames: string[], preferences: Partial<TripPreferences>) => {
+  // Creates multiple destination documents from survey results with proper data transformation
+  const createDestinationDocuments = async (destinationNames: string[], preferences: Partial<TripPreferences>) => {
     console.log('Creating destination documents for:', destinationNames);
     
-    // Get current user to set creatorId
+    // 1. Verify user authentication (required for creatorId)
     const { getCurrentUser, isAuthenticated } = require('../services/apiService');
     const currentUser = isAuthenticated() ? getCurrentUser() : null;
     if (!currentUser || !currentUser.id) {
@@ -118,14 +167,17 @@ const BigIdeaPage: React.FC = () => {
       return;
     }
     
+    // 2. Generate survey metadata (ID, date, name)
     const surveyId = `big_idea_${Date.now()}`;
     const surveyDate = new Date().toISOString();
     const surveyName = `Big Idea Survey - ${new Date().toLocaleDateString()}`;
     
+    // 3. Transform array of destination names into array of document objects using map()
     const destinationDocs = destinationNames.map(dest => ({
-      id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // 4. For each destination: generate unique ID, transform data types, initialize structures
+      id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Generate unique document ID
       destinationName: dest.trim(),
-      creatorId: currentUser.id, // Set creator ID so documents show up in profile
+      creatorId: currentUser.id, // Link document to user (required for ownership verification)
       isAutoCreated: true, // Flag to identify auto-created docs
       // Include survey data from Big Picture (legacy support)
       surveyData: {
@@ -134,6 +186,7 @@ const BigIdeaPage: React.FC = () => {
         budget: preferences?.budget,
         destinationStyle: preferences?.destinationStyle,
         tripVibe: preferences?.tripVibe,
+        // Transform planning style number to descriptive string
         planningStyle: typeof preferences?.planningStyle === 'number' ? 
           (preferences.planningStyle <= 25 ? 'Spontaneous Explorer' :
            preferences.planningStyle <= 50 ? 'Flexible Planner' :
@@ -144,7 +197,7 @@ const BigIdeaPage: React.FC = () => {
       // Enhanced survey data structure
       bigIdeaSurveyData: preferences,
       tripTracingSurveyData: null, // Will be filled when Trip Tracing is completed
-      // Survey origin tracking
+      // Survey origin tracking (metadata)
       surveyOrigin: {
         bigIdeaSurveyId: surveyId,
         bigIdeaSurveyName: surveyName,
@@ -152,6 +205,7 @@ const BigIdeaPage: React.FC = () => {
         tripTracingSurveyId: null,
         tripTracingSurveyDate: null
       },
+      // Initialize empty structures for future data
       calendarPlanner: {
         duration: typeof preferences?.duration === 'string' ? preferences.duration : 'Complex duration structure',
         dates: [],
@@ -168,14 +222,31 @@ const BigIdeaPage: React.FC = () => {
 
     console.log('Documents created:', destinationDocs);
     
-    // IMPORTANT: Append to existing documents instead of overwriting
+    // 5. Save each document to MongoDB (persistent cloud storage)
+    const savedDocumentIds: string[] = [];
+    
+    for (const doc of destinationDocs) {
+      try {
+        const result = await documentsApi.create(doc);
+        if (result.data) {
+          savedDocumentIds.push(result.data._id || result.data.id);
+          console.log('✅ Document saved to MongoDB:', result.data._id || result.data.id);
+        } else {
+          console.error('Failed to save document to MongoDB:', result.error);
+        }
+      } catch (error) {
+        console.error('Error saving document to MongoDB:', error);
+      }
+    }
+    
+    // 6. Also save to localStorage as cache (for offline access)
     const existingDocs = localStorage.getItem('destinationDocuments');
     let allDocs = destinationDocs;
     
     if (existingDocs) {
       try {
         const parsed = JSON.parse(existingDocs);
-        // Add new documents to existing ones
+        // Merge new documents with existing documents
         allDocs = [...parsed, ...destinationDocs];
         console.log('Appending to existing documents. Existing count:', parsed.length, 'New count:', destinationDocs.length);
       } catch (error) {
@@ -183,35 +254,57 @@ const BigIdeaPage: React.FC = () => {
       }
     }
     
-    // Save to localStorage
     localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
-    console.log('Documents saved to localStorage. Total documents:', allDocs.length);
-    
-    // Mark AI planning guide as completed
-    localStorage.setItem('ai_planning_guide_completed', 'true');
+    console.log('Documents saved to localStorage (cache). Total documents:', allDocs.length, 'Saved to MongoDB:', savedDocumentIds.length);
   };
 
+
   const handleNext = () => {
-    console.log('🚀 handleNext called! Current question:', currentQuestion, 'Total questions:', totalQuestions);
-    console.log('🚀 Current tripPreferences:', tripPreferences);
-    console.log('🚀 isComplete() result:', isComplete());
+    console.log('handleNext called! Current question:', currentQuestion, 'Total questions:', totalQuestions);
+    console.log('Current tripPreferences:', tripPreferences);
+    console.log('isComplete() result:', isComplete());
     
+    // Validation: Check if Question 6 (Trip Vibe) has been answered before proceeding to Question 7
+    // IMPORTANT: React state updates are async; if user clicks fast, tripPreferences.tripVibe can lag.
+    // So we also check persisted user data as a safety net.
+    if (currentQuestion === 6) {
+      let tripVibe = tripPreferences.tripVibe;
+
+      // Fallback to persisted user data (user-specific localStorage) if state hasn't caught up yet
+      if (!tripVibe || (typeof tripVibe === 'string' && tripVibe.trim().length === 0)) {
+        try {
+          const saved = getUserData<any>('tripPreferences');
+          if (saved?.tripVibe) {
+            tripVibe = saved.tripVibe;
+            // Sync state forward so Q7 immediately receives the correct prop
+            setTripPreferences(prev => ({ ...prev, tripVibe }));
+          }
+        } catch (e) {
+          console.warn('BigIdeaPage: could not load tripVibe from user storage', e);
+        }
+      }
+
+      if (!tripVibe || (typeof tripVibe === 'string' && tripVibe.trim().length === 0)) {
+        console.log('Cannot proceed: Trip vibes not selected');
+        alert('Please select at least one trip vibe before proceeding.');
+        return;
+      }
+    }
+    
+    // 1. Check if there are more questions to navigate to
     if (currentQuestion < totalQuestions) {
+      // 2. Calculate next question (default: current + 1)
       let nextQuestion = currentQuestion + 1;
       
-      // Skip Question 5 (Destination Style) only if destination status is 'chosen' (not 'open' or 'in_mind')
-      if (currentQuestion === 4 && tripPreferences.destinationApproach?.destinationStatus === 'chosen') {
-        console.log('Skipping Question 5 (Destination Style) - destination status is chosen');
-        nextQuestion = 6; // Skip to Question 6 (Trip Vibe)
-      }
-      
-      // Skip Question 5 if we're on Question 4 and going backwards through navigation
+      // 3. Check if Question 5 (Destination Style) should be skipped
+      // Question 5 is only relevant if user selected 'open' or 'in_mind' in Question 4
       if (nextQuestion === 5 && tripPreferences.destinationApproach?.destinationStatus === 'chosen') {
         console.log('Skipping Question 5 (Destination Style) - destination status is chosen');
         nextQuestion = 6;
       }
       
       console.log('Moving to next question:', nextQuestion);
+      // 4. Navigate to the calculated next question
       setCurrentQuestion(nextQuestion);
       
       // Scroll to top of page for better UX
@@ -232,9 +325,10 @@ const BigIdeaPage: React.FC = () => {
         }
         
         // Show summary instead of AI prompt
-        console.log('🚀 Setting showSummary to true...');
+        console.log('Setting showSummary to true...');
         setShowSummary(true);
-        console.log('🚀 Marking survey as completed...');
+        setSurveyCompletedInSession(true); // Disable navigation blocker
+        console.log('Marking survey as completed...');
         markCompleted(); // Mark survey as completed
         console.log('✅ Summary should now be visible');
         
@@ -287,6 +381,7 @@ const BigIdeaPage: React.FC = () => {
               }
               
               setShowSummary(true);
+              setSurveyCompletedInSession(true); // Disable navigation blocker
               markCompleted(); // Mark survey as completed
               
               // Scroll to top to ensure summary modal is visible
@@ -301,16 +396,20 @@ const BigIdeaPage: React.FC = () => {
   };
 
   const handlePrevious = () => {
+    // 1. Check if not on the first question
     if (currentQuestion > 1) {
+      // 2. Calculate previous question (default: current - 1)
       let prevQuestion = currentQuestion - 1;
       
-      // Skip Question 5 (Destination Style) if destination status is not 'open'
+      // 3. Check if Question 5 should be skipped when going backwards
+      // Skip Question 5 if coming from Question 6 and destination status is not 'open'
       if (currentQuestion === 6 && tripPreferences.destinationApproach?.destinationStatus !== 'open') {
         console.log('Skipping Question 5 (Destination Style) going backwards - destination status is not open');
-        prevQuestion = 4; // Go back to Question 4 (Destination Approach)
+        prevQuestion = 4; 
       }
       
       console.log('Moving to previous question:', prevQuestion);
+      // 4. Navigate to the calculated previous question
       setCurrentQuestion(prevQuestion);
       
       // Scroll to top of page for better UX
@@ -320,74 +419,63 @@ const BigIdeaPage: React.FC = () => {
 
   const handleAnswer = (questionNumber: number, answer: any) => {
     console.log(`Question ${questionNumber} received answer:`, answer);
-    
-    let newPreferences;
-    
-    // Handle different question types
-    if (questionNumber === 4) {
-      // Question 4 is destinationApproach - answer already contains destinationApproach and duration
-      newPreferences = {
-        ...tripPreferences,
-        ...answer  // answer already has the correct structure
+
+    // IMPORTANT: use functional state update so we never merge answers onto stale state.
+    // This fixes Q6->Q7 timing issues where tripVibe can be dropped during fast navigation.
+    setTripPreferences(prev => {
+      const newPreferences = {
+        ...prev,
+        ...answer,
       };
-    } else {
-      // All other questions
-      newPreferences = {
-        ...tripPreferences,
-        ...answer
-      };
-    }
-    
-    console.log('Previous preferences:', tripPreferences);
-    console.log('New preferences:', newPreferences);
-    
-    setTripPreferences(newPreferences);
-    
-    // Save to user-specific storage after each answer
-    const { setUserData } = require('../utils/userDataStorage');
-    const { getCurrentUser, isAuthenticated } = require('../services/apiService');
-    
-    if (isAuthenticated()) {
-      const currentUser = getCurrentUser();
-      if (currentUser && currentUser.id) {
-        setUserData('tripPreferences', newPreferences);
+
+      // Save to user-specific storage after each answer
+      try {
+        const { setUserData } = require('../utils/userDataStorage');
+        const { getCurrentUser, isAuthenticated } = require('../services/apiService');
+        if (isAuthenticated()) {
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            setUserData('tripPreferences', newPreferences);
+          }
+        }
+      } catch (e) {
+        console.warn('BigIdeaPage: failed to persist tripPreferences', e);
       }
-    }
-    
-    // Debug logging
-    console.log(`Question ${questionNumber} answered:`, answer);
-    console.log('Updated preferences:', newPreferences);
-    
-    // Special check for Question 8 completion (was Question 7)
-    if (questionNumber === 8) {
-      console.log('Question 8 completed! Checking if we can proceed...');
-      console.log('Current tripPreferences after Q8:', newPreferences);
-      console.log('isComplete() result:', isComplete());
-    }
+
+      // Debug logging
+      console.log('Previous preferences:', prev);
+      console.log('New preferences:', newPreferences);
+
+      return newPreferences;
+    });
   };
 
+  // Validates survey completion with conditional requirements based on user choices
   const isComplete = (): boolean => {
-    // Base requirements
+    // 1. Check base requirements, always required regardless of user choices
     const baseComplete = !!(
       tripPreferences.groupSize &&
       tripPreferences.duration &&
-      (tripPreferences.budget !== undefined && tripPreferences.budget !== null) && // Allow 0 budget
+      // Validate data types - budget can be 0
+      (tripPreferences.budget !== undefined && tripPreferences.budget !== null) &&
       tripPreferences.destinationApproach &&
       tripPreferences.destinationApproach.travelType &&
       tripPreferences.destinationApproach.destinationStatus &&
       tripPreferences.tripVibe && 
+      // Validate data types - tripVibe must be non-empty string
       (typeof tripPreferences.tripVibe === 'string' && tripPreferences.tripVibe.trim().length > 0) &&
       tripPreferences.planningStyle &&
       tripPreferences.priorities &&
       tripPreferences.priorities.length > 0
     );
     
-    // Conditional requirement: destination style needed if status is 'open' or 'in_mind'
+    // 2. Check conditional requirements, destinationStyle only if status is 'open' or 'in_mind'
     const destinationStyleComplete = (tripPreferences.destinationApproach?.destinationStatus === 'open' || 
                                      tripPreferences.destinationApproach?.destinationStatus === 'in_mind')
       ? !!(tripPreferences.destinationStyle || (tripPreferences.destinationStyles && tripPreferences.destinationStyles.length > 0))
       : true; // Not required if status is 'chosen'
     
+    // 3. Return true only if both base and conditional requirements are met
     const complete = baseComplete && destinationStyleComplete;
     
     console.log('isComplete check:', {
@@ -422,19 +510,18 @@ const BigIdeaPage: React.FC = () => {
   // Function that conditionally renders question components based on state
   // Returns different component based on currentQuestion value
   const renderQuestion = () => {
-    // Common props object shared by all question components
-    // Spread operator (...) passes all props to child component
+    // commonProps object shared by all question components
     const commonProps = {
       onAnswer: handleAnswer, // Parent function updates tripPreferences state
       onNext: handleNext,  // Function to navigate to next question
       onPrevious: handlePrevious,  // Function to navigate to previous question
       currentQuestion,
       totalQuestions,
-      canProceed: true 
+      canProceed: true,
+      tripPreferences: tripPreferences // Pass current tripPreferences state to child components
     };
 
-    // Switch statement selects which component to render
-    // Each case returns a different question component with same props
+    // Component-based architecture: Different components rendered dynamically for each question
     switch (currentQuestion) {
       case 1:
         return <Question1GroupSize {...commonProps} />;
@@ -461,7 +548,7 @@ const BigIdeaPage: React.FC = () => {
     }
   };
 
-  return (
+  return ( 
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -755,9 +842,6 @@ const BigIdeaPage: React.FC = () => {
                         alert('Please complete all questions before generating AI summary.');
                         return;
                       }
-                      
-                      // Mark AI planning guide as completed
-                      localStorage.setItem('ai_planning_guide_completed', 'true');
                       
                       try {
                         console.log('🔄 Generating AI prompt...');

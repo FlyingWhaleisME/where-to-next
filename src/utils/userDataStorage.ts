@@ -14,49 +14,61 @@ export const getUserStorageKey = (baseKey: string, userId: string): string => {
  * Get data for the current logged-in user
  * Returns null if no user is logged in or data doesn't exist
  */
-// Tool 5: JSON key-value structure - Retrieve user-specific data from localStorage
+
+// JSON key-value structure - Retrieve user-specific data from localStorage
+// Converts user data stored as JSON string to JavaScript object using JSON.parse()
 export const getUserData = <T>(baseKey: string): T | null => {
-  // Check authentication before accessing data
   const authenticated = isAuthenticated();
+  // Get current logged-in user
   const user = getCurrentUser();
   
+  // If user is not authenticated or user ID is not found,
+  // return null
   if (!authenticated || !user || !user.id) {
     return null;
   }
   
   // Create user-specific storage key (format: "baseKey_userId")
+  // This ensures each user's data is isolated
   const key = getUserStorageKey(baseKey, user.id);
   
-  // Retrieve JSON string from localStorage (Tool 5: localStorage API)
+  // Retrieve JSON string from localStorage
   const data = localStorage.getItem(key);
   
   if (!data) {
-    return null;
+    return null; // No data found for this user
   }
   
   try {
-    // Tool 5: JSON.parse converts string to object (explained in Tool 5, case A)
+    // Parses JSON string to JavaScript object using JSON.parse()
     const parsed = JSON.parse(data) as T;
     return parsed;
   } catch (e) {
+    // Handle JSON parsing errors
     console.error('Error parsing user data for key', key, e);
     return null;
   }
 };
 
-// Tool 5: JSON key-value structure - Save user-specific data to localStorage
+// JSON key-value structure - Save user-specific data to localStorage
+// Converts JavaScript object to JSON string using JSON.stringify()
 export const setUserData = <T>(baseKey: string, data: T): void => {
   const authenticated = isAuthenticated();
+  // Get current logged-in user
   const user = getCurrentUser();
   
+  // If user is not authenticated or user ID is not found,
+  // throw an error
   if (!authenticated || !user || !user.id) {
     throw new Error('Cannot save data without authentication');
   }
   
-  // Create user-specific storage key
+  // Create user-specific storage key (format: "baseKey_userId")
+  // This ensures each user's data is isolated
   const key = getUserStorageKey(baseKey, user.id);
   
-  // Tool 5: JSON.stringify converts object to string for storage (explained in Tool 5, case A)
+  // Converts JavaScript object to JSON string using JSON.stringify()
+  // This is necessary because localStorage only stores strings
   localStorage.setItem(key, JSON.stringify(data));
 };
 
@@ -69,7 +81,7 @@ export const removeUserData = (baseKey: string): void => {
     return;
   }
   
-  const key = getUserStorageKey(baseKey, user.id);
+  const key = getUserStorageKey(baseKey, user.id);s
   localStorage.removeItem(key);
 };
 
@@ -154,13 +166,12 @@ export const clearAllUserData = (userId: string): void => {
   console.log(`🗑️ [CLEAR DATA] ==========================================`);
 };
 
-/**
- * Migrate old data (without user ID) to new format (with user ID)
- * This is a one-time migration for existing users
- */
+// Migrates old data (without user ID) to new format (with user ID)
+// This is a one-time migration for existing users to ensure backward compatibility
 export const migrateUserData = (userId: string): void => {
   console.log(`🔄 [DEBUG] migrateUserData: Migrating data for user ${userId}`);
   
+  // List of all data keys that need migration from old format to user-specific format
   const oldKeys = [
     'tripPreferences',
     'savedTripPreferences',
@@ -169,16 +180,22 @@ export const migrateUserData = (userId: string): void => {
     'expensePolicySets',
   ];
   
+  // 1. Iterate through each key: check for old data and migrate if found
   oldKeys.forEach(key => {
+    // 2. Check if old-format data exists in localStorage/without user ID suffix
     const oldData = localStorage.getItem(key);
     if (oldData) {
       try {
+        // 3. Validate JSON structure before migration (prevents corrupted data migration)
         const parsed = JSON.parse(oldData);
+        // 4. Generate new user-specific key: "tripPreferences" + "_" + "user123"
         const newKey = getUserStorageKey(key, userId);
+        // 5. Copy data to new key (preserves original data for safety)
         localStorage.setItem(newKey, oldData);
-        // Keep old key for now (will be cleared on logout)
+        // Keep old key temporarily (will be cleared on logout for security)
         console.log(`✅ Migrated ${key} to user-specific storage (${newKey})`);
       } catch (e) {
+        // 7. Handle corrupted data gracefully: log error but continue with other keys
         console.error(`Error migrating ${key}:`, e);
       }
     }

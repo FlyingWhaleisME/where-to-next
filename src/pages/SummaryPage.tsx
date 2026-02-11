@@ -139,7 +139,24 @@ const SummaryPage: React.FC = () => {
         lastModified: new Date().toISOString()
       }));
 
-      // IMPORTANT: Append to existing documents instead of overwriting
+      // Save each document to MongoDB (persistent cloud storage)
+      const savedDocumentIds: string[] = [];
+      
+      for (const doc of destinationDocs) {
+        try {
+          const result = await documentsApi.create(doc);
+          if (result.data) {
+            savedDocumentIds.push(result.data._id || result.data.id);
+            console.log('✅ Document saved to MongoDB:', result.data._id || result.data.id);
+      } else {
+            console.error('Failed to save document to MongoDB:', result.error);
+          }
+        } catch (error) {
+          console.error('Error saving document to MongoDB:', error);
+        }
+      }
+      
+      // Also save to localStorage as cache (for offline access)
       const existingDocs = localStorage.getItem('destinationDocuments');
       let allDocs = destinationDocs;
       
@@ -148,16 +165,13 @@ const SummaryPage: React.FC = () => {
           const parsed = JSON.parse(existingDocs);
           // Add new documents to existing ones
           allDocs = [...parsed, ...destinationDocs];
-        } catch (error) {
+    } catch (error) {
           console.error('Error parsing existing documents:', error);
         }
       }
 
-      // Save to localStorage
       localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
-      
-      // Mark AI planning guide as completed
-      localStorage.setItem('ai_planning_guide_completed', 'true');
+      console.log('Documents saved to localStorage (cache). Saved to MongoDB:', savedDocumentIds.length);
       
       // Navigate to trip tracing
       console.log('🚀 NAVIGATING TO TRIP TRACING from handleDestinationsSubmit');
@@ -251,7 +265,24 @@ const SummaryPage: React.FC = () => {
 
       console.log('Destination documents created:', destinationDocs);
       
-      // IMPORTANT: Append to existing documents instead of overwriting
+      // Save each document to MongoDB (persistent cloud storage)
+      const savedDocumentIds: string[] = [];
+      
+      for (const doc of destinationDocs) {
+        try {
+          const result = await documentsApi.create(doc);
+          if (result.data) {
+            savedDocumentIds.push(result.data._id || result.data.id);
+            console.log('✅ Document saved to MongoDB:', result.data._id || result.data.id);
+          } else {
+            console.error('Failed to save document to MongoDB:', result.error);
+          }
+        } catch (error) {
+          console.error('Error saving document to MongoDB:', error);
+        }
+      }
+      
+      // Also save to localStorage as cache (for offline access)
       const existingDocs = localStorage.getItem('destinationDocuments');
       let allDocs = destinationDocs;
       
@@ -265,16 +296,12 @@ const SummaryPage: React.FC = () => {
         }
       }
       
-      // Save to localStorage
       localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
-      console.log('Documents saved to localStorage');
+      console.log('Documents saved to localStorage (cache). Saved to MongoDB:', savedDocumentIds.length);
       
       // Update local state to show documents immediately
       setDocuments(allDocs);
       console.log('Documents state updated');
-      
-      // Mark AI planning guide as completed
-      localStorage.setItem('ai_planning_guide_completed', 'true');
       
       // Navigate to trip tracing
       console.log('🚀 NAVIGATING TO TRIP TRACING from handleDestinationsSubmit');
@@ -701,7 +728,6 @@ const SummaryPage: React.FC = () => {
                   onClick={() => {
                   console.log('Navigating to Trip Tracing from Summary page');
                   console.log('tripPreferences:', tripPreferences);
-                  console.log('ai_planning_guide_completed:', localStorage.getItem('ai_planning_guide_completed'));
                   try {
                     navigate('/trip-tracing');
                   } catch (error) {
@@ -750,15 +776,14 @@ const SummaryPage: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
+            </div>
+          )}
               
               <div className="space-y-4">
                 <button
                   onClick={() => {
                   console.log('Navigating to Trip Tracing from Summary page');
                   console.log('tripPreferences:', tripPreferences);
-                  console.log('ai_planning_guide_completed:', localStorage.getItem('ai_planning_guide_completed'));
                   try {
                     navigate('/trip-tracing');
                   } catch (error) {
@@ -774,7 +799,7 @@ const SummaryPage: React.FC = () => {
                 </p>
               </div>
             </div>
-          </motion.div>
+        </motion.div>
         )}
 
         {/* Flow 3: Destination Count Selection - Only show for 'open' status */}

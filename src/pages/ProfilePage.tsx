@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { DocumentData } from '../types';
 import promptService from '../services/promptService';
 import AIPromptDisplay from '../components/AIPromptDisplay';
-import { getCurrentUser, isAuthenticated } from '../services/apiService';
+import { getCurrentUser, isAuthenticated, documentsApi } from '../services/apiService';
 import { getUserData, setUserData } from '../utils/userDataStorage';
 
 // Tooltip component
@@ -35,7 +35,6 @@ const ProfilePage: React.FC = () => {
   const location = useLocation();
 
   // Multiple useState hooks manage different pieces of component state
-  // Each hook returns [value, setterFunction] pair
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [tripPreferences, setTripPreferences] = useState<any>(null);
   const [savedTripPreferences, setSavedTripPreferences] = useState<any[]>([]);
@@ -105,7 +104,6 @@ const ProfilePage: React.FC = () => {
   };
 
   // useEffect hook loads data when component mounts
-  // Empty dependency array [] means this runs only once
   useEffect(() => {
     // Check if we should focus on documents section after Trip Tracing
     const urlParams = new URLSearchParams(location.search);
@@ -123,11 +121,13 @@ const ProfilePage: React.FC = () => {
   }, [location]);
 
   // Helper function to load all user data
-  const loadUserData = () => {
-    // Check authentication first
+  const loadUserData = async () => {
+    // Get current logged-in user
     const currentUser = getCurrentUser();
+    // If user is not authenticated or user ID is not found,
+    // return null
     if (!isAuthenticated() || !currentUser) {
-      console.log('🔒 [DEBUG] ProfilePage: User not authenticated, cannot load data');
+      console.log('[DEBUG] ProfilePage: User not authenticated, cannot load data');
       setDocuments([]);
       setTripPreferences(null);
       setSavedTripPreferences([]);
@@ -137,55 +137,176 @@ const ProfilePage: React.FC = () => {
     }
 
     // Log user ID for debugging
-    console.log('📄 [DEBUG] ProfilePage: Loading data for user ID:', currentUser.id);
+    console.log('[DEBUG] ProfilePage: Loading data for user ID:', currentUser.id);
+
+    // Filters documents to show only those owned by current user
+    // 1. Re-verify authentication before loading documents (prevents race conditions)
+    const currentUserCheck = getCurrentUser();
+    if (!isAuthenticated() || !currentUserCheck || currentUserCheck.id !== currentUser.id) {
+      console.log('[DEBUG] ProfilePage: Authentication changed during data load, aborting');
+      setDocuments([]);
+      return;
+    }
 
     try {
-      // Load documents from localStorage
-      const savedDocs = localStorage.getItem('destinationDocuments');
-      if (savedDocs) {
-        const allDocs = JSON.parse(savedDocs) as DocumentData[];
-        // Filter documents to only show those created by current user
-        const userDocs = allDocs.filter((doc: DocumentData) => {
-          // Type assertion to access optional creatorId property
-          const creatorId = (doc as any).creatorId;
-          if (!creatorId) {
-            console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
-            return false; // Don't show documents without creatorId
-          }
-          return creatorId === currentUser.id;
-        });
-        console.log('📄 [DEBUG] ProfilePage: User documents loaded. Total docs:', allDocs.length, 'User docs:', userDocs.length, 'User ID:', currentUser.id);
-        // Update state with filtered documents, triggers re-render
-        setDocuments(userDocs);
+      // 2. Load documents from MongoDB (persistent cloud storage)
+      const result = await documentsApi.getAll();
+      
+      if (result.error) {
+        console.error('[DEBUG] ProfilePage: Error loading documents from MongoDB:', result.error);
+        // Fallback to localStorage if MongoDB fails
+        const savedDocs = localStorage.getItem('destinationDocuments');
+        if (savedDocs) {
+          const allDocs = JSON.parse(savedDocs) as DocumentData[];
+          const userDocs = allDocs.filter((doc: DocumentData) => {
+            const creatorId = (doc as any).creatorId;
+            return creatorId && creatorId === currentUser.id;
+          });
+          setDocuments(userDocs);
+        }
+        return;
       }
+      
+      // 3. Re-verify authentication before filtering (prevents showing data after logout)
+      const verifyUser = getCurrentUser();
+      if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
+        console.log('[DEBUG] ProfilePage: User logged out during document load, aborting');
+        setDocuments([]);
+        return;
+      }
+      
+      // 4. For each document: extract creatorId and verify ownership
+      // MongoDB documents have userId field, convert to creatorId for consistency
+      const allDocs = (result.data || []).map((doc: any) => ({
+        ...doc,
+        id: doc._id || doc.id,
+        creatorId: doc.userId || (doc as any).creatorId
+      })) as DocumentData[];
+      
+      const userDocs = allDocs.filter((doc: DocumentData) => {
+        // Type assertion to access optional creatorId property
+        const creatorId = (doc as any).creatorId || (doc as any).userId;
+        // 5. If creatorId missing: exclude documents without creatorId (prevents unauthorized access)
+        if (!creatorId) {
+          console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
+          return false; // Don't show documents without creatorId
+        }
+        // 6. If creatorId matches current user ID: include document
+        return creatorId === currentUser.id;
+      });
+      
+      // 7. Final verification before setting state (prevents race conditions)
+      const finalUserCheck = getCurrentUser();
+      if (!isAuthenticated() || !finalUserCheck || finalUserCheck.id !== currentUser.id) {
+        console.log('[DEBUG] ProfilePage: User logged out before setting documents, aborting');
+        setDocuments([]);
+        return;
+      }
+      
+      console.log('[DEBUG] ProfilePage: User documents loaded from MongoDB. Total docs:', allDocs.length, 'User docs:', userDocs.length, 'User ID:', currentUser.id);
+      // 8. Update state with filtered documents, triggers re-render
+      setDocuments(userDocs);
+      
+      // Also sync to localStorage as cache
+      localStorage.setItem('destinationDocuments', JSON.stringify(userDocs));
 
-      // Load user-specific data (only if user is authenticated)
-      // CRITICAL: Double-check authentication before loading any data
-      const currentUserCheck = getCurrentUser();
-      if (!currentUserCheck || currentUserCheck.id !== currentUser.id) {
-        console.log('🔒 [DEBUG] ProfilePage: User changed or logged out during data load, aborting');
+      // Load user-specific data (only if user is still authenticated)
+      // Re-verify authentication before loading preferences
+      const prefsUserCheck = getCurrentUser();
+      if (!isAuthenticated() || !prefsUserCheck || prefsUserCheck.id !== currentUser.id) {
+        console.log('[DEBUG] ProfilePage: User logged out before loading preferences, aborting');
         return;
       }
 
       // Use userDataStorage utility to load user-specific preferences
-      const savedPrefs = getUserData('tripPreferences');
+      const savedPrefs = getUserData<any>('tripPreferences');
       if (savedPrefs) {
-        setTripPreferences(savedPrefs);
+        // Final check before setting preferences state
+        const finalCheck = getCurrentUser();
+        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) {
+          console.log('[DEBUG] ProfilePage: User logged out before setting preferences, aborting');
+          return;
+        }
+        
+        // Only show trip preferences if the survey is complete
+        // This prevents displaying incomplete/in-progress survey results
+        const prefsComplete = !!(
+          savedPrefs.groupSize &&
+          savedPrefs.duration &&
+          (savedPrefs.budget !== undefined && savedPrefs.budget !== null) &&
+          savedPrefs.destinationApproach &&
+          savedPrefs.destinationApproach.travelType &&
+          savedPrefs.destinationApproach.destinationStatus &&
+          savedPrefs.tripVibe &&
+          (typeof savedPrefs.tripVibe === 'string' && savedPrefs.tripVibe.trim().length > 0) &&
+          savedPrefs.planningStyle &&
+          savedPrefs.priorities &&
+          savedPrefs.priorities.length > 0 &&
+          ((savedPrefs.destinationApproach.destinationStatus === 'open' || 
+            savedPrefs.destinationApproach.destinationStatus === 'in_mind')
+            ? !!(savedPrefs.destinationStyle || (savedPrefs.destinationStyles && savedPrefs.destinationStyles.length > 0))
+            : true)
+        );
+        
+        if (prefsComplete) {
+          setTripPreferences(savedPrefs);
+        } else {
+          console.log('[DEBUG] ProfilePage: Trip preferences incomplete, not displaying');
+          setTripPreferences(null);
+        }
       }
 
+      // Load flight strategies
       const savedStrategies = getUserData<any[]>('flightStrategies');
       if (savedStrategies && Array.isArray(savedStrategies)) {
+        const finalCheck = getCurrentUser();
+        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) return;
         setFlightStrategies(savedStrategies);
       }
 
+      // Load expense policy sets
       const savedPolicySets = getUserData<any[]>('expensePolicySets');
       if (savedPolicySets && Array.isArray(savedPolicySets)) {
+        const finalCheck = getCurrentUser();
+        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) return;
         setExpensePolicySets(savedPolicySets);
       }
 
+      // Load saved trip preferences - only show complete surveys
       const savedTripPrefs = getUserData<any[]>('savedTripPreferences');
       if (savedTripPrefs && Array.isArray(savedTripPrefs)) {
-        setSavedTripPreferences(savedTripPrefs);
+        const finalCheck = getCurrentUser();
+        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) return;
+        
+        // Filter to only show complete surveys
+        const completeSurveys = savedTripPrefs.filter((prefSet: any) => {
+          const prefs = prefSet.preferences;
+          if (!prefs) return false;
+          
+          // Check if Big Idea survey is complete
+          const isBigIdeaComplete = !!(
+            prefs.groupSize &&
+            prefs.duration &&
+            (prefs.budget !== undefined && prefs.budget !== null) &&
+            prefs.destinationApproach &&
+            prefs.destinationApproach.travelType &&
+            prefs.destinationApproach.destinationStatus &&
+            prefs.tripVibe &&
+            (typeof prefs.tripVibe === 'string' && prefs.tripVibe.trim().length > 0) &&
+            prefs.planningStyle &&
+            prefs.priorities &&
+            prefs.priorities.length > 0 &&
+            // Check destination style completion
+            ((prefs.destinationApproach.destinationStatus === 'open' || 
+              prefs.destinationApproach.destinationStatus === 'in_mind')
+              ? !!(prefs.destinationStyle || (prefs.destinationStyles && prefs.destinationStyles.length > 0))
+              : true)
+          );
+          
+          return isBigIdeaComplete;
+        });
+        
+        setSavedTripPreferences(completeSurveys);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -238,9 +359,10 @@ const ProfilePage: React.FC = () => {
       }
     };
 
-    // Listen for user logout to clear all data and redirect
+    // Listen for user logout to clear all data and redirect immediately
     const handleUserLogout = () => {
       console.log('🔒 [DEBUG] ProfilePage: User logged out, clearing all data and redirecting');
+      // Clear all state immediately
       setDocuments([]);
       setTripPreferences(null);
       setSavedTripPreferences([]);
@@ -248,11 +370,24 @@ const ProfilePage: React.FC = () => {
       setExpensePolicySets([]);
       setShowAIPrompt(false);
       setAiPrompt(null);
-      // Force redirect
-      navigate('/', { replace: true });
+      // Force immediate redirect (full page reload ensures clean state)
+      window.location.href = '/';
     };
 
-    // Periodic auth check every 1 second
+    // Listen for storage changes (detects logout from other tabs/windows)
+    const handleStorageChange = (e: StorageEvent) => {
+      // If token or user is removed, user logged out
+      if (e.key === 'token' && !e.newValue) {
+        console.log('🔒 [PROFILE PAGE] Token removed from localStorage (logout detected), redirecting');
+        handleUserLogout();
+      }
+      if (e.key === 'user' && !e.newValue) {
+        console.log('🔒 [PROFILE PAGE] User removed from localStorage (logout detected), redirecting');
+        handleUserLogout();
+      }
+    };
+
+    // Periodic auth check every 1 second (catches logout in same tab)
     const authCheckInterval = setInterval(() => {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
@@ -271,7 +406,8 @@ const ProfilePage: React.FC = () => {
       
       if (!authenticated || !user) {
         console.log('❌ [PROFILE PAGE] Periodic check - user logged out, redirecting');
-        navigate('/', { replace: true });
+        handleUserLogout();
+        return;
       } else {
         // Verify user ID matches (in case of user switch)
         if (user.id !== initialUserId) {
@@ -280,7 +416,8 @@ const ProfilePage: React.FC = () => {
             current: user.id,
             redirecting: true
           });
-          navigate('/', { replace: true });
+          handleUserLogout();
+          return;
         } else {
           console.log('✅ [PROFILE PAGE] Periodic check - user still authenticated:', user.id);
         }
@@ -289,12 +426,14 @@ const ProfilePage: React.FC = () => {
 
     window.addEventListener('userLogin', handleUserLogin);
     window.addEventListener('userLogout', handleUserLogout);
+    window.addEventListener('storage', handleStorageChange);
 
     // Cleanup
     return () => {
       clearInterval(authCheckInterval);
       window.removeEventListener('userLogin', handleUserLogin);
       window.removeEventListener('userLogout', handleUserLogout);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [navigate]);
 
@@ -316,7 +455,7 @@ const ProfilePage: React.FC = () => {
   };
 
   // Function updates state when document is deleted
-  const handleDeleteDocument = (documentId: string) => {
+  const handleDeleteDocument = async (documentId: string) => {
     if (!isAuthenticated() || !getCurrentUser()) {
       alert('Please log in to delete documents');
       navigate('/');
@@ -332,12 +471,27 @@ const ProfilePage: React.FC = () => {
     }
 
     if (window.confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+      // Delete from MongoDB (persistent cloud storage)
+      if (documentId && !documentId.startsWith('doc_')) {
+        try {
+          const result = await documentsApi.delete(documentId);
+          if (result.error) {
+            console.error('Failed to delete document from MongoDB:', result.error);
+            alert('Failed to delete document from cloud storage. Deleted locally only.');
+          } else {
+            console.log('✅ Document deleted from MongoDB:', documentId);
+          }
+        } catch (error) {
+          console.error('Error deleting document from MongoDB:', error);
+        }
+      }
+      
       const updatedDocs = documents.filter(doc => doc.id !== documentId);
       // Update state: filter removes document from array
-    // Component re-renders automatically with updated list
+      // Component re-renders automatically with updated list
       setDocuments(updatedDocs);
       
-      // Also update localStorage
+      // Also update localStorage cache
       const allDocs = JSON.parse(localStorage.getItem('destinationDocuments') || '[]') as DocumentData[];
       const updatedAllDocs = allDocs.filter((doc: DocumentData) => doc.id !== documentId);
       localStorage.setItem('destinationDocuments', JSON.stringify(updatedAllDocs));
@@ -564,12 +718,12 @@ const ProfilePage: React.FC = () => {
                   </button>
                 </Tooltip>
                 <Tooltip text="Get AI Prompt">
-                  <button
+            <button
                     onClick={() => generateAIPrompt(tripPreferences)}
                     className="text-purple-500 hover:text-purple-700 transition-colors text-xl"
-                  >
+            >
                     💬
-                  </button>
+            </button>
                 </Tooltip>
               </div>
             </div>
@@ -757,7 +911,7 @@ const ProfilePage: React.FC = () => {
                   </p>
                 </div>
               </div>
-            </div>
+          </div>
             
           </motion.div>
         ) : (

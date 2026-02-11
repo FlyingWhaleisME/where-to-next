@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface Question7ActivitiesProps {
@@ -8,6 +8,7 @@ interface Question7ActivitiesProps {
   currentQuestion: number;
   totalQuestions: number;
   canProceed: boolean;
+  tripPreferences?: any;
 }
 
 const Question7Activities: React.FC<Question7ActivitiesProps> = ({
@@ -16,63 +17,205 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
   onPrevious,
   currentQuestion,
   totalQuestions,
-  canProceed
+  canProceed,
+  tripPreferences: tripPreferencesProp
 }) => {
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [vibeActivities, setVibeActivities] = useState<{[key: string]: string[]}>({});
 
-  // Load previous answers on component mount
-  useEffect(() => {
-    const savedPreferences = localStorage.getItem('tripPreferences');
-    if (savedPreferences) {
-      try {
-        const preferences = JSON.parse(savedPreferences);
-        if (preferences.tripVibe) {
-          // Parse the comma-separated tripVibe string back to array
-          // Only include valid vibe values (max 3 as per Question 6)
-          const validVibes = ['relaxation', 'entertainment', 'educational', 'adventure', 'culinary', 'cultural', 'nature', 'shopping', 'photography', 'wellness', 'shared'];
-          const vibes = preferences.tripVibe.split(',').map((v: string) => v.trim()).filter((v: string) => validVibes.includes(v));
-          // Ensure we only show up to 3 vibes (as per Question 6 limit)
-          setSelectedVibes(vibes.slice(0, 3));
-        }
-        // Load saved activities if they exist
-        if (preferences.vibeActivities) {
-          setVibeActivities(preferences.vibeActivities);
-        }
-      } catch (error) {
-        console.error('Error parsing saved preferences:', error);
-      }
-    }
-  }, []);
+  // DEBUG: Log on every render to confirm component is mounting
+  console.log('🎯🎯🎯 Q7 RENDER: selectedVibes.length =', selectedVibes.length, 'currentQuestion =', currentQuestion, '🎯🎯🎯');
 
-  // Update answer whenever vibeActivities change
+  // Load vibes when this question becomes active AND whenever tripVibe changes.
+  // Critical: React state updates are async, so we need to check both prop AND localStorage
+  // to handle the race condition where Q7 mounts before parent state updates.
   useEffect(() => {
-    const answer = {
-      vibeActivities: vibeActivities
+    // Only run when we're actually on question 7
+    if (currentQuestion !== 7) {
+      return;
+    }
+
+    const loadVibes = () => {
+      console.log('🔵🔵🔵 Q7 LOAD VIBES START 🔵🔵🔵');
+      console.log('Question7 useEffect running. currentQuestion:', currentQuestion);
+      console.log('Question7: tripPreferencesProp:', tripPreferencesProp);
+      console.log('Question7: tripPreferencesProp?.tripVibe:', tripPreferencesProp?.tripVibe);
+      console.log('Question7: selectedVibes.length (before load) =', selectedVibes.length);
+
+      // Get preferences - check prop first, then localStorage as fallback
+      let preferences = tripPreferencesProp;
+      let tripVibe = preferences?.tripVibe;
+      
+      // If prop doesn't have tripVibe yet (race condition), check localStorage
+      if (!tripVibe) {
+        console.log('Question7: tripVibe not in prop, checking localStorage...');
+        const { getUserData } = require('../../utils/userDataStorage');
+        const savedPrefs = getUserData('tripPreferences');
+        if (savedPrefs?.tripVibe) {
+          tripVibe = savedPrefs.tripVibe;
+          preferences = savedPrefs;
+          console.log('Question7: Found tripVibe in localStorage:', tripVibe);
+        }
+      }
+
+      console.log('Question7: Final tripVibe value:', tripVibe);
+
+      // Parse vibes from the comma-separated string (or array)
+      if (tripVibe) {
+        const validVibeOptions = ['relaxation', 'entertainment', 'educational', 'cultural', 'shared', 'culinary'];
+
+        // Support legacy stored formats:
+        // - Values: "relaxation, entertainment"
+        // - Labels: "Relaxation, Entertainment"
+        // - Emoji labels: "😌 Relaxation, 🎭 Entertainment"
+        const normalizeVibeToken = (raw: string): string | null => {
+          const token = (raw ?? '').toString().trim();
+          if (!token) return null;
+
+          // Remove leading emoji/symbols and normalize whitespace/case
+          const cleaned = token
+            .replace(/^[^\w\s]+/, '') // drop leading non-letter/number (emoji etc)
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const lower = cleaned.toLowerCase();
+
+          // Already a valid internal value?
+          if (validVibeOptions.includes(lower)) return lower;
+
+          // Legacy label -> value mapping
+          const labelMap: Record<string, string> = {
+            'relaxation': 'relaxation',
+            'entertainment': 'entertainment',
+            'educational discovery': 'educational',
+            'educational': 'educational',
+            'cultural immersion': 'cultural',
+            'cultural': 'cultural',
+            'shared escape': 'shared',
+            'shared': 'shared',
+            'culinary adventure': 'culinary',
+            'culinary': 'culinary',
+          };
+
+          // Try exact label map
+          if (labelMap[lower]) return labelMap[lower];
+
+          // Try stripping any trailing words (e.g., "Relaxation Activities")
+          const firstWord = lower.split(' ')[0];
+          if (labelMap[firstWord]) return labelMap[firstWord];
+
+          return null;
+        };
+
+        const rawTokens: string[] =
+          typeof tripVibe === 'string'
+            ? tripVibe.split(',').map((v: string) => v.trim())
+            : Array.isArray(tripVibe)
+              ? tripVibe.map((v: any) => String(v).trim())
+              : [];
+
+        const vibes = rawTokens
+          .map(normalizeVibeToken)
+          .filter((v): v is string => !!v && validVibeOptions.includes(v));
+
+        const parsedVibes = vibes.slice(0, 3);
+        console.log('Question7: Parsed vibes:', parsedVibes, 'from tripVibe:', tripVibe);
+        if (parsedVibes.length > 0) {
+          console.log('🟢🟢🟢 Q7 SUCCESS: selectedVibes.length (parsed) =', parsedVibes.length, 'values =', parsedVibes, '🟢🟢🟢');
+          setSelectedVibes(parsedVibes);
+          console.log('🔵🔵🔵 Q7 LOAD VIBES END (SUCCESS) 🔵🔵🔵');
+          return true; // Successfully loaded
+        } else {
+          console.error('🔴🔴🔴 Q7 FAILED: Parsed vibes array is empty! 🔴🔴🔴');
+          console.log('Question7: selectedVibes.length (parsed) = 0');
+          console.log('🔵🔵🔵 Q7 LOAD VIBES END (FAILED - NO VIBES) 🔵🔵🔵');
+          setSelectedVibes([]);
+          return false;
+        }
+      } else {
+        console.error('🔴🔴🔴 Q7 FAILED: No tripVibe found in prop or localStorage. 🔴🔴🔴');
+        console.log('🔵🔵🔵 Q7 LOAD VIBES END (FAILED - NO TRIPVIBE) 🔵🔵🔵');
+        return false;
+      }
     };
-    console.log('Question7 sending answer:', answer);
-    onAnswer(7, answer);
-  }, [vibeActivities, onAnswer]);
+
+    // Try loading immediately
+    const loaded = loadVibes();
+    
+    // If not loaded and we're on Q7, retry after a short delay (handles race condition)
+    if (!loaded && currentQuestion === 7) {
+      console.log('Question7: Retrying load after 100ms delay...');
+      const retryTimer = setTimeout(() => {
+        loadVibes();
+      }, 100);
+      return () => clearTimeout(retryTimer);
+    }
+  }, [currentQuestion, tripPreferencesProp?.tripVibe]); // Re-run when tripVibe arrives/changes
+
+  // Ensure vibeActivities always has at least one textbox per selected vibe,
+  // and (if available) hydrate from previously saved vibeActivities.
+  useEffect(() => {
+    if (selectedVibes.length === 0) return;
+    console.log('Question7: selectedVibes.length (init activities) =', selectedVibes.length, 'values =', selectedVibes);
+
+    // Prefer prop-provided activities (already in parent state), otherwise fallback to persisted
+    let persistedActivities: any = null;
+    try {
+      const { getUserData } = require('../../utils/userDataStorage');
+      const persisted = getUserData('tripPreferences');
+      persistedActivities = persisted?.vibeActivities ?? null;
+    } catch {
+      persistedActivities = null;
+    }
+
+    setVibeActivities(prev => {
+      const base =
+        (prev && Object.keys(prev).length > 0) ? prev :
+        (tripPreferencesProp?.vibeActivities && typeof tripPreferencesProp.vibeActivities === 'object' ? tripPreferencesProp.vibeActivities : null) ??
+        (persistedActivities && typeof persistedActivities === 'object' ? persistedActivities : {}) ??
+        {};
+
+      const next: {[key: string]: string[]} = {};
+      selectedVibes.forEach(vibe => {
+        const existing = (base as any)[vibe];
+        next[vibe] = Array.isArray(existing) && existing.length > 0 ? existing : [''];
+      });
+      console.log('Question7: vibeActivities keys after init =', Object.keys(next));
+      return next;
+    });
+  }, [selectedVibes, tripPreferencesProp?.vibeActivities]);
+
+  // Save activities to parent state (tripPreferences)
+  const saveToParent = (activities: {[key: string]: string[]}) => {
+    onAnswer(7, { vibeActivities: activities });
+  };
 
   const addActivity = (vibe: string) => {
-    setVibeActivities(prev => ({
-      ...prev,
-      [vibe]: [...(prev[vibe] || []), '']
-    }));
+    const updated = {
+      ...vibeActivities,
+      [vibe]: [...(vibeActivities[vibe] || []), '']
+    };
+    setVibeActivities(updated);
+    saveToParent(updated);
   };
 
   const removeActivity = (vibe: string, index: number) => {
-    setVibeActivities(prev => ({
-      ...prev,
-      [vibe]: prev[vibe]?.filter((_, i) => i !== index) || []
-    }));
+    const current = vibeActivities[vibe] || [''];
+    const filtered = current.filter((_, i) => i !== index);
+    // Always keep at least one textbox visible
+    const nextArr = filtered.length > 0 ? filtered : [''];
+    const updated = { ...vibeActivities, [vibe]: nextArr };
+    setVibeActivities(updated);
+    saveToParent(updated);
   };
 
   const updateActivity = (vibe: string, index: number, value: string) => {
-    setVibeActivities(prev => ({
-      ...prev,
-      [vibe]: prev[vibe]?.map((activity, i) => i === index ? value : activity) || []
-    }));
+    const updated = {
+      ...vibeActivities,
+      [vibe]: vibeActivities[vibe]?.map((activity, i) => i === index ? value : activity) || []
+    };
+    setVibeActivities(updated);
+    saveToParent(updated);
   };
 
   const getVibeLabel = (vibe: string) => {
@@ -80,13 +223,9 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
       'relaxation': 'Relaxation',
       'entertainment': 'Entertainment',
       'educational': 'Educational Discovery',
-      'adventure': 'Adventure',
-      'culinary': 'Culinary',
-      'cultural': 'Cultural',
-      'nature': 'Nature',
-      'shopping': 'Shopping',
-      'photography': 'Photography',
-      'wellness': 'Wellness'
+      'cultural': 'Cultural Immersion',
+      'shared': 'Shared Escape',
+      'culinary': 'Culinary Adventure'
     };
     return vibeMap[vibe] || vibe;
   };
@@ -96,13 +235,9 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
       'relaxation': '😌',
       'entertainment': '🎭',
       'educational': '📚',
-      'adventure': '🏔️',
-      'culinary': '🍽️',
-      'cultural': '🏛️',
-      'nature': '🌿',
-      'shopping': '🛍️',
-      'photography': '📸',
-      'wellness': '🧘'
+      'cultural': '🏺',
+      'shared': '💘',
+      'culinary': '🍽️'
     };
     return emojiMap[vibe] || '🎯';
   };
@@ -112,18 +247,18 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
       'relaxation': 'e.g., Visit local hot springs and spa treatments (relaxing and authentic)',
       'entertainment': 'e.g., Attend a live music performance at a local venue (energetic and memorable)',
       'educational': 'e.g., Explore historical museums and landmarks (learn about local culture)',
-      'adventure': 'e.g., Go hiking in mountain trails (challenging and scenic)',
-      'culinary': 'e.g., Take a cooking class with local chefs (authentic food experience)',
       'cultural': 'e.g., Participate in a traditional festival (immerse in local customs)',
-      'nature': 'e.g., Visit national parks and wildlife reserves (connect with nature)',
-      'shopping': 'e.g., Explore local markets and artisan shops (find unique souvenirs)',
-      'photography': 'e.g., Capture sunrise at iconic viewpoints (scenic photo opportunities)',
-      'wellness': 'e.g., Join a yoga retreat or meditation session (mindful relaxation)'
+      'shared': 'e.g., Take a scenic boat ride together at sunset (romantic and memorable)',
+      'culinary': 'e.g., Take a cooking class with local chefs (authentic food experience)'
     };
     return placeholderMap[vibe] || 'e.g., Describe your activity idea';
   };
 
   const canProceedToNext = () => {
+    // First check if vibes are selected
+    if (selectedVibes.length === 0) {
+      return false;
+    }
     // Check if at least one activity is provided for each selected vibe
     return selectedVibes.every(vibe => 
       vibeActivities[vibe] && 
@@ -132,13 +267,32 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
     );
   };
 
+  const handleNext = () => {
+    if (selectedVibes.length === 0) {
+      return;
+    }
+    if (!canProceedToNext()) {
+      return;
+    }
+    // Save activities before navigating
+    saveToParent(vibeActivities);
+    onNext();
+  };
+
+  const handlePreviousClick = () => {
+    // Save current activities before navigating back
+    if (selectedVibes.length > 0 && Object.keys(vibeActivities).length > 0) {
+      saveToParent(vibeActivities);
+    }
+    onPrevious();
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full mx-auto"
-      >
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-3xl shadow-xl p-8"
+    >
         {/* Header */}
         <div className="text-center mb-8">
           <motion.div
@@ -149,28 +303,9 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
           >
             🎯
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            What activities do you have in mind?
-          </h1>
           <p className="text-gray-600 text-lg">
             Tell us about the specific activities you're excited about for each trip vibe you selected.
           </p>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Question {currentQuestion} of {totalQuestions}</span>
-            <span>{Math.round((currentQuestion / totalQuestions) * 100)}% Complete</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
-              transition={{ duration: 0.5 }}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
-            />
-          </div>
         </div>
 
         {/* Activities for each selected vibe */}
@@ -204,7 +339,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
                 </p>
 
                 <div className="space-y-3">
-                  {(vibeActivities[vibe] || []).map((activity, activityIndex) => (
+                  {(vibeActivities[vibe] || ['']).map((activity, activityIndex) => (
                     <div key={activityIndex} className="flex items-center space-x-3">
                       <div className="flex-1">
                         <input
@@ -240,26 +375,29 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
         {/* Navigation */}
         <div className="flex justify-between mt-8">
           <button
-            onClick={onPrevious}
+            onClick={handlePreviousClick}
             className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
           >
             ← Previous
           </button>
           
           <button
-            onClick={onNext}
-            disabled={!canProceedToNext()}
+            onClick={handleNext}
+            disabled={!canProceedToNext() || selectedVibes.length === 0}
             className={`px-6 py-3 rounded-xl font-medium transition-colors ${
-              canProceedToNext()
+              canProceedToNext() && selectedVibes.length > 0
                 ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {canProceedToNext() ? 'Next →' : 'Please add activities for each vibe'}
+            {selectedVibes.length === 0 
+              ? 'Please go back and select trip vibes' 
+              : canProceedToNext() 
+                ? 'Next →' 
+                : 'Please add activities for each vibe'}
           </button>
         </div>
-      </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

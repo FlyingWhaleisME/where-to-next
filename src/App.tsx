@@ -1,10 +1,14 @@
-// Tool 2: Third-party libraries - React Router for client-side navigation
+// Importing React and its hooks for state management and routing
 import React, { useState, useEffect } from 'react';
+// Importing React Router for client-side navigation
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+// Importing Framer Motion for animations
 import { AnimatePresence } from 'framer-motion';
+// Importing React components made
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+// Importing React pages made
 import HomePage from './pages/HomePage';
 import BigIdeaPage from './pages/BigIdeaPage';
 import SummaryPage from './pages/SummaryPage';
@@ -12,23 +16,25 @@ import ProfilePage from './pages/ProfilePage';
 import TripTracingPage from './pages/TripTracingPage';
 import FinalizedDocumentPage from './pages/FinalizedDocumentPage';
 import DocumentEditingPage from './pages/DocumentEditingPage';
+// Importing React collaboration components made
 import { DraggableCollaborationPanel } from './components/collaboration';
+// Importing API service for authentication and user data
 import { getCurrentUser } from './services/apiService';
 
 // Custom component using React Router's useLocation hook (Tool 4: React hooks)
 function RouteChangeHandler({ onRouteChange }: { onRouteChange: (pathname: string) => void }) {
   const location = useLocation();  // React Router hook to get current route
   
-  useEffect(() => {  // Tool 4: useEffect hook (explained in Tool 4, case B)
+  useEffect(() => {  // React useEffect hook to handle route changes
     onRouteChange(location.pathname);
   }, [location.pathname, onRouteChange]);
   
   return null;
 }
 
-// Tool 4: React Framework - Main App component with routing
+// React Framework - Main App component with routing
 function App() {
-  // Tool 4: useState hooks for component state management (explained in Tool 4, case B)
+  // React useState hooks for component state management
   const [showGlobalChatbox, setShowGlobalChatbox] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -162,12 +168,19 @@ function App() {
               }
             };
 
+            //Event listeners
+            //Custom event fired to clear user state when logout occurs
             window.addEventListener('storage', handleStorageChange);
+            //Custom event fired to open chatbox when chatbox button is clicked
             window.addEventListener('showChatbox', handleShowChatbox);
+            //Custom event fired to clear user state and redirect to home page
             window.addEventListener('userLogout', handleUserLogout);
+            //Custom event fired to update user state when user logs in
             window.addEventListener('userLogin', handleUserLogin as EventListener);
+            //Custom event fired to clear room state when room is deleted
             window.addEventListener('roomDeleted', handleRoomDeleted as EventListener);
 
+            //Remove event listeners above when component unmounts (to prevent memory leaks)
             return () => {
               window.removeEventListener('storage', handleStorageChange);
               window.removeEventListener('showChatbox', handleShowChatbox);
@@ -177,7 +190,8 @@ function App() {
             };
   }, []);
 
-  // Tool 4: React Router setup - BrowserRouter enables client-side routing
+  // React Router setup - BrowserRouter enables client-side routing
+  // BrowserRouter is a React Router component that enables client-side routing
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
@@ -186,10 +200,11 @@ function App() {
         <main className="flex-1">
           <AnimatePresence mode="wait">
             <Routes>
-              {/* Route maps URL path to React component (Tool 4: React Router) */}
+              {/* Route maps URL path to React component */}
               <Route path="/" element={<HomePage />} />
               
               {/* Protected routes require authentication before rendering */}
+              {/* Component-based architecture: ProtectedRoute wraps ProfilePage */}
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <ProfilePage />
@@ -231,7 +246,7 @@ function App() {
         </main>
         <Footer />
         
-        {/* Tool 4: Conditional rendering - only render if roomId exists */}
+        {/*Conditional rendering - only render DraggableCollaborationPanel if roomId exists */}
         {roomId && (
           <DraggableCollaborationPanel
             tripId={roomId}

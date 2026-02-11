@@ -220,19 +220,6 @@ export const tripTracingApi = {
   }
 };
 
-// AI API calls
-export const aiApi = {
-  generateSummary: async (tripPreferences: any, tripTracingState?: any): Promise<ApiResponse<any>> => {
-    const response = await fetch(`${API_BASE_URL}/ai/generate-summary`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ tripPreferences, tripTracingState })
-    });
-    
-    return handleResponse<any>(response);
-  }
-};
-
 // User API calls
 export const userApi = {
   getProfile: async (): Promise<ApiResponse<User>> => {
