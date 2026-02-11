@@ -144,7 +144,7 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
     >
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          💰 Expense Sharing
+          Expense Sharing
         </h2>
         <p className="text-lg text-gray-600">
           How do you prefer to handle expenses when traveling with others?
@@ -194,7 +194,7 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
                       loadSavedPolicySet(e.target.value);
                     }
                   }}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   <option value="">Select a saved policy set...</option>
                   {savedPolicySets.map((policySet) => (
@@ -216,7 +216,7 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
                 value={policySetName}
                 onChange={(e) => setPolicySetName(e.target.value)}
                 placeholder="e.g., 'Family Trip Rules', 'Friends Weekend Policies'"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
@@ -233,7 +233,7 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
                       value={policy}
                       onChange={(e) => updatePolicy(index, e.target.value)}
                       placeholder={`Policy ${index + 1}: e.g., "Whoever suggests the restaurant pays", "Split accommodation 50/50"`}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     />
                     {customPolicies.length > 1 && (
                       <button
@@ -249,7 +249,7 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
                 <button
                   type="button"
                   onClick={addPolicy}
-                  className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
                 >
                   + Add another policy
                 </button>
@@ -267,18 +267,18 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                💾 Save Policy Set
+                Save Policy Set
               </button>
             </div>
 
             {/* Policy Summary */}
             {customPolicies.some(policy => policy.trim()) && (
-              <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6">
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">✅ Your Current Policies:</h4>
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6">
+                <h4 className="text-lg font-semibold text-gray-800 mb-3">Your Current Policies:</h4>
                 <ul className="space-y-2">
                   {customPolicies.filter(policy => policy.trim()).map((policy, index) => (
                     <li key={index} className="text-gray-700 flex items-start">
-                      <span className="text-blue-500 mr-2 font-bold">{index + 1}.</span>
+                      <span className="text-emerald-500 mr-2 font-bold">{index + 1}.</span>
                       {policy}
                     </li>
                   ))}
@@ -308,7 +308,7 @@ const ExpensesSection: React.FC<ExpensesSectionProps> = ({
           disabled={!canProceedToNext()}
           className={`btn-primary text-lg px-8 py-4 ${
             canProceedToNext()
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+              ? 'bg-gradient-to-r from-emerald-600 to-rose-500 hover:from-emerald-700 hover:to-rose-600'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >

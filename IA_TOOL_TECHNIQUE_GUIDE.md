@@ -48,245 +48,6 @@ MongoDB Atlas (cloud database) stores all persistent data. Mongoose (Object Docu
 
 ### **ALL CODE LOCATIONS:**
 
-#### **A. Database Connection Setup**
-**File:** `backend/server.js`
-**Lines:** 34-50
-
-```javascript
-const connectDB = async () => {
-  try {
-    // Get MongoDB connection string from environment variables or use local default
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/where-to-next';
-    
-    // Connect to MongoDB using Mongoose
-    // await pauses execution until connection is established
-    await mongoose.connect(mongoURI);
-    
-    console.log('✅ Connected to MongoDB successfully!');
-    return true;
-  } catch (error) {
-    // Handle connection errors gracefully
-    console.error('❌ MongoDB connection failed:', error.message);
-    return false;
-  }
-};
-
-// Call function to establish database connection when server starts
-connectDB();
-```
-
-**What this does:**
-- Establishes connection to MongoDB database when server starts
-- Uses environment variable for cloud database (MongoDB Atlas) or falls back to local
-- Handles connection errors without crashing the server
-
----
-
-#### **B. Document Schema Definition**
-**File:** `backend/models/Document.js`
-**Lines:** 69-110
-
-```javascript
-// Define the structure of documents stored in MongoDB
-const documentSchema = new mongoose.Schema({
-  // Link document to user who created it
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,  // MongoDB ObjectId type
-    ref: 'User',                            // Reference to User collection
-    required: true                          // Must have a userId
-  },
-  
-  // Destination name (e.g., "Tokyo", "Paris")
-  destinationName: {
-    type: String,
-    required: true,                         // Must have a destination name
-    trim: true                             // Remove whitespace
-  },
-  
-  // Survey data stored as flexible JSON-like object
-  bigIdeaSurveyData: {
-    type: mongoose.Schema.Types.Mixed      // Can store any JSON structure
-  },
-  
-  tripTracingSurveyData: {
-    type: mongoose.Schema.Types.Mixed      // Flexible nested data
-  },
-  
-  // Nested schema for calendar planner
-  calendarPlanner: calendarPlannerSchema,  // Uses sub-schema defined above
-  
-  // Timestamps automatically managed by Mongoose
-  createdAt: {
-    type: Date,
-    default: Date.now                       // Set to current time when created
-  },
-  lastModified: {
-    type: Date,
-    default: Date.now                       // Updated on each save
-  }
-});
-
-// Middleware: automatically update lastModified before saving
-documentSchema.pre('save', function(next) {
-  this.lastModified = new Date();          // Update timestamp
-  next();                                  // Continue with save operation
-});
-
-// Export model so it can be used in other files
-module.exports = mongoose.model('Document', documentSchema);
-```
-
-**What this does:**
-- Defines the structure of trip documents in the database
-- Ensures data consistency (required fields, data types)
-- Automatically tracks creation and modification times
-- Allows nested data structures (surveys, calendar planners)
-
----
-
-#### **C. Creating and Saving Documents**
-**File:** `backend/server.js`
-**Lines:** 295-306
-
-```javascript
-// POST endpoint: Create a new trip document
-app.post('/api/documents', authenticateToken, async (req, res) => {
-  try {
-    // Create new Document instance with data from request body
-    // Spread operator (...) copies all properties from req.body
-    // Add userId from authenticated user token
-    const document = new Document({
-      ...req.body,                        // All document data from frontend
-      userId: req.user.userId            // User ID from JWT token
-    });
-    
-    // Save document to MongoDB database
-    // await pauses until save operation completes
-    await document.save();
-    
-    // Return success response with created document
-    res.status(201).json(document);
-  } catch (error) {
-    // Handle any errors during save operation
-    res.status(400).json({ error: error.message });
-  }
-});
-```
-
-**What this does:**
-- Creates new trip document when user saves a trip
-- Links document to authenticated user
-- Saves to MongoDB database
-- Returns saved document to frontend
-
----
-
-#### **D. Retrieving Documents**
-**File:** `backend/server.js`
-**Lines:** 280-293
-
-```javascript
-// GET endpoint: Retrieve a specific document by ID
-app.get('/api/documents/:id', authenticateToken, async (req, res) => {
-  try {
-    // Find document in database
-    // Must match both document ID and user ID (security)
-    const document = await Document.findOne({ 
-      _id: req.params.id,                 // Document ID from URL
-      userId: req.user.userId            // User ID from token
-    });
-    
-    // Check if document exists
-    if (!document) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-    
-    // Return document data as JSON
-    res.json(document);
-  } catch (error) {
-    // Handle database errors
-    res.status(500).json({ error: error.message });
-  }
-});
-```
-
-**What this does:**
-- Retrieves a specific trip document from database
-- Ensures user can only access their own documents
-- Returns document data to frontend
-
----
-
-#### **E. Updating Documents**
-**File:** `backend/server.js`
-**Lines:** 308-322
-
-```javascript
-// PUT endpoint: Update existing document
-app.put('/api/documents/:id', authenticateToken, async (req, res) => {
-  try {
-    // Find and update document in one operation
-    const document = await Document.findOneAndUpdate(
-      { 
-        _id: req.params.id,               // Document ID to find
-        userId: req.user.userId          // Ensure user owns document
-      },
-      req.body,                           // New data to update
-      { 
-        new: true,                        // Return updated document (not old one)
-        runValidators: true              // Validate data before saving
-      }
-    );
-    
-    if (!document) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-    
-    res.json(document);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-```
-
-**What this does:**
-- Updates existing trip document
-- Validates new data before saving
-- Returns updated document
-
----
-
-#### **F. Deleting Documents**
-**File:** `backend/server.js`
-**Lines:** 324-330
-
-```javascript
-// DELETE endpoint: Remove document from database
-app.delete('/api/documents/:id', authenticateToken, async (req, res) => {
-  try {
-    // Find and delete document
-    const document = await Document.findOneAndDelete({ 
-      _id: req.params.id,                 // Document ID
-      userId: req.user.userId            // Ensure user owns document
-    });
-    
-    if (!document) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-    
-    res.json({ message: 'Document deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-```
-
-**What this does:**
-- Permanently removes trip document from database
-- Ensures only document owner can delete
-
----
-
 #### **G. Saving Chat Messages**
 **File:** `backend/collaborationServer.js`
 **Lines:** 300-310
@@ -450,177 +211,7 @@ Writing all these features from scratch would take months or years. The project 
 **Solution Overview:**
 Import third-party libraries at the top of files using `import` (TypeScript/ES6) or `require()` (Node.js). These libraries provide pre-built functionality that can be used immediately.
 
----
-
 ### **ALL CODE LOCATIONS:**
-
-#### **A. Frontend Imports (React Components)**
-**File:** `src/pages/BigIdeaPage.tsx`
-**Lines:** 1-16
-
-```typescript
-// Import React library and hooks for component functionality
-import React, { useState, useEffect } from 'react';
-
-// Import React Router for navigation between pages
-import { useNavigate } from 'react-router-dom';
-
-// Import Framer Motion for animations and transitions
-import { motion, AnimatePresence } from 'framer-motion';
-
-// Import custom components built for this project
-import AIPromptDisplay from '../components/AIPromptDisplay';
-import promptService from '../services/promptService';
-
-// Import TypeScript type definitions for type safety
-import { TripPreferences, GeneratedPrompt } from '../types';
-
-// Import custom React hook for survey progress tracking
-import { useSurveyProgress } from '../hooks/useSurveyProgress';
-
-// Import question components (reusable UI elements)
-import Question1GroupSize from '../components/bigIdea/Question1GroupSize';
-import Question2Duration from '../components/bigIdea/Question2Duration';
-// ... more question components
-```
-
-**What this does:**
-- Imports React for building UI components
-- Imports hooks (`useState`, `useEffect`) for state management
-- Imports React Router for page navigation
-- Imports Framer Motion for animations
-- Imports custom components and services
-
----
-
-#### **B. Backend Imports (Express Server)**
-**File:** `backend/server.js`
-**Lines:** 1-9
-
-```javascript
-// Import Express framework for creating HTTP server and API routes
-const express = require('express');
-
-// Import CORS middleware to allow frontend-backend communication
-const cors = require('cors');
-
-// Import Mongoose library for MongoDB database operations
-const mongoose = require('mongoose');
-
-// Import JWT library for user authentication tokens
-const jwt = require('jsonwebtoken');
-
-// Import express-validator for input validation
-const { body, validationResult } = require('express-validator');
-
-// Import OpenAI SDK for AI integration (optional feature)
-const OpenAI = require('openai');
-
-// Import dotenv for loading environment variables
-require('dotenv').config();
-
-// Create Express application instance
-const app = express();
-```
-
-**What this does:**
-- Imports Express for HTTP server functionality
-- Imports Mongoose for database operations
-- Imports JWT for authentication
-- Imports validation middleware
-- Imports environment variable management
-
----
-
-#### **C. Using React Hooks**
-**File:** `src/pages/BigIdeaPage.tsx`
-**Lines:** 18-27
-
-```typescript
-const BigIdeaPage: React.FC = () => {
-  // useState hook: Manages component state (current question number)
-  // Returns [currentValue, setterFunction]
-  const [currentQuestion, setCurrentQuestion] = useState(1);
-  
-  // useState hook: Manages trip preferences object
-  const [tripPreferences, setTripPreferences] = useState<Partial<TripPreferences>>({});
-  
-  // useState hook: Controls visibility of AI prompt modal
-  const [showAIPrompt, setShowAIPrompt] = useState(false);
-  
-  // useNavigate hook: Provides navigation function from React Router
-  const navigate = useNavigate();
-  
-  // Custom hook: Tracks survey progress (reusable logic)
-  const { updateProgress, markCompleted } = useSurveyProgress();
-  
-  // ... rest of component
-};
-```
-
-**What this does:**
-- Uses React's `useState` hook to manage component state
-- Uses React Router's `useNavigate` for navigation
-- Uses custom hook for reusable logic
-
----
-
-#### **D. Using Express Routes**
-**File:** `backend/server.js`
-**Lines:** 114-150
-
-```javascript
-// Express route: Handle POST request to /api/auth/register
-// Uses express-validator middleware for input validation
-app.post('/api/auth/register', [
-  // Validate email format using express-validator
-  body('email').isEmail().withMessage('Please provide a valid email'),
-  
-  // Validate password length
-  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
-  
-  // Optional name field with trimming
-  body('name').optional().trim()
-], async (req, res) => {
-  // Check validation results
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
-  
-  // Extract data from request body
-  const { email, password, name } = req.body;
-  
-  // Use Mongoose to check if user exists
-  const existingUser = await User.findOne({ email });
-  
-  // Use Mongoose to create and save new user
-  const user = new User({ email, password, name });
-  await user.save();
-  
-  // Use JWT library to generate authentication token
-  const token = jwt.sign(
-    { userId: user._id, email: user.email },
-    process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: '24h' }
-  );
-  
-  // Send response back to frontend
-  res.status(201).json({
-    message: 'User created successfully',
-    token,
-    user: { id: user._id, email: user.email, name: user.name }
-  });
-});
-```
-
-**What this does:**
-- Uses Express to create API endpoint
-- Uses express-validator for input validation
-- Uses Mongoose for database operations
-- Uses JWT for token generation
-
----
 
 ### **STEP 3: Explain WHY You Used These Libraries**
 
@@ -686,15 +277,9 @@ app.post('/api/auth/register', [
 3. **Browser DevTools** showing React components in Elements tab
 4. **Network tab** showing API requests handled by Express
 
----
-
----
-
 ## **TOOL 3: Use of Event Handlers, Listeners, and/or Promises**
 
 ### WebSocket Event Handlers + Async/Await
-
----
 
 ### **LEARNING RESOURCES USED**
 
@@ -712,167 +297,87 @@ app.post('/api/auth/register', [
 
 *See `LEARNING_RESOURCES.md` for complete list of resources.*
 
----
-
 ### **STEP 1: Explain the Problem You Are Solving**
 
 **Problem Statement:**
-The website needs real-time collaboration features:
-- Instant chat messages between users
-- Live updates when users join/leave rooms
-- Synchronized trip planning across multiple users
-- Connection state management (online/offline)
+This itinerary planning website enables groups of travelers to collaboratively plan trips together. The core problem is that multiple users need to:
+- **Chat in real-time** while planning (e.g., "Should we visit Tokyo or Kyoto first?")
+- **See live updates** when other users join the planning session or go offline
+- **Synchronize trip preferences** across all group members instantly
+- **Receive notifications** when someone sends a message, even if the chatbox is closed
+- **Load chat history** from the database when joining a room, without blocking other operations
 
-Traditional HTTP requests (request → wait → response → close) cannot provide instant, bidirectional communication. The application needs persistent connections that can send data in both directions simultaneously.
+Traditional HTTP requests work like a phone call: you call, wait for an answer, talk, then hang up. This is **one-way and temporary** - perfect for loading a page, but **impossible for real-time chat** where messages can arrive at any moment from any user. The website needs **persistent, bidirectional connections** that stay open and can send/receive data simultaneously.
+
+Additionally, when users interact with the website (clicking buttons, typing messages, joining rooms), the application must **respond immediately** to these events. When the server needs to save messages to MongoDB or load chat history, these operations take time, but the server must **continue handling other users** while waiting - it cannot freeze.
 
 ---
 
 ### **STEP 2: Explain How You Solved It (Code + UI Screenshots)**
 
 **Solution Overview:**
-WebSocket protocol provides persistent bidirectional connections. Event handlers (`onopen`, `onmessage`, `onclose`, `onerror`) respond to connection events. Async/await handles asynchronous database operations without blocking the server.
+**Event handlers and event listeners** respond to user actions and system events (button clicks, WebSocket connections, messages arriving). **Promises with async/await** handle time-consuming operations (database queries, saving messages) without blocking the server, allowing multiple users to be served simultaneously.
+
+**Three types of event-driven programming are used:**
+1. **WebSocket Event Handlers** (`onopen`, `onmessage`, `onclose`, `onerror`) - React to connection lifecycle events for real-time communication
+2. **DOM Event Listeners** (`addEventListener`) - React to browser events (storage changes, custom events) and user interactions
+3. **Promises with async/await** - Handle asynchronous database operations, ensuring data is saved/loaded correctly while the server remains responsive
 
 ---
 
 ### **ALL CODE LOCATIONS:**
 
-#### **A. WebSocket Connection Setup (Frontend)**
-**File:** `src/services/collaborationService.ts`
-**Lines:** 150-170
-
-```typescript
-// Create new WebSocket connection to backend server
-// wss:// indicates secure WebSocket (like https://)
-// Token included in URL for authentication
-const wsUrl = `wss://where-to-next-backend.onrender.com?token=${encodeURIComponent(token)}`;
-this.ws = new WebSocket(wsUrl);
-
-// Event handler: Fires when WebSocket connection successfully opens
-this.ws.onopen = () => {
-  console.log('✅ WebSocket connection opened successfully');
-  
-  // Update service state to reflect connection status
-  this.state.isConnected = true;
-  this.state.lastError = null;
-  this.reconnectAttempts = 0;
-  
-  // Notify other parts of application that connection is established
-  this.callbacks.onConnectionChange?.(true);
-  
-  // Start heartbeat to keep connection alive
-  this.startHeartbeat();
-};
-
-// Event handler: Fires when message received from server
-this.ws.onmessage = (event) => {
-  // Parse JSON message from server
-  // event.data contains the message string
-  const message = JSON.parse(event.data);
-  
-  // Handle the message based on its type
-  this.handleMessage(message);
-};
-
-// Event handler: Fires when WebSocket connection closes
-this.ws.onclose = (event) => {
-  console.log('🔌 WebSocket connection closed');
-  
-  // Update state to reflect disconnection
-  this.state.isConnected = false;
-  this.callbacks.onConnectionChange?.(false);
-  
-  // Attempt to reconnect if connection was lost unexpectedly
-  if (event.code !== 1000 && token && hasActiveRoom) {
-    this.attemptReconnect();
-  }
-};
-
-// Event handler: Fires when WebSocket error occurs
-this.ws.onerror = (error) => {
-  console.error('❌ WebSocket error occurred:', error);
-  
-  // Update state with error information
-  this.state.lastError = 'Connection error';
-  this.callbacks.onError?.('Connection error');
-};
-```
-
-**What this does:**
-- Establishes WebSocket connection to backend
-- Sets up event handlers for connection lifecycle
-- Handles incoming messages in real-time
-- Manages reconnection on disconnect
-
----
-
-#### **B. WebSocket Server Event Handlers (Backend)**
+#### **C. Message Routing with Switch Statement (Event Handler Called by Event Listener)**
 **File:** `backend/collaborationServer.js`
-**Lines:** 117-128
+**Lines:** 114-183
 
+**Function/Logic:** This function is an **event handler** that is called by the **event listener** `ws.on('message')` (from Section B). It routes messages to other event handler functions, some of which use **promises** for database operations.
+
+**Connection to Event Listener:**
+This function is called by the event listener in Section B:
 ```javascript
-// Event handler: Fires when client sends message to server
+// EVENT LISTENER (Section B): Fires when client sends message
 ws.on('message', (data) => {
-  // data is raw buffer/string from client
-  // Pass to handler method for processing
-  this.handleMessage(ws, data);
-});
-
-// Event handler: Fires when client closes connection
-ws.on('close', () => {
-  // Clean up user session and room membership
-  this.handleDisconnection(ws);
-});
-
-// Event handler: Fires when WebSocket error occurs
-ws.on('error', (error) => {
-  console.error(`❌ WebSocket error for user ${ws.userName}:`, error);
-  // Clean up on error
-  this.handleDisconnection(ws);
+  this.handleMessage(ws, data);  // ← Calls the function below
 });
 ```
 
-**What this does:**
-- Listens for messages from clients
-- Handles disconnections gracefully
-- Manages errors without crashing server
-
----
-
-#### **C. Message Routing with Switch Statement**
-**File:** `backend/collaborationServer.js`
-**Lines:** 138-186
-
+**The Event Handler Function:**
 ```javascript
+// EVENT HANDLER: This function handles the 'message' event
+// Called automatically when ws.on('message') event listener fires
 handleMessage(ws, data) {
   try {
     // Parse JSON message from client
     const message = JSON.parse(data);
     console.log(`📨 Message from ${ws.userName}:`, message.type);
 
-    // Switch statement: Route message based on type
+    // Switch statement: Route message to appropriate event handler
     switch (message.type) {
       case 'join_room':
-        // Handle user joining a chatroom
-        this.handleJoinRoom(ws, message);
+        // Routes to event handler that uses PROMISE (async/await)
+        // handleJoinRoom uses promises to load chat history from database (Section D)
+        this.handleJoinRoom(ws, message);  // ← Event handler with promises
         break;
         
       case 'leave_room':
-        // Handle user leaving a chatroom
+        // Routes to event handler for user leaving room
         this.handleLeaveRoom(ws, message);
         break;
         
       case 'chat_message':
-        // Handle incoming chat message
-        this.handleChatMessage(ws, message);
+        // Routes to event handler that uses PROMISE (async/await)
+        // handleChatMessage uses promises to save message to database (Section E)
+        this.handleChatMessage(ws, message);  // ← Event handler with promises
         break;
         
       case 'update_preferences':
-        // Handle trip preferences update
+        // Routes to event handler for trip preferences updates
         this.handleUpdatePreferences(ws, message);
         break;
         
       case 'ping':
-        // Heartbeat: Client checking if server is alive
+        // Heartbeat: No database operation, so no promise needed
         this.sendToClient(ws, {
           type: 'pong'
         });
@@ -896,31 +401,51 @@ handleMessage(ws, data) {
 }
 ```
 
+**How This Relates to Event Handlers, Event Listeners, and Promises:**
+
+1. **Event Listener** (Section B): `ws.on('message')` listens for messages and calls this function
+2. **Event Handler** (This function): `handleMessage()` handles the message event and routes it
+3. **More Event Handlers**: Routes to `handleJoinRoom()` and `handleChatMessage()` which are also event handlers
+4. **Promises**: `handleJoinRoom()` and `handleChatMessage()` use promises (async/await) for database operations (Sections D & E)
+
+**Event Flow:**
+```
+Client sends message
+  → Event Listener fires (ws.on('message') from Section B)
+    → Calls Event Handler (handleMessage - this function)
+      → Switch routes to specific Event Handler (handleJoinRoom or handleChatMessage)
+        → Handler uses Promise (async/await) for database operation (Sections D & E)
+```
+
 **What this does:**
-- Parses incoming WebSocket messages
-- Routes messages to appropriate handlers based on type
-- Handles errors gracefully
+- **Event Handler**: This function handles the 'message' event from the WebSocket
+- **Called by Event Listener**: Invoked automatically when `ws.on('message')` fires (Section B)
+- **Routes to Promises**: Routes messages to handlers that use promises for database operations (Sections D & E)
+- **Error handling**: Catches JSON parsing errors gracefully
 
 ---
 
-#### **D. Async/Await for Database Operations**
+#### **D. Promise with async/await for Loading Chat History from Database**
 **File:** `backend/collaborationServer.js`
-**Lines:** 219-232
+**Lines:** 209-229
+
+**Function/Logic:** Loads previous chat messages from MongoDB when user joins a room, using async/await to wait for database query without blocking other users
 
 ```javascript
 async handleJoinRoom(ws, message) {
-  // ... room joining logic ...
+  // ... room joining logic (adds user to room, broadcasts user_joined event) ...
   
-  // Load chat history from database
+  // PROMISE + ASYNC/AWAIT: Load chat history from database
   try {
-    // await pauses execution until database query completes
-    // ChatMessage.find() returns a Promise
-    // await waits for Promise to resolve with results
+    // ChatMessage.find() returns a Promise that resolves with query results
+    // await pauses execution until Promise resolves (database query completes)
+    // While waiting, server can handle other users' requests (non-blocking)
     const chatHistory = await ChatMessage.find({ roomId })
-      .sort({ timestamp: 1 })    // Sort by timestamp ascending
-      .limit(50);                 // Limit to 50 messages
+      .sort({ timestamp: 1 })    // Sort by timestamp ascending (oldest first)
+      .limit(50);                 // Limit to 50 most recent messages
     
-    // Send history to client (only after database query completes)
+    // This code only runs AFTER database query completes (Promise resolved)
+    // Send history to client via WebSocket
     this.sendToClient(ws, {
       type: 'chat_history',
       messages: chatHistory.map(msg => ({
@@ -931,27 +456,30 @@ async handleJoinRoom(ws, message) {
       }))
     });
   } catch (error) {
-    // Handle database errors
+    // Handle database errors if Promise rejects
     console.error('❌ Error loading chat history:', error);
   }
 }
 ```
 
 **What this does:**
-- Uses async/await to handle asynchronous database queries
-- Waits for database operation before continuing
-- Handles errors with try/catch
+- **Promise**: `ChatMessage.find()` returns a Promise that will resolve with database results
+- **async/await**: `await` pauses this function until Promise resolves, but server continues handling other users
+- **Function**: Loads chat history when user joins room, ensuring they see previous messages
+- **Non-blocking**: While waiting for database, server can process other users' messages
 
 ---
 
-#### **E. Saving Chat Messages (Async/Await)**
+#### **E. Promise with async/await for Saving Chat Messages to Database**
 **File:** `backend/collaborationServer.js`
-**Lines:** 300-310
+**Lines:** 300-330
+
+**Function/Logic:** Saves incoming chat messages to MongoDB before broadcasting to all users, ensuring messages are persisted even if server crashes
 
 ```javascript
 async handleChatMessage(ws, message) {
   try {
-    // Create new chat message document
+    // Create new chat message document (Mongoose model instance)
     const chatMessage = new ChatMessage({
       roomId: message.roomId,
       userId: ws.userId,
@@ -960,11 +488,15 @@ async handleChatMessage(ws, message) {
       timestamp: new Date()
     });
     
-    // await pauses until save operation completes
-    // Prevents sending broadcast before message is saved
+    // PROMISE + ASYNC/AWAIT: Save message to database
+    // chatMessage.save() returns a Promise that resolves when save completes
+    // await pauses until Promise resolves (message is saved to MongoDB)
+    // Prevents race condition: ensures message is saved BEFORE broadcasting
     await chatMessage.save();
     
-    // Broadcast to all users in room (only after save succeeds)
+    // This code only runs AFTER save succeeds (Promise resolved)
+    // Broadcast to all users in room via WebSocket
+    // Now all users receive the message, and it's safely stored in database
     this.broadcastToRoom(message.roomId, {
       type: 'chat_message',
       id: chatMessage._id,
@@ -973,33 +505,85 @@ async handleChatMessage(ws, message) {
       timestamp: chatMessage.timestamp
     });
   } catch (error) {
+    // Handle database errors if Promise rejects (save fails)
     console.error('❌ Error saving chat message:', error);
   }
 }
 ```
 
 **What this does:**
-- Saves message to database asynchronously
-- Waits for save to complete before broadcasting
-- Ensures message is persisted before sending to users
+- **Promise**: `chatMessage.save()` returns a Promise that resolves when MongoDB save completes
+- **async/await**: `await` ensures message is saved before broadcasting (prevents data loss)
+- **Function**: Persists chat messages to database so they survive server restarts
+- **Race condition prevention**: Guarantees save completes before sending to users
 
 ---
 
-#### **F. Frontend Message Handling**
+#### **F. DOM Event Listeners for Cross-Component Communication**
+**File:** `src/App.tsx`
+**Lines:** 165-177
+
+**Function/Logic:** Listens for custom browser events (user login/logout, storage changes) to synchronize state across different React components
+
+```typescript
+// EVENT LISTENER: addEventListener('storage') - Fires when localStorage changes
+// Function: Detects when user logs in/out in another tab and updates UI accordingly
+window.addEventListener('storage', handleStorageChange);
+
+// EVENT LISTENER: addEventListener('userLogin') - Custom event fired when user logs in
+// Function: Updates global user state when login occurs (Header component fires this)
+window.addEventListener('userLogin', handleUserLogin as EventListener);
+
+// EVENT LISTENER: addEventListener('userLogout') - Custom event fired when user logs out
+// Function: Clears user state and redirects when logout occurs
+window.addEventListener('userLogout', handleUserLogout);
+
+// EVENT LISTENER: addEventListener('showChatbox') - Custom event to open chatbox
+// Function: Opens collaboration chatbox when triggered from Header button
+window.addEventListener('showChatbox', handleShowChatbox);
+
+// EVENT LISTENER: addEventListener('roomDeleted') - Custom event when room is deleted
+// Function: Clears room state when room is deleted by creator
+window.addEventListener('roomDeleted', handleRoomDeleted as EventListener);
+
+// Cleanup: Remove all listeners when component unmounts (prevents memory leaks)
+return () => {
+  window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('userLogin', handleUserLogin as EventListener);
+  window.removeEventListener('userLogout', handleUserLogout);
+  window.removeEventListener('showChatbox', handleShowChatbox);
+  window.removeEventListener('roomDeleted', handleRoomDeleted as EventListener);
+};
+```
+
+**What this does:**
+- **storage listener**: Detects localStorage changes (login/logout in other tabs)
+- **userLogin/userLogout listeners**: Synchronizes user state across components
+- **showChatbox listener**: Allows Header component to open chatbox from anywhere
+- **roomDeleted listener**: Updates UI when room is deleted
+- **Cleanup**: Prevents memory leaks by removing listeners on unmount
+
+---
+
+#### **G. Frontend Message Routing (Called by onmessage Event Handler)**
 **File:** `src/services/collaborationService.ts`
 **Lines:** 288-360
 
+**Function/Logic:** Routes incoming WebSocket messages to appropriate handlers based on message type, updating UI state accordingly
+
 ```typescript
+// This function is called by the onmessage event handler (Section A)
+// Function: Routes different message types to appropriate handlers
 private handleMessage(message: any) {
   console.log('📨 Collaboration message received:', message.type);
 
-  // Switch statement: Handle different message types
+  // Switch statement: Handle different message types from server
   switch (message.type) {
     case 'connection_established':
-      // Server confirmed connection
+      // Server confirmed WebSocket connection is ready
       console.log('✅ Collaboration connection established');
       
-      // If user was trying to join room before connection, do it now
+      // If user was trying to join room before connection opened, do it now
       if (this.pendingJoinRoom) {
         this.sendJoinRoomMessage(
           this.pendingJoinRoom.roomId,
@@ -1012,22 +596,22 @@ private handleMessage(message: any) {
       break;
 
     case 'user_joined':
-      // Another user joined the room
+      // Another user joined the room - update users list in UI
       this.handleUserJoined(message.user);
       break;
 
     case 'user_left':
-      // User left the room
+      // User left the room - mark as offline in UI
       this.handleUserLeft(message.user);
       break;
 
     case 'chat_message':
-      // New chat message received
+      // New chat message received - display in chatbox
       this.handleChatMessage(message);
       break;
 
     case 'preferences_updated':
-      // Trip preferences were updated by another user
+      // Trip preferences were updated by another user - refresh UI
       this.handlePreferencesUpdate(message.preferences, message.updatedBy);
       break;
 
@@ -1038,57 +622,85 @@ private handleMessage(message: any) {
 ```
 
 **What this does:**
-- Handles different types of WebSocket messages
-- Updates UI based on message type
-- Manages application state from real-time updates
+- **Called by onmessage handler**: This function is invoked when `onmessage` event fires (Section A)
+- **Message routing**: Uses switch statement to route different message types to appropriate handlers
+- **UI updates**: Each handler updates React state, triggering UI re-renders (users list, chat messages, etc.)
+- **State synchronization**: Keeps frontend state in sync with backend state via real-time events
 
 ---
 
-### **STEP 3: Explain WHY You Used Event Handlers + Async/Await**
-
-**Justification:**
-
-1. **WebSocket Event Handlers:**
-   - Enable real-time bidirectional communication
-   - Respond immediately to connection events
-   - Handle errors gracefully without crashing
-   - Essential for instant chat and collaboration
-
-2. **Async/Await Pattern:**
-   - Makes asynchronous code readable (like synchronous code)
-   - Prevents "callback hell" (nested callbacks)
-   - Error handling with try/catch
-   - Server can handle multiple requests while waiting for database
-
-3. **Event-Driven Architecture:**
-   - Decouples components (frontend/backend communicate via events)
-   - Scalable (can handle many concurrent connections)
-   - Responsive (immediate reactions to events)
-
-4. **Promise-Based Operations:**
-   - Database operations return Promises
-   - Async/await waits for Promises to resolve
-   - Prevents race conditions (operations complete in order)
-
----
-
-### **STEP 4: Why Alternatives Are Not as Optimal**
+### **STEP 3: What Alternatives Could Have Been Considered**
 
 **Alternative 1: HTTP Polling (Request Every Few Seconds)**
-- ❌ High server load (constant requests)
-- ❌ Delayed updates (not real-time)
-- ❌ Wastes bandwidth
-- ❌ Poor user experience
+- Instead of WebSocket event handlers, the website could poll the server every 2-3 seconds asking "Any new messages?"
+- Frontend would use `setInterval()` to repeatedly call an API endpoint like `/api/check-messages`
+- Server would return any new messages since the last request
 
-**Alternative 2: Callbacks Instead of Async/Await**
-- ❌ "Callback hell" (nested callbacks hard to read)
-- ❌ Difficult error handling
-- ❌ Harder to maintain
+**Alternative 2: Server-Sent Events (SSE)**
+- Instead of bidirectional WebSocket, use one-way Server-Sent Events
+- Server pushes updates to client, but client uses regular HTTP POST for sending messages
+- Simpler than WebSocket but only one-way communication
 
-**Alternative 3: Synchronous Database Operations**
-- ❌ Server blocks while waiting for database
-- ❌ Cannot handle multiple users simultaneously
-- ❌ Poor performance
+**Alternative 3: Callback Functions Instead of async/await**
+- Instead of `await chatMessage.save()`, use callbacks: `chatMessage.save((error, result) => { ... })`
+- Nested callbacks for multiple operations: `saveMessage(() => { loadHistory(() => { sendResponse() }) })`
+
+**Alternative 4: Synchronous Database Operations**
+- Instead of async/await, use synchronous database calls that block the server
+- Server waits for database to finish before handling next user's request
+
+**Alternative 5: Manual DOM Manipulation Instead of Event Listeners**
+- Instead of `addEventListener`, manually check for changes in a loop
+- Use `setInterval()` to repeatedly check if user logged in/out
+
+---
+
+### **STEP 4: Why These Alternatives Were Not Chosen First, and Why Event Handlers/Listeners/Promises Were Chosen**
+
+**Why HTTP Polling Was Not Chosen First:**
+- ❌ **High server load**: Every user sends requests every 2-3 seconds, even when nothing happens
+- ❌ **Delayed updates**: Messages appear 2-3 seconds late (not instant)
+- ❌ **Wastes bandwidth**: Constant requests even when idle
+- ❌ **Poor user experience**: Noticeable delay in chat, feels sluggish
+- ✅ **Event handlers chosen instead**: WebSocket `onmessage` fires instantly when message arrives, no polling needed
+
+**Why Server-Sent Events (SSE) Was Not Chosen First:**
+- ❌ **One-way only**: Server can push to client, but client needs separate HTTP requests to send messages
+- ❌ **More complex**: Requires managing both SSE connection and HTTP requests
+- ❌ **Less efficient**: Two separate connections instead of one bidirectional WebSocket
+- ✅ **Event handlers chosen instead**: WebSocket `onmessage` and `send()` provide full bidirectional communication in one connection
+
+**Why Callbacks Instead of async/await Was Not Chosen First:**
+- ❌ **"Callback hell"**: Nested callbacks become unreadable: `saveMessage(() => { loadHistory(() => { sendResponse(() => { ... }) }) })`
+- ❌ **Difficult error handling**: Errors must be passed through each callback level
+- ❌ **Harder to maintain**: Adding new operations requires nesting deeper
+- ✅ **Promises with async/await chosen instead**: Code reads like synchronous code, errors handled with try/catch, easy to add operations
+
+**Why Synchronous Database Operations Was Not Chosen First:**
+- ❌ **Server blocks**: While waiting for database, server cannot handle other users' requests
+- ❌ **Cannot scale**: With 10 users, 9 wait while 1 user's database query runs
+- ❌ **Poor performance**: Server becomes unresponsive under load
+- ✅ **Promises with async/await chosen instead**: Server handles multiple users simultaneously, database operations don't block
+
+**Why Manual DOM Manipulation Instead of Event Listeners Was Not Chosen First:**
+- ❌ **Inefficient**: Constant checking wastes CPU cycles
+- ❌ **Delayed updates**: Changes detected only when interval runs
+- ❌ **Complex**: Must track previous state to detect changes
+- ✅ **Event listeners chosen instead**: Browser fires events instantly when changes occur, no polling needed
+
+**Why Event Handlers, Event Listeners, and Promises Were Chosen for This Website:**
+
+1. **Real-Time Collaboration Requirement**: The website's core feature is **group trip planning with instant chat**. Users need to see messages immediately, not after 2-3 seconds. WebSocket event handlers (`onmessage`) provide **instant message delivery** when messages arrive.
+
+2. **Multiple Concurrent Users**: The website serves **multiple groups planning trips simultaneously**. Promises with async/await allow the server to **handle many users at once** - while waiting for one user's database query, it processes other users' requests. Synchronous operations would make the server freeze.
+
+3. **Cross-Component State Synchronization**: Different parts of the website (Header, Profile, Chatbox) need to know when user logs in/out. DOM event listeners (`addEventListener`) allow **components to communicate** without tight coupling - Header fires `userLogin` event, App component listens and updates state.
+
+4. **Data Persistence Without Blocking**: Chat messages must be **saved to MongoDB** so they survive server restarts, but saving takes time. Promises with async/await ensure messages are **saved before broadcasting**, while the server continues handling other users. This prevents data loss and maintains responsiveness.
+
+5. **Error Resilience**: WebSocket connections can fail, database queries can timeout. Event handlers (`onerror`, `onclose`) and try/catch with Promises allow the website to **handle errors gracefully** - reconnect automatically, show error messages, but never crash.
+
+**In summary**: Event handlers/listeners provide **instant, reactive responses** to user actions and system events, while Promises with async/await enable **non-blocking, concurrent operations** that keep the server responsive for multiple users. These characteristics are essential for a real-time collaboration website where responsiveness and reliability are critical.
 
 ---
 
@@ -1150,30 +762,39 @@ React provides component-based architecture where UI is built from reusable comp
 
 ### **ALL CODE LOCATIONS:**
 
-#### **A. React Router Setup**
+#### **A. React Router Setup for Client-Side Navigation**
 **File:** `src/App.tsx`
-**Lines:** 1-3, 180-241 (Essential: lines 1-3, 181-229, 234-241)
+**Lines:** 193-256 (Essential: lines 193-242, 247-254)
+
+**Function/Logic:** React Router enables client-side navigation without page reloads. BrowserRouter wraps the app, Routes defines URL paths, and Route components map paths to React components. The `getCurrentUser` import (line 22) is used to check authentication status when the component mounts.
+
+**Note about `getCurrentUser` import (line 22):** This function retrieves the current logged-in user from localStorage. It's used in the `useEffect` hook (line 55) to check if a user is authenticated when the App component mounts, allowing the app to restore user state and show the chatbox if the user has an active room.
 
 ```typescript
-// Tool 2: Third-party libraries - React Router for client-side navigation
+// Tool 2: Import React Router library for client-side navigation
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// Tool 4: Import React page components (component-based architecture)
 import HomePage from './pages/HomePage';
 import BigIdeaPage from './pages/BigIdeaPage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Tool 4: React functional component
+// Tool 4: React functional component - main application component
 function App() {
+  // Tool 4: useState hook manages component state (roomId for chatbox)
   const [roomId, setRoomId] = useState<string | null>(null);
   
-  // React Router setup - BrowserRouter enables client-side routing
+  // Tool 4: React Router - BrowserRouter enables client-side routing
+  // No page reloads when navigating between routes
   return (
     <Router>
       <Routes>
-        {/* Route maps URL path to React component */}
+        {/* Tool 4: Route component maps URL path to React component */}
+        {/* When URL is "/", React Router renders HomePage component */}
         <Route path="/" element={<HomePage />} />
         
-        {/* Protected routes require authentication */}
+        {/* Tool 4: Protected routes use reusable ProtectedRoute component */}
+        {/* Component-based architecture: ProtectedRoute wraps ProfilePage */}
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />
@@ -1187,7 +808,8 @@ function App() {
         {/* More routes... */}
       </Routes>
       
-      {/* Tool 4: Conditional rendering - only render if roomId exists */}
+      {/* Tool 4: Conditional rendering based on state */}
+      {/* Only renders DraggableCollaborationPanel if roomId exists */}
       {roomId && (
         <DraggableCollaborationPanel
           tripId={roomId}
@@ -1199,11 +821,11 @@ function App() {
 }
 ```
 
-**What this does:**
-- Sets up client-side routing (no page reloads) using BrowserRouter
-- Maps URL paths to React components using Route components
-- Protects routes requiring authentication with ProtectedRoute wrapper
-- Conditionally renders components based on state (roomId check)
+**What this demonstrates:**
+- **React Router**: BrowserRouter enables client-side navigation (no page reloads when clicking links)
+- **Component-based architecture**: Route components are reusable - same Route pattern used for multiple pages
+- **Conditional rendering**: React conditionally renders components based on state (`roomId` check)
+- **Component composition**: ProtectedRoute wraps page components, demonstrating reusable component pattern
 
 **Screenshot recommendation:** 
 - **Option 1 (Minimal - ~35 lines):** Lines 1-3 (imports) + 181-229 (Router/Routes structure with 3-4 route examples) + 234-241 (conditional rendering)
@@ -1211,28 +833,34 @@ function App() {
 
 ---
 
-#### **B. React Component with Hooks**
+#### **B. React Hooks for State Management and Side Effects**
 **File:** `src/pages/BigIdeaPage.tsx`
-**Lines:** 20-66
+**Lines:** 27-73
+
+**Function/Logic:** React hooks manage component state and handle side effects. useState stores component data, useEffect runs code when component mounts or state changes, and useNavigate provides programmatic navigation.
 
 ```typescript
-// Tool 4: React functional component with hooks
+// Tool 4: React functional component - component-based architecture
 const BigIdeaPage: React.FC = () => {
-  // Tool 4: React Router hook for navigation
+  // Tool 4: React Router hook - useNavigate provides navigation function
+  // Enables programmatic navigation (e.g., navigate('/profile'))
   const navigate = useNavigate();
   
-  // Tool 4: useState hooks for component state
+  // Tool 4: useState hooks manage component state
+  // Each useState returns [value, setterFunction]
+  // When setter is called, React automatically re-renders component with new state
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [tripPreferences, setTripPreferences] = useState<Partial<TripPreferences>>({});
   const [showAIPrompt, setShowAIPrompt] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   
-  // Tool 4: Custom hook for reusable logic
+  // Tool 4: Custom hook - reusable logic extracted to separate hook
+  // Component-based architecture: logic shared across components via hooks
   const { updateProgress, markCompleted } = useSurveyProgress();
 
-  // Tool 4: useEffect hook - runs when component mounts
+  // Tool 4: useEffect hook - handles side effects (data loading)
+  // Runs when component mounts (empty dependency array [])
   useEffect(() => {
-    // Tool 5: Load data from user-specific storage (explained in Tool 5, case A)
     const { getUserData, migrateUserData } = require('../utils/userDataStorage');
     const { getCurrentUser, isAuthenticated } = require('../services/apiService');
     
@@ -1247,183 +875,57 @@ const BigIdeaPage: React.FC = () => {
     
     migrateUserData(currentUser.id);
     
-    // getUserData retrieves JSON from localStorage
+    // Load saved preferences from localStorage
     const saved = getUserData('tripPreferences');
     if (saved) {
-      setTripPreferences(saved);  // Update component state with loaded data
+      // Update component state - triggers automatic re-render
+      setTripPreferences(saved);
     }
-  }, []);  // Empty array means this runs only once on mount
+  }, []);  // Empty array: runs only once when component mounts
 
-  // Tool 4: useEffect hook - updates progress when question changes
+  // Tool 4: useEffect hook - runs when dependencies change
+  // Updates progress bar whenever currentQuestion changes
   useEffect(() => {
     updateProgress(currentQuestion, totalQuestions);
   }, [currentQuestion, totalQuestions, updateProgress]);
+  // Dependency array: re-runs when currentQuestion, totalQuestions, or updateProgress changes
 ```
 
-**What this does:**
-- Uses React hooks (useState, useEffect) for state management
-- Handles side effects with useEffect
-- Loads data from localStorage on component mount
-- Updates progress bar when question changes
+**What this demonstrates:**
+- **React hooks (useState)**: Manages component state - when `setCurrentQuestion(2)` is called, React automatically re-renders with question 2
+- **React hooks (useEffect)**: Handles side effects - loads data on mount, updates progress when question changes
+- **React Router hook (useNavigate)**: Provides programmatic navigation without page reload
+- **Custom hooks**: Reusable logic (useSurveyProgress) demonstrates component-based architecture
 
 ---
 
-#### **C. Reusable Component**
+#### **C. Reusable Component (Component-Based Architecture)**
 **File:** `src/components/bigIdea/Question1GroupSize.tsx`
-**Lines:** 4-11, 13-40 (Essential: lines 4-11, 13-21, 25-40)
+**Lines:** 4-48 (Essential: lines 4-13, 17-48)
 
-```typescript
-// Tool 4: Reusable component - accepts props for customization
-interface Question1GroupSizeProps {
-  onAnswer: (questionNumber: number, answer: any) => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  currentQuestion: number;
-  totalQuestions: number;
-}
+**Function/Logic:** Demonstrates component-based architecture - a reusable component that accepts props and manages its own state. This component is used multiple times in the survey flow.
 
-const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
-  onAnswer,
-  onNext,
-  onPrevious,
-  currentQuestion,
-  totalQuestions
-}) => {
-  // Tool 4: useState hook for component state
-  const [selectedGroupSize, setSelectedGroupSize] = useState<string>('');
-  
-  // Tool 4: useEffect hook - loads saved data on mount
-  useEffect(() => {
-    const savedPreferences = localStorage.getItem('tripPreferences');
-    if (savedPreferences) {
-      const preferences = JSON.parse(savedPreferences);
-      if (preferences.groupSize) {
-        setSelectedGroupSize(preferences.groupSize);
-      }
-    }
-  }, []);
-
-  const handleSelect = (groupSize: string) => {
-    setSelectedGroupSize(groupSize);
-    // Call parent's onAnswer callback with question number and answer
-    onAnswer(1, { groupSize });
-  };
-
-  return (
-    <div>
-      <h2>How many people are going?</h2>
-      {/* Render options - calls handleSelect which updates state */}
-      {groupSizeOptions.map((option) => (
-        <div key={option.value} onClick={() => handleSelect(option.value)}>
-          {option.label}
-        </div>
-      ))}
-    </div>
-  );
-};
-```
-
-**Then used in:** `BigIdeaPage.tsx` lines 405-438 (Essential: lines 405-420)
-
-```typescript
-// Tool 4: Function that renders different question components based on state
-const renderQuestion = () => {
-  const commonProps = {
-    onAnswer: handleAnswer,  // Parent function that updates state
-    onNext: handleNext,
-    onPrevious: handlePrevious,
-    currentQuestion,
-    totalQuestions,
-    canProceed: true
-  };
-
-  // Tool 4: Switch statement for conditional rendering
-  switch (currentQuestion) {
-    case 1:
-      return <Question1GroupSize {...commonProps} />;
-    case 2:
-      return <Question2Duration {...commonProps} />;
-    case 3:
-      return <Question3Budget {...commonProps} />;
-    // ... more cases ...
-    default:
-      return null;
-  }
-};
-
-// In return statement:
-return <div>{renderQuestion()}</div>;
-```
-
-**What this does:**
-- Creates reusable UI component that accepts props
-- Uses switch statement to conditionally render different questions
-- Components share common props (onAnswer, onNext, onPrevious)
-- Parent component manages which question to show
+**What this demonstrates:**
+- **Component-based architecture**: Question1GroupSize is a reusable component - written once, used in survey flow
+- **Props for customization**: Component accepts props (onAnswer, onNext) allowing parent to customize behavior
+- **Independent state**: Each component instance manages its own state via useState hook
+- **Component composition**: Parent component (BigIdeaPage) composes multiple child components (Question1, Question2, etc.)
 
 **Screenshot recommendation:** 
 - **Component definition:** Lines 4-11 (interface) + 13-40 (component with hooks)
 - **Usage in parent:** Lines 405-420 (renderQuestion function with 3-4 switch cases)
 
----
-
-#### **D. Conditional Rendering**
+#### **D. Conditional Rendering Based on State**
 **File:** `src/pages/BigIdeaPage.tsx`
-**Lines:** 405-439, 441-448 (Essential: lines 405-420, 441-448)
+**Lines:** 405-448 (Essential: lines 405-420, 441-448)
 
-```typescript
-// Tool 4: Function that conditionally renders question components
-const renderQuestion = () => {
-  const commonProps = {
-    onAnswer: handleAnswer,
-    onNext: handleNext,
-    onPrevious: handlePrevious,
-    currentQuestion,
-    totalQuestions,
-    canProceed: true
-  };
+**Function/Logic:** React conditionally renders different components based on component state. When state changes, React automatically re-renders with the appropriate components.
 
-  // Tool 4: Switch statement for conditional rendering based on state
-  switch (currentQuestion) {
-    case 1:
-      return <Question1GroupSize {...commonProps} />;
-    case 2:
-      return <Question2Duration {...commonProps} />;
-    case 3:
-      return <Question3Budget {...commonProps} />;
-    // ... more cases ...
-    default:
-      return null;
-  }
-};
-
-return (
-  <div>
-    {/* Tool 4: Conditional rendering - call function to render current question */}
-    {renderQuestion()}
-    
-    {/* Tool 4: Conditional rendering - show summary modal only if state is true */}
-    {showSummary && (
-      <div>
-        {/* Summary content */}
-      </div>
-    )}
-    
-    {/* Tool 4: Conditional rendering - show AI prompt modal conditionally */}
-    {showAIPrompt && aiPrompt && (
-      <AIPromptDisplay
-        prompt={aiPrompt}
-        onClose={handlePromptClose}
-      />
-    )}
-  </div>
-);
-```
-
-**What this does:**
-- Uses switch statement to render different questions based on state
-- Conditionally shows/hides modals based on boolean state
-- Creates dynamic user interface that changes based on user progress
+**What this demonstrates:**
+- **Conditional rendering**: React renders different components based on state (`currentQuestion` value)
+- **Automatic re-rendering**: When `setCurrentQuestion(2)` is called, React automatically re-renders with Question2 component
+- **State-driven UI**: UI changes dynamically based on component state - no manual DOM manipulation needed
+- **Component-based**: Different question components are conditionally rendered, demonstrating reusable component pattern
 
 **Screenshot recommendation:** 
 - **Switch statement:** Lines 405-420 (renderQuestion function with 3-4 switch cases)
@@ -1431,81 +933,17 @@ return (
 
 ---
 
-#### **E. State Management Across Components**
+#### **E. State Management and Automatic UI Updates**
 **File:** `src/pages/ProfilePage.tsx`
-**Lines:** 32-184 (Essential: lines 32-42, 120-184, document rendering section)
+**Lines:** 33-184 (Essential: lines 33-44, 107-184)
 
-```typescript
-// Tool 4: React functional component with multiple state variables
-const ProfilePage: React.FC = () => {
-  // Tool 4: useState hooks for component state management
-  const [documents, setDocuments] = useState<DocumentData[]>([]);
-  const [tripPreferences, setTripPreferences] = useState<any>(null);
-  const [savedTripPreferences, setSavedTripPreferences] = useState<any[]>([]);
-  const [flightStrategies, setFlightStrategies] = useState<any[]>([]);
-  const [expensePolicySets, setExpensePolicySets] = useState<any[]>([]);
-  
-  // Tool 4: useEffect hook - loads data when component mounts
-  useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (!isAuthenticated() || !currentUser) {
-      setDocuments([]);
-      return;
-    }
+**Function/Logic:** React hooks manage component state, and React automatically re-renders the UI when state changes. useEffect handles side effects like loading data on component mount.
 
-    // Tool 5: Load documents from localStorage (explained in Tool 5, case C)
-    const savedDocs = localStorage.getItem('destinationDocuments');
-    if (savedDocs) {
-      const allDocs = JSON.parse(savedDocs);
-      // Filter to show only current user's documents
-      const userDocs = allDocs.filter((doc: DocumentData) => {
-        return doc.creatorId === currentUser.id;
-      });
-      setDocuments(userDocs);  // Update state with filtered documents
-    }
-
-    // Tool 5: Load user-specific data using getUserData (explained in Tool 5, case A)
-    const savedPrefs = getUserData('tripPreferences');
-    if (savedPrefs) {
-      setTripPreferences(savedPrefs);
-    }
-  }, []);
-
-  // Function to delete document - updates both state and localStorage
-  const handleDeleteDocument = (docId: string) => {
-    // Update state: Remove document from list
-    setDocuments(documents.filter(doc => doc.id !== docId));
-    
-    // Tool 5: Also remove from localStorage (explained in Tool 5, case C)
-    const savedDocs = localStorage.getItem('destinationDocuments');
-    if (savedDocs) {
-      const docs = JSON.parse(savedDocs);
-      const updated = docs.filter(doc => doc.id !== docId);
-      localStorage.setItem('destinationDocuments', JSON.stringify(updated));
-    }
-  };
-  
-  return (
-    <div>
-      {/* Tool 4: Map function to render list of documents */}
-      {documents.map(doc => (
-        <div key={doc.id}>
-          <h3>{doc.destinationName}</h3>
-          <button onClick={() => handleDeleteDocument(doc.id)}>
-            Delete
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-};
-```
-
-**What this does:**
-- Uses multiple useState hooks to manage different pieces of state
-- useEffect loads data from localStorage when component mounts
-- Updates UI automatically when state changes
-- Handles user interactions (delete, edit, etc.)
+**What this demonstrates:**
+- **React hooks (useState)**: Manages component state - multiple state variables for different data
+- **Automatic re-rendering**: When `setDocuments([...])` is called, React automatically re-renders the component with updated UI
+- **React hooks (useEffect)**: Handles side effects - loads data from localStorage when component mounts
+- **State-driven UI**: UI automatically updates when state changes - no manual DOM manipulation needed
 
 **Screenshot recommendation:** 
 - **State declarations:** Lines 32-42 (multiple useState hooks)
@@ -1623,329 +1061,11 @@ JSON (JavaScript Object Notation) provides key-value pair structure. Data is sto
 
 ### **ALL CODE LOCATIONS:**
 
-#### **A. User-Specific Data Storage (Frontend)**
-**File:** `src/utils/userDataStorage.ts`
-**Lines:** 17-63
-
-```typescript
-/**
- * Get data for the current logged-in user
- * Uses key-value structure: "tripPreferences_user123"
- */
-export const getUserData = <T>(baseKey: string): T | null => {
-  // Check if user is authenticated
-  if (!isAuthenticated()) {
-    return null;
-  }
-  
-  // Get current user ID
-  const user = getCurrentUser();
-  if (!user || !user.id) {
-    return null;
-  }
-  
-  // Create user-specific key: "tripPreferences" + "_" + "user123"
-  // This ensures each user's data is isolated
-  const key = `${baseKey}_${user.id}`;
-  
-  // Retrieve JSON string from localStorage
-  // localStorage stores data as strings
-  const data = localStorage.getItem(key);
-  
-  if (!data) {
-    return null; // No data found for this user
-  }
-  
-  try {
-    // Parse JSON string back to JavaScript object
-    // JSON.parse() converts string to object with nested key-value pairs
-    const parsed = JSON.parse(data) as T;
-    return parsed;
-  } catch (e) {
-    // Handle JSON parsing errors
-    console.error(`Error parsing user data for key ${key}:`, e);
-    return null;
-  }
-};
-
-/**
- * Set data for the current logged-in user
- */
-export const setUserData = <T>(baseKey: string, data: T): void => {
-  // Check authentication
-  if (!isAuthenticated()) {
-    throw new Error('Cannot save data without authentication');
-  }
-  
-  const user = getCurrentUser();
-  if (!user || !user.id) {
-    throw new Error('Cannot save data without logged-in user');
-  }
-  
-  // Create user-specific key
-  const key = `${baseKey}_${user.id}`;
-  
-  // Convert JavaScript object to JSON string
-  // JSON.stringify() converts object with nested key-value pairs to string
-  // This is necessary because localStorage only stores strings
-  localStorage.setItem(key, JSON.stringify(data));
-};
-```
-
 **What this does:**
-- Creates user-specific storage keys
-- Converts objects to JSON strings for storage
-- Parses JSON strings back to objects when retrieving
-- Ensures data isolation per user
-
----
-
-#### **B. Saving Trip Preferences**
-**File:** `src/pages/BigIdeaPage.tsx`
-**Lines:** 88-96
-
-```typescript
-const savePreferencesSet = () => {
-  if (preferencesName.trim() && tripPreferences) {
-    // Load existing saved preferences from localStorage
-    const saved = localStorage.getItem('savedTripPreferences');
-    let savedPreferences = [];
-    
-    if (saved) {
-      try {
-        // Parse JSON string to JavaScript array
-        savedPreferences = JSON.parse(saved);
-      } catch (error) {
-        console.error('Error parsing saved preferences:', error);
-      }
-    }
-
-    // Create new preference set object
-    // Object contains nested key-value pairs
-    const newPreferenceSet = {
-      id: `pref_${Date.now()}`,           // Key: "id", Value: unique string
-      name: preferencesName.trim(),       // Key: "name", Value: string
-      preferences: { ...tripPreferences }, // Key: "preferences", Value: nested object
-      createdAt: new Date().toISOString()  // Key: "createdAt", Value: string
-    };
-
-    // Add new preference set to array
-    const updatedPreferences = [newPreferenceSet, ...savedPreferences].slice(0, 4);
-    
-    // Save array as JSON string to localStorage
-    // Uses userDataStorage utility which adds user ID to key
-    setUserData('savedTripPreferences', updatedPreferences);
-  }
-};
-```
-
-**What this does:**
-- Creates nested key-value object structure
-- Stores array of objects as JSON string
-- Retrieves and parses JSON when loading
-
----
-
-#### **C. Loading Documents from localStorage**
-**File:** `src/pages/DocumentEditingPage.tsx`
-**Lines:** 96-99
-
-```typescript
-// Load documents from localStorage
-const savedDocs = localStorage.getItem('destinationDocuments');
-
-if (savedDocs) {
-  try {
-    // Parse JSON string to JavaScript array
-    // Each document is an object with nested key-value pairs
-    const docs: DocumentData[] = JSON.parse(savedDocs);
-    
-    // Find specific document by ID
-    const foundDoc = docs.find(doc => doc.id === id);
-    
-    if (foundDoc) {
-      // Access nested key-value pairs
-      // foundDoc.destinationName - string value
-      // foundDoc.calendarPlanner.timeSlots - array value
-      // foundDoc.bigIdeaSurveyData.groupSize - string value
-      setDocument(foundDoc);
-    }
-  } catch (error) {
-    console.error('Error parsing documents from localStorage:', error);
-  }
-}
-```
-
-**What this does:**
-- Retrieves JSON string from localStorage
-- Parses to array of document objects
-- Accesses nested key-value pairs
-
----
-
-#### **D. Saving Documents to localStorage**
-**File:** `src/pages/DocumentEditingPage.tsx`
-**Lines:** 263-375
-
-```typescript
-const handleSaveDocument = () => {
-  // Get existing documents from localStorage
-  const savedDocs = localStorage.getItem('destinationDocuments');
-  
-  // Parse JSON string to array (or empty array if none exist)
-  let docs: DocumentData[] = savedDocs ? JSON.parse(savedDocs) : [];
-  
-  // Create or update document object
-  // Complex nested key-value structure
-  const updatedDocument: DocumentData = {
-    id: document.id,                      // Key: "id"
-    destinationName: documentName,        // Key: "destinationName"
-    creatorId: currentUser.id,            // Key: "creatorId"
-    createdAt: document.createdAt,        // Key: "createdAt"
-    lastModified: new Date().toISOString(), // Key: "lastModified"
-    
-    // Nested object: calendar planner
-    calendarPlanner: {
-      duration: document.calendarPlanner?.duration || '', // Nested key-value
-      dates: document.calendarPlanner?.dates || [],       // Nested array
-      timeSlots: document.calendarPlanner?.timeSlots || [] // Nested array of objects
-    },
-    
-    // Nested object: survey data
-    bigIdeaSurveyData: {
-      groupSize: tripPreferences?.groupSize,    // Nested key-value
-      budget: tripPreferences?.budget,          // Nested key-value
-      destinationStyle: tripPreferences?.destinationStyle, // Nested array
-      // ... more nested properties
-    },
-    
-    // Nested object: editable fields
-    editableFields: {
-      dates: {                                 // Nested object within nested object
-        startDate: document.editableFields?.dates?.startDate || '',
-        endDate: document.editableFields?.dates?.endDate || ''
-      },
-      budget: {
-        amount: document.editableFields?.budget?.amount || 0,
-        currency: document.editableFields?.budget?.currency || 'USD'
-      }
-      // ... more nested fields
-    }
-  };
-  
-  // Update or add document to array
-  const existingIndex = docs.findIndex(doc => doc.id === document.id);
-  if (existingIndex >= 0) {
-    docs[existingIndex] = updatedDocument; // Update existing
-  } else {
-    docs.push(updatedDocument);            // Add new
-  }
-  
-  // Convert array back to JSON string and save to localStorage
-  localStorage.setItem('destinationDocuments', JSON.stringify(docs));
-};
-```
-
-**What this does:**
-- Creates complex nested key-value object structure
-- Updates array of documents
-- Converts to JSON string for storage
-
----
-
-#### **E. MongoDB Document Schema (Backend)**
-**File:** `backend/models/Document.js`
-**Lines:** 69-102
-
-```javascript
-// MongoDB document schema: Defines key-value structure
-const documentSchema = new mongoose.Schema({
-  // Top-level key-value pairs
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,  // Key: "userId", Value: ObjectId
-    ref: 'User',
-    required: true
-  },
-  
-  destinationName: {
-    type: String,                           // Key: "destinationName", Value: String
-    required: true,
-    trim: true
-  },
-  
-  // Nested key-value structure: Survey data stored as flexible object
-  bigIdeaSurveyData: {
-    type: mongoose.Schema.Types.Mixed       // Key: "bigIdeaSurveyData", Value: Any JSON object
-    // Can contain: { groupSize: "pair", budget: 5000, ... }
-  },
-  
-  // Nested schema: Calendar planner with sub-key-value pairs
-  calendarPlanner: {
-    duration: String,                       // Key: "duration", Value: String
-    startDate: String,                      // Key: "startDate", Value: String
-    endDate: String,                        // Key: "endDate", Value: String
-    dates: [String],                        // Key: "dates", Value: Array of strings
-    timeSlots: [{                           // Key: "timeSlots", Value: Array of objects
-      id: String,                           // Each object has nested keys
-      date: String,
-      startTime: String,
-      activity: String
-    }]
-  },
-  
-  // More nested structures...
-  optionsOrganizer: {
-    accommodation: [String],               // Key: "accommodation", Value: Array
-    meals: [String],                        // Key: "meals", Value: Array
-    activities: [String]                   // Key: "activities", Value: Array
-  },
-  
-  // Timestamps
-  createdAt: {
-    type: Date,                             // Key: "createdAt", Value: Date
-    default: Date.now
-  }
-});
-```
-
-**What this does:**
-- Defines key-value structure for MongoDB documents
-- Allows nested objects and arrays
-- Flexible schema for varying data structures
-
----
-
-#### **F. Accessing Nested Key-Value Pairs**
-**File:** `src/pages/FinalizedDocumentPage.tsx`
-
-```typescript
-// Access nested key-value pairs from document object
-const destinationName = document.destinationName;           // Top-level key
-
-// Access nested object
-const calendarPlanner = document.calendarPlanner;
-const duration = calendarPlanner.duration;                  // Nested key
-
-// Access nested array
-const timeSlots = calendarPlanner.timeSlots;                // Array value
-timeSlots.forEach(slot => {
-  const date = slot.date;                                    // Key within array object
-  const activity = slot.activity;                            // Another key
-});
-
-// Access deeply nested structure
-const budget = document.editableFields.budget.amount;        // Deeply nested key
-const currency = document.editableFields.budget.currency;    // Another deeply nested key
-
-// Access survey data
-const groupSize = document.bigIdeaSurveyData.groupSize;     // Nested key
-const preferences = document.bigIdeaSurveyData;              // Entire nested object
-```
-
-**What this does:**
-- Accesses values using dot notation
-- Handles nested structures
-- Retrieves arrays and objects
+- Creates MongoDB document from JSON object (not string)
+- Saves document to MongoDB database (persistent cloud storage)
+- MongoDB stores data as JSON objects, accessible from any device
+- Demonstrates backend persistent storage vs frontend temporary localStorage
 
 ---
 
@@ -2005,6 +1125,83 @@ const preferences = document.bigIdeaSurveyData;              // Entire nested ob
 2. **Code showing JSON.parse/stringify** operations
 3. **MongoDB Atlas interface** showing document structure
 4. **Profile page** showing data loaded from JSON
+
+---
+
+### **CLARIFICATION: What is localStorage and What Frontend Data is Stored There?**
+
+**What is localStorage?**
+`localStorage` is a browser storage mechanism that stores data **temporarily on the user's device** (in their browser). It is **frontend-only** - meaning the data exists only in the browser, not on a server. This data persists even after closing the browser tab, but it can be cleared by the user (clearing browser cache) and is **not accessible from other devices**.
+
+**What Frontend Data is Stored in localStorage?**
+
+The website uses `localStorage` to store **temporary frontend data** that needs to be quickly accessible without making API calls to the backend:
+
+1. **Authentication Data:**
+   - `token`: JWT authentication token (string) - used to verify the user is logged in
+   - `user`: User object (stored as JSON string) - contains `{ id, email, name }` for the current logged-in user
+
+2. **Temporary Trip Preferences (Before Saving to MongoDB):**
+   - `tripPreferences_${userId}`: Current survey answers (stored as JSON string) - used while user is filling out the survey
+   - `savedTripPreferences_${userId}`: Saved preference sets (stored as JSON string) - quick access to previously saved preferences
+   - `tripTracingState_${userId}`: Trip tracing survey state (stored as JSON string) - current progress in the survey
+
+3. **Temporary Document Data (Before Syncing to MongoDB):**
+   - `destinationDocuments`: Array of document objects (stored as JSON string) - used for quick access and editing before saving to database
+
+**Why localStorage is Used (Frontend) vs MongoDB (Backend):**
+
+- **Tool 1 (MongoDB)**: Stores **permanent, cloud-based data** that must be accessible from any device. This includes:
+  - User accounts (email, password hashes)
+  - Finalized documents (saved to database)
+  - Chat messages (permanent chat history)
+  - All data that needs to persist across devices and browser sessions
+
+- **Tool 5 (localStorage)**: Stores **temporary, device-specific data** for quick frontend access:
+  - Authentication tokens (so user stays logged in)
+  - Survey progress (so user doesn't lose progress if they refresh the page)
+  - Temporary edits (before saving to MongoDB)
+  - Data that doesn't need to be shared across devices
+
+**Why JSON is Needed for localStorage:**
+
+`localStorage` **only stores strings**. You cannot store JavaScript objects directly. Therefore:
+- **JSON.stringify()**: Converts JavaScript objects (with nested key-value pairs) into a JSON string for storage
+  - Example: `{ id: "123", name: "Trip" }` → `'{"id":"123","name":"Trip"}'`
+- **JSON.parse()**: Converts the JSON string back into a JavaScript object when retrieving
+  - Example: `'{"id":"123","name":"Trip"}'` → `{ id: "123", name: "Trip" }`
+
+**The Role of JSON Key-Value Pairs:**
+
+JSON provides a **structured way to organize data** using key-value pairs:
+- **Keys** are property names (e.g., `"destinationName"`, `"groupSize"`, `"calendarPlanner"`)
+- **Values** can be strings, numbers, arrays, or nested objects
+- This structure allows the website to:
+  1. **Store complex nested data** (e.g., `document.calendarPlanner.timeSlots[0].activity`)
+  2. **Access specific values** using dot notation (e.g., `document.destinationName`)
+  3. **Serialize/deserialize** data easily for storage and retrieval
+  4. **Maintain data relationships** (e.g., survey data nested within document objects)
+
+**Example of What's Stored in localStorage:**
+
+```javascript
+// Key: "tripPreferences_user123"
+// Value (as JSON string): '{"groupSize":"pair","budget":5000,"destinationStyle":["beach","mountain"]}'
+
+// When retrieved and parsed:
+const preferences = JSON.parse(localStorage.getItem('tripPreferences_user123'));
+// Returns: { groupSize: "pair", budget: 5000, destinationStyle: ["beach", "mountain"] }
+
+// Access nested values:
+const budget = preferences.budget;  // 5000
+const styles = preferences.destinationStyle;  // ["beach", "mountain"]
+```
+
+**Summary:**
+- **localStorage** = Temporary browser storage (frontend only, device-specific)
+- **MongoDB** = Permanent cloud storage (backend, accessible from any device)
+- **JSON** = The format/structure used to convert objects to strings for localStorage storage
+- **Key-value pairs** = The way JSON organizes data, allowing nested structures and easy access
 
 ---
 

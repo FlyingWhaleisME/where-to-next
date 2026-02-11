@@ -717,9 +717,9 @@ const DocumentEditingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">📝</div>
+          <div className="text-xl mb-4 font-bold text-gray-400">Loading</div>
           <p className="text-xl text-gray-600">Loading document...</p>
         </div>
       </div>
@@ -728,9 +728,9 @@ const DocumentEditingPage: React.FC = () => {
 
   if (!document) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
+          <div className="text-xl mb-4 font-bold text-red-400">Error</div>
           <p className="text-xl text-gray-600">Document not found</p>
         </div>
       </div>
@@ -738,7 +738,7 @@ const DocumentEditingPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -756,7 +756,7 @@ const DocumentEditingPage: React.FC = () => {
               value={documentName}
               onChange={(e) => setDocumentName(e.target.value)}
               placeholder="Enter destination name..."
-              className="text-4xl font-bold text-gray-800 text-center bg-transparent border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none px-4 py-2 w-full max-w-2xl mx-auto"
+              className="text-4xl font-bold text-gray-800 text-center bg-transparent border-b-2 border-gray-300 focus:border-emerald-500 focus:outline-none px-4 py-2 w-full max-w-2xl mx-auto"
             />
           </div>
           <p className="text-xl text-gray-600 mb-8">
@@ -769,10 +769,10 @@ const DocumentEditingPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="bg-blue-50 rounded-2xl p-6 mb-8 border border-blue-200"
+          className="bg-emerald-50 rounded-2xl p-6 mb-8 border border-emerald-200"
         >
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-lg font-semibold text-blue-800">📋 Survey Origin & Summary</h3>
+            <h3 className="text-lg font-semibold text-emerald-800">Survey Origin & Summary</h3>
             <div className="flex space-x-3">
               {savedPreferences.length > 0 && (
                 <button
@@ -780,7 +780,7 @@ const DocumentEditingPage: React.FC = () => {
                     console.log('Switch Preferences clicked, savedPreferences:', savedPreferences);
                     setShowPreferenceModal(true);
                   }}
-                  className="text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="text-sm bg-emerald-500 text-white px-3 py-1 rounded-lg hover:bg-emerald-600 transition-colors"
                 >
                   Switch Preferences ({savedPreferences.length})
                 </button>
@@ -789,20 +789,20 @@ const DocumentEditingPage: React.FC = () => {
           </div>
           
           {/* Big Idea Survey - Full Width */}
-          <div className="bg-white rounded-xl p-6 border border-blue-200 shadow-sm">
+          <div className="bg-white rounded-xl p-6 border border-emerald-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xl font-semibold text-blue-800">🎯 Big Idea Survey</h4>
-              <span className="text-sm text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+              <h4 className="text-xl font-semibold text-emerald-800">Big Idea Survey</h4>
+              <span className="text-sm text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">
                 {document.surveyOrigin?.bigIdeaSurveyDate ? 
                   new Date(document.surveyOrigin.bigIdeaSurveyDate).toLocaleDateString() : 
                   'Legacy survey'
                 }
               </span>
             </div>
-            <div className="text-sm text-blue-700 mb-4">
+            <div className="text-sm text-emerald-700 mb-4">
               <strong>Survey Name:</strong> {document.surveyOrigin?.bigIdeaSurveyName || 'Legacy survey'}
             </div>
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4">
               {renderSurveySummary(document.bigIdeaSurveyData, 'bigIdea')}
             </div>
           </div>
@@ -816,7 +816,7 @@ const DocumentEditingPage: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.45 }}
             className="bg-white rounded-2xl shadow-xl p-8 mb-8"
           >
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">👥 Group Members</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Group Members</h2>
             
             <div className="space-y-4">
               {groupMembers.map((member, index) => (
@@ -826,7 +826,7 @@ const DocumentEditingPage: React.FC = () => {
                     value={member}
                     onChange={(e) => updateArrayItem(setGroupMembers, index, e.target.value)}
                     placeholder={`Group member ${index + 1} name`}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                   {groupMembers.length > 1 && (
                     <button
@@ -841,7 +841,7 @@ const DocumentEditingPage: React.FC = () => {
               
               <button
                 onClick={() => addArrayItem(setGroupMembers)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
               >
                 <span>+</span>
                 <span>Add Group Member</span>
@@ -867,7 +867,7 @@ const DocumentEditingPage: React.FC = () => {
                   value={travelerName}
                   onChange={(e) => setTravelerName(e.target.value)}
                   placeholder="Enter your name for the Travel Handbook"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
               
@@ -885,7 +885,7 @@ const DocumentEditingPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="bg-white rounded-2xl shadow-xl p-8 mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">📅 Dates & Duration</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Dates & Duration</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -896,7 +896,7 @@ const DocumentEditingPage: React.FC = () => {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
             
@@ -908,7 +908,7 @@ const DocumentEditingPage: React.FC = () => {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -922,7 +922,7 @@ const DocumentEditingPage: React.FC = () => {
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="e.g., 2 weeks, 10 days, 1 month"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               Default from Big Idea survey. Update based on your AI discussions.
@@ -937,7 +937,7 @@ const DocumentEditingPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="bg-white rounded-2xl shadow-xl p-8 mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">💰 Budget</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Budget</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
@@ -948,7 +948,7 @@ const DocumentEditingPage: React.FC = () => {
                 <select
                   value={budgetCurrency}
                   onChange={(e) => setBudgetCurrency(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                  className="px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50"
                 >
                   <option value="USD">$ USD - US Dollar</option>
                   <option value="EUR">€ EUR - Euro</option>
@@ -967,7 +967,7 @@ const DocumentEditingPage: React.FC = () => {
                     setBudgetAmount(parsed);
                   }}
                   placeholder="Enter amount"
-                  className="flex-1 px-4 py-2 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -1012,7 +1012,7 @@ const DocumentEditingPage: React.FC = () => {
                 e.target.style.height = e.target.scrollHeight + 'px';
               }}
               placeholder="Document key insights from your budget planning discussions, special considerations, or detailed financial breakdowns..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[80px]"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none min-h-[80px]"
               style={{ height: 'auto', minHeight: '80px' }}
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -1028,7 +1028,7 @@ const DocumentEditingPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="bg-white rounded-2xl shadow-xl p-8 mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">🚗 Transportation</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Transportation</h2>
           
           <div className="space-y-6">
             <div>
@@ -1040,7 +1040,7 @@ const DocumentEditingPage: React.FC = () => {
                 value={humanizeTransportation(transportationTo)}
                 onChange={(e) => setTransportationTo(e.target.value)}
                 placeholder="e.g., Flight from JFK to ICN, Train from Paris to London"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Your chosen method for reaching the destination. Intelligently populated from your comprehensive travel survey.
@@ -1060,7 +1060,7 @@ const DocumentEditingPage: React.FC = () => {
                   e.target.style.height = e.target.scrollHeight + 'px';
                 }}
                 placeholder="Document key insights and decisions from your transportation planning discussions..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[80px]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none min-h-[80px]"
                 style={{ height: 'auto', minHeight: '80px' }}
               />
             </div>
@@ -1074,7 +1074,7 @@ const DocumentEditingPage: React.FC = () => {
                 value={humanizeTransportation(transportationWithin)}
                 onChange={(e) => setTransportationWithin(e.target.value)}
                 placeholder="e.g., Public Transportation, Rental Car, Walking, Taxi/Uber"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Your preferred methods for exploring the destination locally. Pre-populated from your detailed survey responses.
@@ -1094,7 +1094,7 @@ const DocumentEditingPage: React.FC = () => {
                   e.target.style.height = e.target.scrollHeight + 'px';
                 }}
                 placeholder="Document insights and decisions from your local transportation planning discussions..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[80px]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none min-h-[80px]"
                 style={{ height: 'auto', minHeight: '80px' }}
               />
             </div>
@@ -1109,7 +1109,7 @@ const DocumentEditingPage: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="bg-white rounded-2xl shadow-xl p-8 mb-8"
           >
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">💰 Expense Sharing</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Expense Sharing</h2>
             
             <div className="space-y-6">
               <div>
@@ -1119,7 +1119,7 @@ const DocumentEditingPage: React.FC = () => {
                 <select
                   value={expenseSharingPolicy}
                   onChange={(e) => setExpenseSharingPolicy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   <option value="">Select expense sharing policy...</option>
                   <option value="split">Split Equally</option>
@@ -1148,7 +1148,7 @@ const DocumentEditingPage: React.FC = () => {
                           value={policy}
                           onChange={(e) => updateArrayItem(setCustomExpensePolicies, index, e.target.value)}
                           placeholder={`Custom policy ${index + 1}`}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         />
                         {customExpensePolicies.length > 1 && (
                           <button
@@ -1163,7 +1163,7 @@ const DocumentEditingPage: React.FC = () => {
                     
                     <button
                       onClick={() => addArrayItem(setCustomExpensePolicies)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      className="flex items-center space-x-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                     >
                       <span>+</span>
                       <span>Add Policy</span>
@@ -1190,10 +1190,10 @@ const DocumentEditingPage: React.FC = () => {
                 id="showGroupRules"
                 checked={showGroupRules}
                 onChange={(e) => setShowGroupRules(e.target.checked)}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
               />
               <label htmlFor="showGroupRules" className="text-2xl font-bold text-gray-800 cursor-pointer">
-                📋 Group Rules
+                Group Rules
               </label>
             </div>
             
@@ -1215,7 +1215,7 @@ const DocumentEditingPage: React.FC = () => {
                       value={rule}
                       onChange={(e) => updateArrayItem(setGroupRules, index, e.target.value)}
                       placeholder={`Group rule ${index + 1}`}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     />
                     {groupRules.length > 1 && (
                       <button
@@ -1230,7 +1230,7 @@ const DocumentEditingPage: React.FC = () => {
                 
                 <button
                   onClick={() => addArrayItem(setGroupRules)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                 >
                   <span>+</span>
                   <span>Add Group Rule</span>
@@ -1248,13 +1248,13 @@ const DocumentEditingPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="bg-white rounded-2xl shadow-xl p-8 mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">📋 Options Organizer</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Options Organizer</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Accommodation Options */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏨 Accommodation Options
+                Accommodation Options
               </label>
               <div className="space-y-2">
                 {accommodationOptions.map((option, index) => (
@@ -1267,7 +1267,7 @@ const DocumentEditingPage: React.FC = () => {
                         newOptions[index] = e.target.value;
                         setAccommodationOptions(newOptions);
                       }}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                       placeholder="Hotel name, Airbnb, etc."
                     />
                     <button
@@ -1293,7 +1293,7 @@ const DocumentEditingPage: React.FC = () => {
             {/* Meal Options */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🍽️ Meal Options
+                Meal Options
               </label>
               <div className="space-y-2">
                 {mealOptions.map((option, index) => (
@@ -1306,7 +1306,7 @@ const DocumentEditingPage: React.FC = () => {
                         newOptions[index] = e.target.value;
                         setMealOptions(newOptions);
                       }}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                       placeholder="Restaurant, cuisine type, etc."
                     />
                     <button
@@ -1332,7 +1332,7 @@ const DocumentEditingPage: React.FC = () => {
             {/* Activity Options */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🎯 Activity Options
+                Activity Options
               </label>
               <div className="space-y-2">
                 {activityOptions.map((option, index) => (
@@ -1345,7 +1345,7 @@ const DocumentEditingPage: React.FC = () => {
                         newOptions[index] = e.target.value;
                         setActivityOptions(newOptions);
                       }}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                       placeholder="Museum, tour, activity, etc."
                     />
                     <button
@@ -1383,7 +1383,7 @@ const DocumentEditingPage: React.FC = () => {
             disabled={saving}
             className="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? '💾 Saving...' : '💾 Save Changes'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </motion.div>
         
@@ -1412,7 +1412,7 @@ const DocumentEditingPage: React.FC = () => {
               {selectedPreference && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center mb-2">
-                    <span className="text-red-600 text-lg mr-2">⚠️</span>
+                    <span className="text-red-600 text-lg mr-2">!</span>
                     <h4 className="font-semibold text-red-800">Warning</h4>
                   </div>
                   <p className="text-red-700 text-sm">
@@ -1429,7 +1429,7 @@ const DocumentEditingPage: React.FC = () => {
                     key={pref.id || index}
                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                       selectedPreference?.id === pref.id
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-emerald-500 bg-emerald-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => setSelectedPreference(pref)}
@@ -1471,7 +1471,7 @@ const DocumentEditingPage: React.FC = () => {
                 <button
                   onClick={confirmPreferenceSwitch}
                   disabled={!selectedPreference}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Switch Preferences
                 </button>

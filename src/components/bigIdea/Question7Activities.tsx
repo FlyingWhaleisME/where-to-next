@@ -301,7 +301,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="text-6xl mb-4"
           >
-            🎯
+            
           </motion.div>
           <p className="text-gray-600 text-lg">
             Tell us about the specific activities you're excited about for each trip vibe you selected.
@@ -347,7 +347,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
                           value={activity}
                           onChange={(e) => updateActivity(vibe, activityIndex, e.target.value)}
                           placeholder={getVibePlaceholder(vibe)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         />
                       </div>
                       <button
@@ -361,7 +361,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
                   
                   <button
                     onClick={() => addActivity(vibe)}
-                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
+                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors flex items-center justify-center"
                   >
                     <span className="mr-2">+</span>
                     Add another activity
@@ -386,7 +386,7 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
             disabled={!canProceedToNext() || selectedVibes.length === 0}
             className={`px-6 py-3 rounded-xl font-medium transition-colors ${
               canProceedToNext() && selectedVibes.length > 0
-                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                ? 'bg-gradient-to-r from-emerald-500 to-rose-500 text-white hover:from-emerald-600 hover:to-rose-600'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >

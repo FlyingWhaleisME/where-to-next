@@ -119,15 +119,15 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
                 className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left relative ${
                   isSelected
                     ? isDontMind 
-                      ? 'border-purple-500 bg-purple-50 shadow-lg'
-                      : 'border-blue-500 bg-blue-50 shadow-lg'
+                      ? 'border-rose-500 bg-rose-50 shadow-lg'
+                      : 'border-emerald-500 bg-emerald-50 shadow-lg'
                     : (!isDontMind && dontMindSelected)
                       ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
-                      : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+                      : 'border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md'
                 }`}
               >
                 {isSelected && !isDontMind && (
-                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  <div className="absolute -top-2 -right-2 bg-emerald-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
                     #{rank}
                   </div>
                 )}
@@ -137,8 +137,8 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
                 </h4>
                 <p className="text-gray-600 text-sm">{option.description}</p>
                 {isDontMind && dontMindSelected && (
-                  <div className="mt-2 text-purple-600 text-sm font-medium">
-                    ✨ Other options disabled
+                  <div className="mt-2 text-rose-500 text-sm font-medium">
+                    Other options disabled
                   </div>
                 )}
               </motion.button>
@@ -163,7 +163,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
                   type="checkbox"
                   checked={changeThroughTrip}
                   onChange={(e) => setChangeThroughTrip(e.target.checked)}
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-5 h-5 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500"
                 />
                 <span className="text-gray-700">
                   I might change transportation methods during my trip
@@ -175,7 +175,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
                   type="checkbox"
                   checked={changeType}
                   onChange={(e) => setChangeType(e.target.checked)}
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-5 h-5 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500"
                 />
                 <span className="text-gray-700">
                   I'm open to changing my transportation preference based on recommendations
@@ -191,9 +191,9 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 mb-8"
+          className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 mb-8"
         >
-          <h4 className="text-lg font-semibold text-gray-800 mb-3">✅ Your Local Transportation Preferences:</h4>
+          <h4 className="text-lg font-semibold text-gray-800 mb-3">Your Local Transportation Preferences:</h4>
           <div className="space-y-2 text-gray-700">
             <p>
               <span className="font-medium">Preferences:</span>
@@ -207,8 +207,8 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
                     key={value} 
                     className={`px-3 py-1 rounded-full text-sm font-medium ${
                       isDontMind 
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-blue-100 text-blue-800'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-emerald-100 text-emerald-800'
                     }`}
                   >
                     {!isDontMind && `#${index + 1} `}{option?.label || value}
@@ -217,10 +217,10 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
               })}
             </div>
             {changeThroughTrip && (
-              <p className="text-sm">💡 Open to changing methods during the trip</p>
+              <p className="text-sm">Open to changing methods during the trip</p>
             )}
             {changeType && (
-              <p className="text-sm">🔄 Open to recommendation-based changes</p>
+              <p className="text-sm">Open to recommendation-based changes</p>
             )}
           </div>
         </motion.div>
@@ -246,7 +246,7 @@ const TransportationSection: React.FC<TransportationSectionProps> = ({
           disabled={selectedTransportation.length === 0}
           className={`btn-primary text-lg px-8 py-4 ${
             selectedTransportation.length > 0
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+              ? 'bg-gradient-to-r from-emerald-600 to-rose-500 hover:from-emerald-700 hover:to-rose-600'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >

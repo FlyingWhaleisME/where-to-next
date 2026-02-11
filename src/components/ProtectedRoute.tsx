@@ -44,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         setIsAuthorized(false);
         setIsChecking(false);
         // Show login required popup
-        alert('🔒 Please log in to access this feature.\n\nClick "Login" or "Register" in the top navigation bar.');
+        alert('Please log in to access this feature.\n\nClick "Login" or "Register" in the top navigation bar.');
         window.location.href = '/';
         return;
       }
@@ -134,7 +134,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (typeof window !== 'undefined') {
       // Use setTimeout to avoid blocking render cycle
       setTimeout(() => {
-        alert('🔒 Please log in to access this feature.\n\nClick "Login" or "Register" in the top navigation bar.');
+        alert('Please log in to access this feature.\n\nClick "Login" or "Register" in the top navigation bar.');
         window.location.href = '/';
       }, 0);
     }
@@ -144,9 +144,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Show loading state while checking
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-rose-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Checking authentication...</p>
         </div>
       </div>

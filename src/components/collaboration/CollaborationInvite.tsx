@@ -54,7 +54,7 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
-            📤 Invite Others
+            Invite Others
           </h2>
           <button
             onClick={onClose}
@@ -98,7 +98,7 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
                 className={`px-4 py-2 rounded-lg transition-colors touch-manipulation ${
                   copied 
                     ? 'bg-green-600 text-white' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
                 }`}
                 style={{ touchAction: 'manipulation' }}
               >
@@ -119,7 +119,7 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
                 console.log('📧 [DEBUG] Touch end - Email button');
                 shareViaEmail();
               }}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-manipulation"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors touch-manipulation"
               style={{ touchAction: 'manipulation' }}
             >
               <span>📧</span>
@@ -137,15 +137,15 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors touch-manipulation"
               style={{ touchAction: 'manipulation' }}
             >
-              <span>📋</span>
+              <span>Copy</span>
               <span>Copy Code</span>
             </button>
           </div>
 
           {/* Instructions */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">How to join:</h4>
-            <ol className="text-sm text-blue-700 space-y-1">
+          <div className="bg-emerald-50 rounded-lg p-4">
+            <h4 className="font-medium text-emerald-800 mb-2">How to join:</h4>
+            <ol className="text-sm text-emerald-700 space-y-1">
               <li>1. Go to the website</li>
               <li>2. Click "Join Room" button</li>
               <li>3. Enter the share code: <strong>{shareCode}</strong></li>

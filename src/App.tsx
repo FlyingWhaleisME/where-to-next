@@ -194,7 +194,7 @@ function App() {
   // BrowserRouter is a React Router component that enables client-side routing
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50">
         <RouteChangeHandler onRouteChange={handleRouteChange} />
         <Header />
         <main className="flex-1">

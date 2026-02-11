@@ -297,7 +297,7 @@ const CollaborationHomeToggle: React.FC = () => {
             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
         }`}
       >
-        <span>{isEnabled ? '🔗' : '🔌'}</span>
+        <span>{isEnabled ? 'Link' : 'Off'}</span>
         <span className="hidden sm:inline">{isEnabled ? 'Communicating' : 'Start Communication'}</span>
         <span className="sm:hidden">{isEnabled ? 'On' : 'Start'}</span>
       </motion.button>
@@ -309,7 +309,7 @@ const CollaborationHomeToggle: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowJoinRoom(true)}
-          className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2 text-sm sm:text-base"
+          className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center space-x-2 text-sm sm:text-base"
         >
           <span>🚪</span>
           <span>Join Room</span>
@@ -339,7 +339,7 @@ const CollaborationHomeToggle: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleShowPanel}
-          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           title="Open communication panel"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -149,6 +149,14 @@ const FinalizedDocumentPage: React.FC = () => {
                 return;
               }
               
+              // Re-verify authentication before setting document state (prevents showing data after logout)
+              const verifyUser = getCurrentUser();
+              if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
+                console.log('🔒 [DEBUG] FinalizedDocumentPage: User logged out during document load, redirecting');
+                window.location.href = '/';
+                return;
+              }
+              
               console.log('✅ [DEBUG] FinalizedDocumentPage: Document ownership verified. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
               setDocument(foundDoc);
               // Check if current user is the creator
@@ -171,6 +179,38 @@ const FinalizedDocumentPage: React.FC = () => {
     }
       }
     }
+    
+    // Listen for logout events to redirect immediately
+    const handleUserLogout = () => {
+      console.log('🔒 [DEBUG] FinalizedDocumentPage: User logged out, redirecting');
+      window.location.href = '/';
+    };
+    
+    // Listen for storage changes (detects logout from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if ((e.key === 'token' && !e.newValue) || (e.key === 'user' && !e.newValue)) {
+        console.log('🔒 [DEBUG] FinalizedDocumentPage: Logout detected via storage event, redirecting');
+        handleUserLogout();
+      }
+    };
+    
+    // Periodic auth check every 1 second (only for non-shared views)
+    const authCheckInterval = setInterval(() => {
+      const shareCode = searchParams.get('code');
+      if (!shareCode && (!isAuthenticated() || !getCurrentUser())) {
+        console.log('🔒 [DEBUG] FinalizedDocumentPage: Periodic check - user logged out, redirecting');
+        handleUserLogout();
+      }
+    }, 1000);
+    
+    window.addEventListener('userLogout', handleUserLogout);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(authCheckInterval);
+      window.removeEventListener('userLogout', handleUserLogout);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [documentId, searchParams]);
 
   const handleInviteClick = async () => {
@@ -259,7 +299,7 @@ const FinalizedDocumentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Loading...</h2>
@@ -271,9 +311,9 @@ const FinalizedDocumentPage: React.FC = () => {
 
   if (error || !document) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
+          <div className="text-xl mb-4 font-bold text-red-400">Error</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
           <p className="text-gray-600">{error || 'Document not found'}</p>
         </div>
@@ -284,7 +324,7 @@ const FinalizedDocumentPage: React.FC = () => {
   const isGroupTravel = (document.bigIdeaSurveyData?.groupSize || document.surveyData?.groupSize) !== 'solo';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -306,11 +346,11 @@ const FinalizedDocumentPage: React.FC = () => {
             }
           </p>
                   {isSharedView && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-                      <p className="text-blue-800 font-medium">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-8">
+                      <p className="text-emerald-800 font-medium">
                         You're viewing a shared document. This document was created and shared by another user.
                       </p>
-                      <p className="text-blue-600 text-sm mt-2">
+                      <p className="text-emerald-600 text-sm mt-2">
                         <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
                 </p>
               </div>
@@ -414,7 +454,7 @@ const FinalizedDocumentPage: React.FC = () => {
             />
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <div className="text-4xl mb-2">📝</div>
+              <div className="text-lg mb-2 font-bold text-gray-400">Document</div>
               <p>Please set your travel dates to use the daily planner!</p>
             </div>
             )}
@@ -429,12 +469,12 @@ const FinalizedDocumentPage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
               <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-                🤝 Travel Companion Contract
+                Travel Companion Contract
               </h2>
               
             <div className="bg-yellow-50 rounded-2xl p-6 border border-yellow-200">
               <div className="text-center mb-6">
-                <div className="text-4xl mb-3">📋</div>
+                
                 <h3 className="text-xl font-semibold text-yellow-800 mb-2">
                   Group Travel Agreement
                 </h3>
@@ -452,19 +492,19 @@ const FinalizedDocumentPage: React.FC = () => {
                       {document.editableFields?.dates?.startDate ? (
                         <strong>{new Date(document.editableFields.dates.startDate).toLocaleDateString()}</strong>
                       ) : (
-                        <span className="text-blue-600 font-medium">[Date from]</span>
+                        <span className="text-emerald-600 font-medium">[Date from]</span>
                       )}{' '}
                       to{' '}
                       {document.editableFields?.dates?.endDate ? (
                         <strong>{new Date(document.editableFields.dates.endDate).toLocaleDateString()}</strong>
                       ) : (
-                        <span className="text-blue-600 font-medium">[Date to]</span>
+                        <span className="text-emerald-600 font-medium">[Date to]</span>
                       )}{' '}
                       for{' '}
                       {document.editableFields?.dates?.duration ? (
                         <strong>{document.editableFields.dates.duration}</strong>
                       ) : (
-                        <span className="text-blue-600 font-medium">[Duration]</span>
+                        <span className="text-emerald-600 font-medium">[Duration]</span>
                       )}.
                     </p>
 
@@ -484,7 +524,7 @@ const FinalizedDocumentPage: React.FC = () => {
                           {document.bigIdeaSurveyData.budgetType === 'perDay' ? ' per day' : ' total'}
                         </strong>
                       ) : (
-                        <span className="text-blue-600 font-medium">[Budget]</span>
+                        <span className="text-emerald-600 font-medium">[Budget]</span>
                       )}{' '}
                       to{' '}
                       {document.editableFields?.budget?.perDay || document.bigIdeaSurveyData?.budgetType === 'perDay' ? (
@@ -505,7 +545,7 @@ const FinalizedDocumentPage: React.FC = () => {
                       ) : document.tripTracingSurveyData?.travelMethod?.travelMethod ? (
                         <strong>{document.tripTracingSurveyData.travelMethod.travelMethod}</strong>
                       ) : (
-                        <span className="text-blue-600 font-medium">[Transport to Destination]</span>
+                        <span className="text-emerald-600 font-medium">[Transport to Destination]</span>
                       )}{' '}
                       to <strong>{document.destinationName}</strong>.
                       {document.editableFields?.transportation?.toNotes && document.editableFields.transportation.toNotes.trim() !== '' && (
@@ -521,7 +561,7 @@ const FinalizedDocumentPage: React.FC = () => {
                       ) : (document.tripTracingSurveyData?.transportation?.selectedMethods && Array.isArray(document.tripTracingSurveyData.transportation.selectedMethods)) ? (
                         <strong>{document.tripTracingSurveyData.transportation.selectedMethods.join(', ')}</strong>
                       ) : (
-                        <span className="text-blue-600 font-medium">[Transportation within Destination]</span>
+                        <span className="text-emerald-600 font-medium">[Transportation within Destination]</span>
                       )}{' '}
                       for local transportation.
                       {document.editableFields?.transportation?.withinNotes && document.editableFields.transportation.withinNotes.trim() !== '' && (
@@ -575,7 +615,7 @@ const FinalizedDocumentPage: React.FC = () => {
                               );
                             }
                           }
-                          return <span className="text-blue-600 font-medium">[trip focus and goals]</span>;
+                          return <span className="text-emerald-600 font-medium">[trip focus and goals]</span>;
                         })()}
                       </p>
                       
@@ -686,7 +726,7 @@ const FinalizedDocumentPage: React.FC = () => {
                               );
                             }
                           }
-                          return <span className="text-blue-600 font-medium">[planning approach and expectations]</span>;
+                          return <span className="text-emerald-600 font-medium">[planning approach and expectations]</span>;
                         })()}
                       </p>
                       
@@ -797,7 +837,7 @@ const FinalizedDocumentPage: React.FC = () => {
                               </span>
                             ))
                         ) : (
-                          <span className="text-blue-600 font-medium">[Travel Companion Names]</span>
+                          <span className="text-emerald-600 font-medium">[Travel Companion Names]</span>
                         )}
                       </p>
             </div>
@@ -826,9 +866,9 @@ const FinalizedDocumentPage: React.FC = () => {
               📖 Travel Handbook
             </h2>
             
-            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
+            <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-200">
               <div className="text-center mb-6">
-                <div className="text-4xl mb-3">📚</div>
+                
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   Personal Travel Guide for {document.editableFields?.travelerName || 'Your Name'}
                   </h3>
@@ -846,19 +886,19 @@ const FinalizedDocumentPage: React.FC = () => {
                     {document.editableFields?.dates?.startDate ? (
                       <strong>{new Date(document.editableFields.dates.startDate).toLocaleDateString()}</strong>
                     ) : (
-                      <span className="text-blue-600 font-medium">[Start Date]</span>
+                      <span className="text-emerald-600 font-medium">[Start Date]</span>
                     )}{' '}
                     to{' '}
                     {document.editableFields?.dates?.endDate ? (
                       <strong>{new Date(document.editableFields.dates.endDate).toLocaleDateString()}</strong>
                     ) : (
-                      <span className="text-blue-600 font-medium">[End Date]</span>
+                      <span className="text-emerald-600 font-medium">[End Date]</span>
                     )}{' '}
                     for{' '}
                     {document.editableFields?.dates?.duration ? (
                       <strong>{document.editableFields.dates.duration}</strong>
                     ) : (
-                      <span className="text-blue-600 font-medium">[Duration]</span>
+                      <span className="text-emerald-600 font-medium">[Duration]</span>
                     )}.
                   </p>
 
@@ -874,7 +914,7 @@ const FinalizedDocumentPage: React.FC = () => {
                         )}
                       </>
                     ) : (
-                      <span className="text-blue-600 font-medium">[Budget Information]</span>
+                      <span className="text-emerald-600 font-medium">[Budget Information]</span>
                     )}
                   </p>
 
@@ -885,7 +925,7 @@ const FinalizedDocumentPage: React.FC = () => {
                     {document.editableFields?.transportation?.toDestination ? (
                       <strong>{document.editableFields.transportation.toDestination}</strong>
                     ) : (
-                      <span className="text-blue-600 font-medium">[Transport to Destination]</span>
+                      <span className="text-emerald-600 font-medium">[Transport to Destination]</span>
                     )}{' '}
                     to <strong>{document.destinationName}</strong>.
                     {document.editableFields?.transportation?.toNotes && document.editableFields.transportation.toNotes.trim() !== '' && (
@@ -898,7 +938,7 @@ const FinalizedDocumentPage: React.FC = () => {
                     {document.editableFields?.transportation?.withinDestination ? (
                       <strong>{document.editableFields.transportation.withinDestination}</strong>
                     ) : (
-                      <span className="text-blue-600 font-medium">[Local Transportation]</span>
+                      <span className="text-emerald-600 font-medium">[Local Transportation]</span>
                     )}
                     {document.editableFields?.transportation?.withinNotes && document.editableFields.transportation.withinNotes.trim() !== '' && (
                       <span>. Notes: <em>{document.editableFields.transportation.withinNotes}</em></span>
@@ -942,7 +982,7 @@ const FinalizedDocumentPage: React.FC = () => {
           className="bg-gray-50 rounded-3xl p-8 text-center"
         >
           <h3 className="text-2xl font-bold text-gray-800 mb-4">
-            📊 Document Information
+            Document Information
                 </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
@@ -1018,7 +1058,7 @@ const FinalizedDocumentPage: React.FC = () => {
                       navigator.clipboard.writeText(shareCode);
                       alert('Share code copied to clipboard!');
                     }}
-                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                    className="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors text-sm"
                   >
                     Copy
               </button>

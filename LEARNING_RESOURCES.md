@@ -30,11 +30,6 @@ This document lists the resources a beginner would have used to learn and implem
    - **Why:** Step-by-step Mongoose tutorial specifically for Node.js/Express
    - **What I learned:** Schema definition, model creation, CRUD operations with Mongoose
 
-3. **"MongoDB Atlas Setup Tutorial" by Web Dev Simplified**
-   - YouTube: https://www.youtube.com/watch?v=rPqRyYJmx2g
-   - **Why:** Shows how to set up cloud database (MongoDB Atlas) for production
-   - **What I learned:** Cloud database setup, connection strings, environment variables
-
 #### **Blogs & Documentation:**
 1. **MongoDB Official Documentation - Getting Started**
    - URL: https://www.mongodb.com/docs/manual/tutorial/getting-started/

@@ -183,12 +183,12 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`option-card relative cursor-pointer transition-all ${
-                isSelected ? 'selected border-2 border-blue-500 bg-blue-50' : ''
+                isSelected ? 'selected border-2 border-emerald-500 bg-emerald-50' : ''
               }`}
               onClick={() => handlePriorityToggle(priority.value)}
             >
               {rank && (
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   {rank}
                 </div>
               )}
@@ -200,7 +200,7 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
                 
                 <div className={`mt-3 p-2 rounded-lg text-center font-medium ${
                   isSelected 
-                    ? 'bg-blue-500 text-white' 
+                    ? 'bg-emerald-500 text-white' 
                     : 'bg-gray-200 text-gray-600'
                 }`}>
                   {isSelected ? `Ranked #${rank}` : 'Click to select'}
@@ -241,7 +241,7 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
           {/* Success message when ready to continue */}
           <div className="mt-4 p-4 bg-green-100 rounded-lg border border-green-300">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl">🎉</span>
+              <span className="text-xl font-bold">Done!</span>
               <div>
                 <p className="font-semibold text-green-800">All set! You can now continue.</p>
                 <p className="text-sm text-green-700">Click the "Next" button below to see your AI travel summary.</p>
@@ -306,10 +306,10 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
                 console.error('❌ onNext is not a function:', typeof onNext);
               }
             }}
-            className="px-6 py-3 rounded-xl font-semibold bg-purple-500 text-white hover:bg-purple-600 transition-all ml-2"
+            className="px-6 py-3 rounded-xl font-semibold bg-rose-500 text-white hover:bg-rose-500 transition-all ml-2"
             style={{ zIndex: 1000, position: 'relative', cursor: 'pointer' }}
           >
-            🚀 Get AI Summary Now
+            Get AI Summary Now
           </button>
         )}
       </div>

@@ -173,7 +173,7 @@ const Question3Budget: React.FC<Question3BudgetProps> = ({
             onClick={() => handleBudgetTypeChange('total')}
             className={`px-4 py-2 rounded-lg font-medium transition-all ${
               budgetType === 'total'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -183,7 +183,7 @@ const Question3Budget: React.FC<Question3BudgetProps> = ({
             onClick={() => handleBudgetTypeChange('perDay')}
             className={`px-4 py-2 rounded-lg font-medium transition-all ${
               budgetType === 'perDay'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -204,7 +204,7 @@ const Question3Budget: React.FC<Question3BudgetProps> = ({
               onClick={() => handleCurrencyChange(curr.code)}
               className={`p-3 rounded-lg border-2 transition-all ${
                 currency === curr.code
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-emerald-500 bg-emerald-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -225,7 +225,7 @@ const Question3Budget: React.FC<Question3BudgetProps> = ({
           value={budget}
           onChange={(e) => handleBudgetChange(e.target.value)}
           placeholder={budgetType === 'total' ? 'e.g., 5,000' : 'e.g., 200'}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg"
           disabled={isNotSure}
         />
         
@@ -241,7 +241,7 @@ const Question3Budget: React.FC<Question3BudgetProps> = ({
           ) : (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
               <p className="text-yellow-800 font-medium mb-2">
-                💡 No worries! We'll help you figure out your budget
+                No worries! We'll help you figure out your budget
               </p>
               <p className="text-sm text-yellow-700 mb-3">
                 The AI will guide you through a discussion to determine an appropriate budget based on your preferences and destination.
@@ -283,21 +283,21 @@ const Question3Budget: React.FC<Question3BudgetProps> = ({
       </div>
 
       {/* Enhanced XE Currency Converter */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-xl">
+      <div className="mb-6 p-4 bg-emerald-50 rounded-xl">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-semibold text-blue-800 mb-1">Need to check currency rates?</h4>
-            <p className="text-sm text-blue-600 mb-2">
+            <h4 className="font-semibold text-emerald-800 mb-1">Need to check currency rates?</h4>
+            <p className="text-sm text-emerald-600 mb-2">
               Use XE Currency Converter to check current exchange rates and convert between currencies
             </p>
-            <p className="text-xs text-blue-500">
+            <p className="text-xs text-emerald-500">
               This helps you understand the real cost in your local currency and compare with other destinations. 
               Exchange rates can significantly affect your budget planning!
             </p>
           </div>
           <button
             onClick={openXE}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
           >
             Open XE
           </button>

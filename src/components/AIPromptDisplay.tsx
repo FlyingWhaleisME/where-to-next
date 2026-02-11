@@ -82,15 +82,15 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
+        <div className="bg-gradient-to-r from-emerald-500 to-rose-500 text-white p-6">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold">{prompt.title}</h2>
-              <p className="text-blue-100 mt-2">{prompt.description}</p>
+              <p className="text-emerald-100 mt-2">{prompt.description}</p>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:text-blue-200 transition-colors text-2xl"
+              className="text-white hover:text-emerald-200 transition-colors text-2xl"
             >
               ✕
             </button>
@@ -100,12 +100,12 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Tips Section */}
-          <div className="bg-blue-50 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-blue-800 mb-3">💡 Pro Tips</h3>
+          <div className="bg-emerald-50 rounded-xl p-4 mb-6">
+            <h3 className="font-semibold text-emerald-800 mb-3">Pro Tips</h3>
             <ul className="space-y-2">
               {prompt.tips.map((tip, index) => (
-                <li key={index} className="text-blue-700 flex items-start">
-                  <span className="text-blue-500 mr-2">•</span>
+                <li key={index} className="text-emerald-700 flex items-start">
+                  <span className="text-emerald-500 mr-2">•</span>
                   {tip}
                 </li>
               ))}
@@ -113,8 +113,8 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
           </div>
 
           {/* AI Tools Links */}
-          <div className="bg-purple-50 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-purple-800 mb-3">🤖 Popular AI Tools</h3>
+          <div className="bg-rose-50 rounded-xl p-4 mb-6">
+            <h3 className="font-semibold text-rose-700 mb-3">🤖 Popular AI Tools</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {prompt.links.map((link, index) => (
                 <a
@@ -122,7 +122,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white rounded-lg p-3 text-center hover:shadow-md transition-shadow text-purple-700 hover:text-purple-800"
+                  className="bg-white rounded-lg p-3 text-center hover:shadow-md transition-shadow text-rose-600 hover:text-rose-700"
                 >
                   {link.includes('openai') ? 'ChatGPT' : 
                    link.includes('claude') ? 'Claude' : 
@@ -136,7 +136,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
           {prompt.preferencesPrompt && (
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-gray-800">📋 Step 1: Preferences Prompt</h3>
+                <h3 className="font-semibold text-gray-800">Step 1: Preferences Prompt</h3>
                 <div className="flex space-x-2">
                   {isEditingPreferences ? (
                     <>
@@ -156,14 +156,14 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                   ) : (
                     <button
                       onClick={() => setIsEditingPreferences(true)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                      className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
                     >
                       Edit Prompt
                     </button>
                   )}
                   <button
                     onClick={handleCopyPreferencesPrompt}
-                    className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors relative"
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-500 transition-colors relative"
                   >
                     {showCopiedPreferences ? 'Copied!' : 'Copy Prompt'}
                   </button>
@@ -174,7 +174,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                 <textarea
                   value={editedPreferencesPrompt}
                   onChange={(e) => setEditedPreferencesPrompt(e.target.value)}
-                  className="w-full h-48 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+                  className="w-full h-48 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none font-mono text-sm"
                   placeholder="Edit your preferences prompt here..."
                 />
               ) : (
@@ -185,7 +185,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                 </div>
               )}
               <p className="text-sm text-gray-600 mt-2">
-                💡 Copy this prompt first to establish context with your AI assistant
+                Copy this prompt first to establish context with your AI assistant
               </p>
             </div>
           )}
@@ -194,7 +194,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
           {prompt.destinationPrompt && (
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-gray-800">🌍 Step 2: Destination Prompt</h3>
+                <h3 className="font-semibold text-gray-800">Step 2: Destination Prompt</h3>
                 <div className="flex space-x-2">
                   {isEditingDestination ? (
                     <>
@@ -214,14 +214,14 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                   ) : (
                     <button
                       onClick={() => setIsEditingDestination(true)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                      className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
                     >
                       Edit Prompt
                     </button>
                   )}
                   <button
                     onClick={handleCopyDestinationPrompt}
-                    className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors relative"
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-500 transition-colors relative"
                   >
                     {showCopiedDestination ? 'Copied!' : 'Copy Prompt'}
                   </button>
@@ -232,7 +232,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                 <textarea
                   value={editedDestinationPrompt}
                   onChange={(e) => setEditedDestinationPrompt(e.target.value)}
-                  className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+                  className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none font-mono text-sm"
                   placeholder="Edit your destination prompt here..."
                 />
               ) : (
@@ -243,7 +243,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                 </div>
               )}
               <p className="text-sm text-gray-600 mt-2">
-                💡 Copy this prompt after the preferences prompt for destination-specific information
+                Copy this prompt after the preferences prompt for destination-specific information
               </p>
             </div>
           )}
@@ -252,13 +252,13 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
           {prompt.prompt && !prompt.preferencesPrompt && !prompt.destinationPrompt && (
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-gray-800">📝 Your AI Prompt</h3>
+                <h3 className="font-semibold text-gray-800">Your AI Prompt</h3>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(prompt.prompt || '');
                     }}
-                    className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-500 transition-colors"
                   >
                     Copy Prompt
                   </button>

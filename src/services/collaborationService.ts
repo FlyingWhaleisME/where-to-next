@@ -128,7 +128,7 @@ class CollaborationService {
       // Check if token is expired
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('🔍 [DEBUG] Token payload:', payload);
+        console.log('[DEBUG] Token payload:', payload);
         
         if (payload.exp && payload.exp * 1000 < Date.now()) {
           const expiredAt = new Date(payload.exp * 1000);
@@ -147,36 +147,45 @@ class CollaborationService {
         return;
       }
 
+      // Create new WebSocket connection to backend server
+      // wss:// indicates secure WebSocket (like https://)
+      // Token included in URL for authentication
       const wsUrl = `wss://where-to-next-backend.onrender.com?token=${encodeURIComponent(token)}`;
-      console.log('🌐 [DEBUG] Connecting to WebSocket:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
-      
+      console.log('[DEBUG] Connecting to WebSocket:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
       this.ws = new WebSocket(wsUrl);
 
+      // Onopen event handler fires when WebSocket connection successfully opens
+      // When the connection is established, it is ready to send and receive messages
       this.ws.onopen = () => {
         console.log('✅ [DEBUG] WebSocket connection opened successfully');
-        console.log('🔗 [DEBUG] Connected to collaboration server');
-        this.isConnecting = false; // Reset connection flag
+        this.isConnecting = false;
+        // Update service state to reflect connection status
         this.state.isConnected = true;
+        // Clear any existing error
         this.state.lastError = null;
         this.reconnectAttempts = 0;
+        // Notify other parts of application that connection is established
         this.callbacks.onConnectionChange?.(true);
         
-        // Start heartbeat to keep connection alive
         this.startHeartbeat();
       };
 
+      // Onmessage event handler fires when a message is received from the server
       this.ws.onmessage = (event) => {
+        // Parse JSON string to JavaScript object
+        // event.data contains the message as string
         this.handleMessage(JSON.parse(event.data));
       };
 
+      // Onclose event handler fires when the WebSocket connection is closed
       this.ws.onclose = (event) => {
-        console.log('🔌 [DEBUG] WebSocket connection closed');
-        console.log('📊 [DEBUG] Close code:', event.code, 'Reason:', event.reason);
-        console.log('🔌 [DEBUG] Disconnected from collaboration server');
+        console.log('[DEBUG] WebSocket connection closed');
+        console.log('[DEBUG] Close code:', event.code, 'Reason:', event.reason);
+        console.log('[DEBUG] Disconnected from collaboration server');
         
-        this.isConnecting = false; // Reset connection flag
+        // Reset connection flag to allow new connection attempts
+        this.isConnecting = false; 
         
-        // Explain close codes
         const closeCodeMeanings = {
           1000: 'Normal closure',
           1001: 'Going away',
@@ -191,21 +200,24 @@ class CollaborationService {
           1015: 'TLS handshake failure'
         };
         
-        console.log('💡 [DEBUG] Close code meaning:', closeCodeMeanings[event.code as keyof typeof closeCodeMeanings] || 'Unknown');
+        console.log('[DEBUG] Close code meaning:', closeCodeMeanings[event.code as keyof typeof closeCodeMeanings] || 'Unknown');
         
-        // Stop heartbeat on disconnect
+        // Stop heartbeat to prevent stale connections
         this.stopHeartbeat();
         
+        // Update service state to reflect disconnection status
         this.state.isConnected = false;
+        // Notify other parts of application that connection is lost
         this.callbacks.onConnectionChange?.(false);
         
         // Always attempt to reconnect unless it's a manual close (1000) or user logged out
         const token = localStorage.getItem('token');
         const hasActiveRoom = localStorage.getItem('current-room-id');
-        
+
+        // Attempt to reconnect unless it's a manual close (1000) or user logged out or no active room
         if (event.code !== 1000 && token && hasActiveRoom && this.reconnectAttempts < this.maxReconnectAttempts) {
-          console.log('🔄 [DEBUG] Attempting to reconnect...');
-          console.log('🔄 [DEBUG] Reason: User still authenticated and has active room');
+          console.log('[DEBUG] Attempting to reconnect...');
+          console.log('[DEBUG] Reason: User still authenticated and has active room');
           this.attemptReconnect();
         } else if (event.code === 1000) {
           console.log('✅ [DEBUG] Normal closure - no reconnection needed');
@@ -216,6 +228,7 @@ class CollaborationService {
         }
       };
 
+      // Onerror event handler fires when the WebSocket connection encounters an error
       this.ws.onerror = (error) => {
         console.error('❌ [DEBUG] WebSocket error occurred:', error);
         console.error('❌ [DEBUG] Error type:', error.type);
@@ -224,7 +237,7 @@ class CollaborationService {
         this.isConnecting = false; // Reset connection flag
         
         // Check if backend server is running
-        console.log('🔍 [DEBUG] Checking if backend server is accessible...');
+        console.log('[DEBUG] Checking if backend server is accessible...');
         fetch('https://where-to-next-backend.onrender.com/api/health')
           .then(response => {
             if (response.ok) {
@@ -236,18 +249,14 @@ class CollaborationService {
           })
           .then(data => {
             if (data) {
-              console.log('📊 [DEBUG] Backend health:', data);
+              console.log('[DEBUG] Backend health:', data);
             }
           })
           .catch(err => {
             console.error('❌ [DEBUG] Backend server is not accessible:', err.message);
-            console.log('💡 [DEBUG] Possible causes:');
-            console.log('   - Backend server is not running');
-            console.log('   - Backend server is on different port');
-            console.log('   - Firewall blocking connection');
-            console.log('   - Network connectivity issues');
           });
         
+        // Update service state to reflect error status
         this.state.lastError = 'Connection error - please check if backend server is running';
         this.callbacks.onError?.('Connection error - please check if backend server is running');
       };
@@ -289,20 +298,20 @@ class CollaborationService {
     console.log('📨 [DEBUG] Collaboration message received:', message.type);
     console.log('📨 [DEBUG] Full message:', message);
 
+    // Switch statement: Handle different message types
     switch (message.type) {
       case 'connection_established':
+        // Server confirmed connection
         console.log('✅ Collaboration connection established');
-        // If there's a pending room join, execute it now
+
         if (this.pendingJoinRoom) {
           console.log('🔄 [DEBUG] Executing pending room join:', this.pendingJoinRoom);
           this.sendJoinRoomMessage(this.pendingJoinRoom.roomId, this.pendingJoinRoom.userId, this.pendingJoinRoom.userName, this.pendingJoinRoom.isRoomCreator);
           this.pendingJoinRoom = null;
         } else {
-          // If no pending join but we have a saved room ID, try to rejoin
           const savedRoomId = localStorage.getItem('current-room-id');
           if (savedRoomId) {
             console.log('🔄 [DEBUG] No pending join but found saved room ID, attempting to rejoin:', savedRoomId);
-            // Try to get user info from token
             try {
               const token = localStorage.getItem('token');
               if (token) {
@@ -323,10 +332,12 @@ class CollaborationService {
         break;
 
       case 'user_joined':
+        // Another user joined the room
         this.handleUserJoined(message.user);
         break;
 
       case 'user_left':
+        // User left the room
         this.handleUserLeft(message.user);
         break;
 
@@ -335,11 +346,13 @@ class CollaborationService {
         break;
 
       case 'chat_message':
+        // New chat message received
         console.log('💬 [DEBUG] Received chat_message type in handleMessage:', message);
         this.handleChatMessage(message);
         break;
 
       case 'preferences_updated':
+        // Trip preferences were updated by another user
         this.handlePreferencesUpdate(message.preferences, message.updatedBy);
         break;
 

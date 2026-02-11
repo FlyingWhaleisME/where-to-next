@@ -533,6 +533,52 @@ Keep the response concise but informative, focusing on actionable advice.
   }
 });
 
+// ===== DEBUG ENDPOINT =====
+// Debug endpoint to view all accounts and their data (for development/testing only)
+app.get('/api/debug/all-data', async (req, res) => {
+  try {
+    // Get all users (include password hash for debug)
+    const users = await User.find({});
+    
+    // For each user, get their documents and preferences
+    const usersWithData = await Promise.all(users.map(async (user) => {
+      const documents = await Document.find({ userId: user._id });
+      const preferences = await TripPreferences.find({ userId: user._id });
+      
+      return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        passwordHash: user.password,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+        documentsCount: documents.length,
+        documents: documents.map(doc => ({
+          id: doc._id,
+          title: doc.title || doc.destinationName || 'Untitled',
+          createdAt: doc.createdAt,
+          lastModified: doc.lastModified
+        })),
+        preferencesCount: preferences.length,
+        preferences: preferences.map(pref => ({
+          id: pref._id,
+          surveyName: pref.surveyName || 'Unnamed Survey',
+          completedAt: pref.completedAt,
+          createdAt: pref.createdAt
+        }))
+      };
+    }));
+    
+    res.json({
+      totalUsers: usersWithData.length,
+      users: usersWithData,
+      fetchedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ===== ADDITIONAL ENDPOINTS =====
 
 // Get user profile

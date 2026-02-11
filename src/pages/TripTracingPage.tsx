@@ -63,11 +63,14 @@ const TripTracingPage: React.FC = () => {
 
   }, [navigate]);
 
+
   const handleNext = () => {
+    // 1. Check if there are more sections to navigate to
     if (currentSection < totalSections) {
+      // 2. Calculate next section (default: current + 1)
       let nextSection = currentSection + 1;
       
-      // For section 2 (TravelMethod), check if we should skip FlightSection  
+      // 3. Check if section 3 (Flight) should be skipped based on travel method
       if (currentSection === 2) {
         // Get the most current transportation method from localStorage as backup
         const savedState = localStorage.getItem('tripTracingState');
@@ -84,42 +87,45 @@ const TripTracingPage: React.FC = () => {
         
         console.log('Navigation Debug - Current section:', currentSection, 'Travel method:', travelMethod, 'Next section will be:', nextSection);
         
-        // Only skip FlightSection if we have a definitive non-flight method
+        // Only skip section 3 (Flight) if we have a definitive non-flight method
         if (travelMethod === 'driving' || travelMethod === 'public_transport') {
           console.log('Skipping FlightSection - travel method is:', travelMethod);
-          nextSection = 4; // Skip to TransportationSection (local transport)
+          nextSection = 4; // Skip to section 4 (Transportation)
         } else {
           console.log('Proceeding to FlightSection - travel method is:', travelMethod || 'undefined (defaulting to show flights)');
         }
       }
       
-      // For section 5 (MealPatterns), check if we should skip ExpensesSection for solo travelers
+      // For section 5 (Meal patterns), check if we should skip section 6 (Expenses) for solo travelers
       if (currentSection === 5 && tripPreferences?.groupSize === 'solo') {
         console.log('Skipping ExpensesSection - solo traveler');
-        nextSection = 7; // Skip to FoodPreferencesSection
+        nextSection = 7; // Skip to section 7 (Food preferences)
       }
       
+      // 4. Navigate to the calculated next section
       setCurrentSection(nextSection);
       
       // Scroll to top of page for better UX
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (isComplete()) {
-      // Save Trip Tracing survey with metadata before showing summary
+      // 5. Save Trip Tracing survey with metadata before showing summary
       saveTripTracingSurvey();
       
-      // Show summary review instead of AI prompt
+      // 6. Show summary review instead of AI prompt
       setShowSummary(true);
       
-      // Scroll to top to ensure summary modal is visible
+      // 7. Scroll to top to ensure summary modal is visible
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePrevious = () => {
+    // 1. Check if not on the first section
     if (currentSection > 1) {
+      // 2. Calculate previous section (default: current - 1)
       let prevSection = currentSection - 1;
       
-      // For section 4 (TransportationSection), check if we should skip FlightSection going backwards
+      // 3. Check if section 3 (Flight) should be skipped when going backwards
       if (currentSection === 4) {
         const savedState = localStorage.getItem('tripTracingState');
         let travelMethod = tripTracingState.travelMethod?.travelMethod;
@@ -133,19 +139,20 @@ const TripTracingPage: React.FC = () => {
           }
         }
         
-        // Only skip FlightSection if we have a definitive non-flight method
+        // Only skip section 3 (Flight) if we have a definitive non-flight method
         if (travelMethod === 'driving' || travelMethod === 'public_transport') {
           console.log('Skipping FlightSection going backwards - travel method is:', travelMethod);
-          prevSection = 2; // Go back to TravelMethodSection
+          prevSection = 2; // Go back to section 2 (Travel method)
         }
       }
       
-      // For section 7 (FoodPreferences), check if we should skip ExpensesSection going backwards for solo travelers
+      // 4. Check if section 6 (Expenses) should be skipped when going backwards for solo travelers
       if (currentSection === 7 && tripPreferences?.groupSize === 'solo') {
         console.log('Skipping ExpensesSection going backwards - solo traveler');
-        prevSection = 5; // Go back to MealPatternsSection
+        prevSection = 5; // Go back to section 5 (Meal patterns)
       }
       
+      // 5. Navigate to the calculated previous section
       setCurrentSection(prevSection);
       
       // Scroll to top of page for better UX
@@ -182,7 +189,7 @@ const TripTracingPage: React.FC = () => {
   };
 
   const isComplete = (): boolean => {
-    // Base requirements (always needed)
+    // 1. Check base requirements, always required regardless of user choices
     const baseRequirementsComplete = !!(
       tripTracingState.accommodation?.selectedTypes &&
       tripTracingState.accommodation.selectedTypes.length > 0 &&
@@ -195,12 +202,12 @@ const TripTracingPage: React.FC = () => {
       tripTracingState.foodPreferences.styles.length > 0
     );
     
-    // Conditional requirement: expenses only needed for group travelers (not solo)
+    // 2. Check conditional requirements, expenses only needed for group travelers (not solo)
     const expensesComplete = tripPreferences?.groupSize === 'solo' 
       ? true // Solo travelers don't need expense sharing
       : !!(tripTracingState.expenses?.type); // Group travelers need expense type
     
-    // Conditional requirement: flight details only needed if travel method requires flights
+    // 3. Check conditional requirements, flight details only needed if travel method requires flights
     const travelMethod = tripTracingState.travelMethod?.travelMethod;
     const flightComplete = (travelMethod === 'flights' || travelMethod === 'undecided')
       ? !!(tripTracingState.flight?.priority && tripTracingState.flight?.flightType)
@@ -421,7 +428,7 @@ const TripTracingPage: React.FC = () => {
 
   if (!tripPreferences) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white rounded-3xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h2>
@@ -433,7 +440,7 @@ const TripTracingPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -453,7 +460,7 @@ const TripTracingPage: React.FC = () => {
         {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
             <motion.div
-              className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full"
+              className="bg-gradient-to-r from-emerald-500 to-rose-500 h-3 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${(currentSection / totalSections) * 100}%` }}
               transition={{ duration: 0.5 }}
@@ -500,7 +507,7 @@ const TripTracingPage: React.FC = () => {
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-gray-800">
-                  📋 Review Your Trip Tracing Responses
+                  Review Your Trip Tracing Responses
                 </h2>
                 <button
                   onClick={() => setShowSummary(false)}
@@ -521,10 +528,10 @@ const TripTracingPage: React.FC = () => {
                             const option = ['hotel', 'hostel', 'airbnb', 'resort', 'guesthouse', 'camping', 'dont-mind']
                               .map(val => ({
                                 value: val,
-                                label: val === 'hotel' ? '🏨 Hotel' :
+                                label: val === 'hotel' ? 'Hotel' :
                                        val === 'hostel' ? '🛏️ Hostel' :
-                                       val === 'airbnb' ? '🏠 Airbnb' :
-                                       val === 'resort' ? '🏖️ Resort' :
+                                       val === 'airbnb' ? 'Airbnb' :
+                                       val === 'resort' ? 'Resort' :
                                        val === 'guesthouse' ? '🏡 Guesthouse' :
                                        val === 'camping' ? '⛺ Camping' :
                                        '🤷‍♂️ I don\'t mind'
@@ -537,8 +544,8 @@ const TripTracingPage: React.FC = () => {
                                 key={type} 
                                 className={`px-2 py-1 rounded-full text-sm ${
                                   isDontMind 
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : 'bg-blue-100 text-blue-800'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : 'bg-emerald-100 text-emerald-800'
                                 }`}
                               >
                                 {!isDontMind && `#${index + 1} `}{option?.label || type}
@@ -558,8 +565,8 @@ const TripTracingPage: React.FC = () => {
                         <div className="space-y-2">
                           <p>
                             <span className="font-medium">Method:</span> {
-                              tripTracingState.travelMethod.travelMethod === 'flights' ? '✈️ Flying' :
-                              tripTracingState.travelMethod.travelMethod === 'driving' ? '🚗 Driving' :
+                              tripTracingState.travelMethod.travelMethod === 'flights' ? 'Flying' :
+                              tripTracingState.travelMethod.travelMethod === 'driving' ? 'Driving' :
                               tripTracingState.travelMethod.travelMethod === 'public_transport' ? '🚂 Public Transportation' :
                               '🤔 Undecided'
                             }
@@ -590,7 +597,7 @@ const TripTracingPage: React.FC = () => {
                             const option = ['rental-car', 'public-transport', 'ride-sharing', 'walking-biking', 'taxis', 'dont-mind']
                               .map(val => ({
                                 value: val,
-                                label: val === 'rental-car' ? '🚗 Rental Car' :
+                                label: val === 'rental-car' ? 'Rental Car' :
                                        val === 'public-transport' ? '🚌 Public Transportation' :
                                        val === 'ride-sharing' ? '🚕 Ride Sharing' :
                                        val === 'walking-biking' ? '🚶‍♂️ Walking & Biking' :
@@ -605,8 +612,8 @@ const TripTracingPage: React.FC = () => {
                                 key={method} 
                                 className={`px-2 py-1 rounded-full text-sm ${
                                   isDontMind 
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : 'bg-blue-100 text-blue-800'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : 'bg-emerald-100 text-emerald-800'
                                 }`}
                               >
                                 {!isDontMind && `#${index + 1} `}{option?.label || method}
@@ -705,7 +712,7 @@ const TripTracingPage: React.FC = () => {
                   }}
                   className="btn-primary text-lg px-8 py-4"
                 >
-                  Continue to AI Prompt 🚀
+                  Continue to AI Prompt
                 </button>
               </div>
             </motion.div>

@@ -6,6 +6,8 @@ import { getCurrentUser } from '../services/apiService';
 const HomePage: React.FC = () => {
   const [hasTripPreferences, setHasTripPreferences] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [debugData, setDebugData] = useState<any>(null);
+  const [showDebugModal, setShowDebugModal] = useState(false);
   const { safeNavigate } = useSurveyProgress();
   
   // Temporary test function for backend communication
@@ -21,6 +23,23 @@ const HomePage: React.FC = () => {
       }
     } catch (error) {
       alert(`Backend connection failed:\n${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Debug function to view all accounts and data in MongoDB
+  const viewAllAccounts = async () => {
+    try {
+      const { debugApi } = await import('../services/apiService');
+      const result = await debugApi.getAllData();
+      
+      if (result.data) {
+        setDebugData(result.data);
+        setShowDebugModal(true);
+      } else {
+        alert(`Failed to fetch data:\n${result.error}`);
+      }
+    } catch (error) {
+      alert(`Failed to fetch data:\n${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -49,29 +68,23 @@ const HomePage: React.FC = () => {
 
     // Listen for login/logout events
     const handleUserLogin = () => {
-      console.log('User logged in - updating HomePage user state');
       const currentUser = getCurrentUser();
       setUser(currentUser);
     };
 
     const handleUserLogout = () => {
-      console.log('User logged out - clearing HomePage user state');
       setUser(null);
     };
 
-    // Listen for custom events
     window.addEventListener('userLogin', handleUserLogin);
     window.addEventListener('userLogout', handleUserLogout);
 
-    // Also listen for storage changes (token updates)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'token') {
         if (e.newValue) {
-          // Token added - user logged in
           const currentUser = getCurrentUser();
           setUser(currentUser);
         } else {
-          // Token removed - user logged out
           setUser(null);
         }
       }
@@ -87,7 +100,7 @@ const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 sm:py-12 lg:py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-8 sm:py-12 lg:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -95,16 +108,22 @@ const HomePage: React.FC = () => {
           transition={{ duration: 0.8 }}
         >
           <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-800 mb-4 sm:mb-6">
-            🌍 Where To Next?
+            Where To Next?
           </h1>
           
-          {/* Temporary backend test button */}
-          <div className="mb-6 sm:mb-8">
+          {/* Temporary test buttons */}
+          <div className="mb-6 sm:mb-8 flex justify-center gap-3 flex-wrap">
             <button
               onClick={testBackendConnection}
               className="px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm sm:text-base"
             >
               Test Backend Connection
+            </button>
+            <button
+              onClick={viewAllAccounts}
+              className="px-3 sm:px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm sm:text-base"
+            >
+              View All Accounts & Data
             </button>
           </div>
           
@@ -115,7 +134,6 @@ const HomePage: React.FC = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-shadow"
             >
-              <div className="text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4">💡</div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Big Idea</h2>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Identify your dream trip before you start planning.
@@ -134,7 +152,6 @@ const HomePage: React.FC = () => {
               transition={{ duration: 0.8, delay: 0.5 }}
               className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-shadow"
             >
-              <div className="text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4">🎯</div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Trip Tracing</h2>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Specify your trip details from your big ideas.
@@ -163,7 +180,7 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200"
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">🚀 How It Works</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">How It Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-left">
               <div>
                 <div className="text-xl sm:text-2xl mb-2">1️⃣</div>
@@ -190,6 +207,71 @@ const HomePage: React.FC = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Debug Modal - View All Accounts */}
+      {showDebugModal && debugData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">
+                All Accounts & Data ({debugData.totalUsers} users)
+              </h2>
+              <button
+                onClick={() => setShowDebugModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Fetched at: {debugData.fetchedAt}</p>
+            
+            <div className="space-y-6">
+              {debugData.users?.map((u: any, idx: number) => (
+                <div key={u.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">
+                    User {idx + 1}: {u.name || 'No Name'}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mb-3">
+                    <p><strong>ID:</strong> <code className="bg-gray-200 px-1 rounded text-xs">{u.id}</code></p>
+                    <p><strong>Email:</strong> {u.email}</p>
+                    <p><strong>Password (hash):</strong> <code className="bg-gray-200 px-1 rounded text-xs break-all">{u.passwordHash?.substring(0, 30)}...</code></p>
+                    <p><strong>Created:</strong> {new Date(u.createdAt).toLocaleString()}</p>
+                    <p><strong>Last Login:</strong> {u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}</p>
+                  </div>
+                  
+                  {/* Documents */}
+                  <div className="mb-2">
+                    <h4 className="font-semibold text-gray-700">Documents ({u.documentsCount})</h4>
+                    {u.documents?.length > 0 ? (
+                      <ul className="list-disc list-inside text-sm text-gray-600 ml-2">
+                        {u.documents.map((doc: any) => (
+                          <li key={doc.id}>{doc.title} <span className="text-gray-400 text-xs">({new Date(doc.createdAt).toLocaleDateString()})</span></li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-400 ml-2">No documents</p>
+                    )}
+                  </div>
+                  
+                  {/* Preferences */}
+                  <div>
+                    <h4 className="font-semibold text-gray-700">Saved Surveys ({u.preferencesCount})</h4>
+                    {u.preferences?.length > 0 ? (
+                      <ul className="list-disc list-inside text-sm text-gray-600 ml-2">
+                        {u.preferences.map((pref: any) => (
+                          <li key={pref.id}>{pref.surveyName} <span className="text-gray-400 text-xs">({pref.completedAt ? new Date(pref.completedAt).toLocaleDateString() : 'N/A'})</span></li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-400 ml-2">No saved surveys</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

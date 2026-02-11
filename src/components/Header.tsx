@@ -8,10 +8,6 @@ import DocumentShareModal from './documents/DocumentShareModal';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showPreferenceModal, setShowPreferenceModal] = useState(false);
-  const [latestPreferences, setLatestPreferences] = useState<any>(null);
-  const [savedPreferences, setSavedPreferences] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -22,29 +18,9 @@ const Header: React.FC = () => {
   const [showChatRoomModal, setShowChatRoomModal] = useState(false);
   const [showDocumentShareModal, setShowDocumentShareModal] = useState(false);
   const location = useLocation();
-  const { safeNavigate, surveyProgress } = useSurveyProgress();
+  const { safeNavigate } = useSurveyProgress();
 
   useEffect(() => {
-    // Load latest trip preferences
-    const latestPrefs = localStorage.getItem('tripPreferences');
-    if (latestPrefs) {
-      try {
-        setLatestPreferences(JSON.parse(latestPrefs));
-      } catch (error) {
-        console.error('Error parsing latest preferences:', error);
-      }
-    }
-    
-    // Load saved trip preferences
-    const savedPrefs = localStorage.getItem('savedTripPreferences');
-    if (savedPrefs) {
-      try {
-        setSavedPreferences(JSON.parse(savedPrefs));
-      } catch (error) {
-        console.error('Error parsing saved preferences:', error);
-      }
-    }
-
     // Load user from localStorage
     const currentUser = getCurrentUser();
     if (currentUser) {
@@ -53,15 +29,12 @@ const Header: React.FC = () => {
 
     // Check for active room
     const activeRoomId = localStorage.getItem('current-room-id');
-    console.log('🔍 [DEBUG] Header: Initial room check, activeRoomId:', activeRoomId);
     if (activeRoomId) {
       setHasActiveRoom(true);
       setRoomId(activeRoomId);
-      console.log('🔍 [DEBUG] Header: Set hasActiveRoom to true, roomId:', activeRoomId);
     } else {
       setHasActiveRoom(false);
       setRoomId(null);
-      console.log('🔍 [DEBUG] Header: Set hasActiveRoom to false');
     }
   }, [location]);
 
@@ -69,7 +42,6 @@ const Header: React.FC = () => {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'current-room-id') {
-        console.log('🔍 [DEBUG] Header: Room ID changed:', e.newValue);
         if (e.newValue) {
           setHasActiveRoom(true);
           setRoomId(e.newValue);
@@ -80,26 +52,18 @@ const Header: React.FC = () => {
       }
     };
 
-    // Also listen for custom events from collaboration system
     const handleRoomChange = (event: Event) => {
       const activeRoomId = localStorage.getItem('current-room-id');
-      const customEvent = event as CustomEvent;
-      console.log('🔍 [DEBUG] Header: Room change event received:', customEvent?.type, 'current room:', activeRoomId);
-      console.log('🔍 [DEBUG] Header: Event detail:', customEvent?.detail);
       if (activeRoomId) {
         setHasActiveRoom(true);
         setRoomId(activeRoomId);
-        console.log('🔍 [DEBUG] Header: Updated hasActiveRoom to true, roomId:', activeRoomId);
       } else {
         setHasActiveRoom(false);
         setRoomId(null);
-        console.log('🔍 [DEBUG] Header: Updated hasActiveRoom to false');
       }
     };
 
-    // Listen for notification updates from chatbox
     const handleNotificationUpdate = (event: CustomEvent) => {
-      console.log('🔍 [DEBUG] Header: Notification update received:', event.detail);
       setHasNewMessages(event.detail.hasNewMessages);
       setUnreadMessageCount(event.detail.unreadMessageCount);
     };
@@ -120,50 +84,16 @@ const Header: React.FC = () => {
   }, []);
 
   const handleAuth = async (email: string, password: string, name?: string) => {
-    console.log('🔐 [AUTH] handleAuth called:', {
-      isLogin,
-      email,
-      hasName: !!name,
-      timestamp: new Date().toISOString()
-    });
-    
     try {
       const result = isLogin 
         ? await authApi.login(email, password)
         : await authApi.register(email, password, name);
       
-      console.log('🔐 [AUTH] Backend response:', {
-        hasData: !!result.data,
-        hasError: !!result.error,
-        userId: result.data?.user?.id,
-        userEmail: result.data?.user?.email,
-        hasToken: !!result.data?.token
-      });
-      
       if (result.data) {
         const userData = result.data.user;
         const token = result.data.token;
         
-        console.log('✅ [AUTH] Login/Register successful:', {
-          userId: userData.id,
-          userEmail: userData.email,
-          userName: userData.name,
-          tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
-          timestamp: new Date().toISOString()
-        });
-        
-        // Store user and token
-        console.log('💾 [AUTH] Storing user data in localStorage:', {
-          userId: userData.id,
-          storageKey: 'user',
-          storageValue: JSON.stringify(userData)
-        });
         localStorage.setItem('user', JSON.stringify(userData));
-        
-        console.log('💾 [AUTH] Storing token in localStorage:', {
-          storageKey: 'token',
-          tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
-        });
         localStorage.setItem('token', token);
         
         setUser(userData);
@@ -173,54 +103,26 @@ const Header: React.FC = () => {
         // Migrate old data to user-specific storage on login
         try {
           const { migrateUserData } = require('../utils/userDataStorage');
-          console.log('🔄 [AUTH] Migrating old data for user:', userData.id);
           migrateUserData(userData.id);
         } catch (e) {
-          console.error('❌ [AUTH] Error migrating user data:', e);
+          console.error('Error migrating user data:', e);
         }
-        
-        // Verify storage after setting
-        const verifyUser = localStorage.getItem('user');
-        const verifyToken = localStorage.getItem('token');
-        console.log('✅ [AUTH] Verification after storage:', {
-          userStored: !!verifyUser,
-          tokenStored: !!verifyToken,
-          storedUserId: verifyUser ? JSON.parse(verifyUser).id : null
-        });
         
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('userLogin', {
           detail: { user: userData }
         }));
-        console.log('📢 [AUTH] userLogin event dispatched');
       } else {
-        console.error('❌ [AUTH] Login/Register failed:', result.error);
         alert(`Error: ${result.error}`);
       }
     } catch (error) {
-      console.error('❌ [AUTH] Network error:', error);
       alert('Network error. Please try again.');
     }
   };
 
   const handleLogout = () => {
-    console.log('🚪 [LOGOUT] ==========================================');
-    console.log('🚪 [LOGOUT] Logout button clicked');
-    console.log('🚪 [LOGOUT] Current pathname:', location.pathname);
-    console.log('🚪 [LOGOUT] Timestamp:', new Date().toISOString());
-    
-    // Get user info BEFORE any clearing
     const userStr = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
     const currentUser = userStr ? JSON.parse(userStr) : null;
-    
-    console.log('🚪 [LOGOUT] Current authentication state:', {
-      hasUserStr: !!userStr,
-      hasToken: !!token,
-      userId: currentUser?.id,
-      userEmail: currentUser?.email,
-      userName: currentUser?.name
-    });
     
     // Check if user is on a survey page or has unsaved data
     const isOnSurveyPage = location.pathname.includes('/big-picture') || 
@@ -232,100 +134,21 @@ const Header: React.FC = () => {
                           getUserData('tripTracingState') ||
                           getUserData('savedTripPreferences');
     
-    console.log('🚪 [LOGOUT] Survey/unsaved data check:', {
-      isOnSurveyPage,
-      hasUnsavedData: !!hasUnsavedData
-    });
-    
-    // Show confirmation dialog, especially if on survey page or has unsaved data
     let confirmMessage = 'Are you sure you want to log out?';
     if (isOnSurveyPage || hasUnsavedData) {
-      confirmMessage = '⚠️ WARNING: You are in the middle of completing a survey.\n\n' +
+      confirmMessage = 'WARNING: You are in the middle of completing a survey.\n\n' +
                       'If you log out now, your unsaved progress will be lost and will NOT be saved.\n\n' +
                       'Are you sure you want to log out?';
     }
     
     const confirmed = window.confirm(confirmMessage);
-    if (!confirmed) {
-      console.log('🚪 [LOGOUT] Logout cancelled by user');
-      return;
-    }
+    if (!confirmed) return;
     
-    console.log('🚪 [LOGOUT] User confirmed logout, proceeding...');
-    console.log('🚪 [LOGOUT] User ID to clear:', currentUser?.id);
-    
-    // Get user ID BEFORE clearing
-    const userId = currentUser?.id || null;
-    
-    if (!userId) {
-      console.warn('⚠️ [LOGOUT] No user ID found - user may already be logged out');
-    }
-    
-    // Clear ALL user data FIRST (including surveys and preferences)
-    // This must happen BEFORE clearing auth tokens to ensure we have the user ID
-    console.log('🚪 [LOGOUT] Calling apiLogout(true) to clear all user data...');
-    apiLogout(true); // true = clear all user data
-    
-    // Verify data was cleared
-    const verifyUser = localStorage.getItem('user');
-    const verifyToken = localStorage.getItem('token');
-    console.log('🚪 [LOGOUT] Verification after apiLogout:', {
-      userStillExists: !!verifyUser,
-      tokenStillExists: !!verifyToken,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Clear authentication AFTER clearing data
+    apiLogout(true);
     setUser(null);
-    console.log('🚪 [LOGOUT] User state cleared in component');
     
-    // Dispatch custom event to notify collaboration system
     window.dispatchEvent(new CustomEvent('userLogout'));
-    console.log('📢 [LOGOUT] userLogout event dispatched');
-    
-    // Force immediate redirect to home page (full page reload)
-    // This ensures no data can be accessed after logout
-    console.log('🚪 [LOGOUT] Forcing redirect to home page...');
-    console.log('🚪 [LOGOUT] ==========================================');
     window.location.href = '/';
-  };
-
-
-  const handleTripTracingClick = () => {
-    setShowDropdown(false);
-    
-    // If no preferences available, go directly to trip tracing
-    if (!latestPreferences && savedPreferences.length === 0) {
-      safeNavigate('/trip-tracing');
-      return;
-    }
-    
-    // Show preference selection modal
-    setShowPreferenceModal(true);
-  };
-
-  const handlePreferenceSelect = (preferenceSet: any | 'latest') => {
-    if (preferenceSet === 'latest') {
-      // Use latest preferences (already in localStorage)
-      safeNavigate('/trip-tracing');
-    } else {
-      // Load selected saved preferences
-      localStorage.setItem('tripPreferences', JSON.stringify(preferenceSet.preferences));
-      safeNavigate('/trip-tracing');
-    }
-    setShowPreferenceModal(false);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return 'Unknown date';
-    }
   };
 
   return (
@@ -340,7 +163,7 @@ const Header: React.FC = () => {
             <button onClick={() => safeNavigate('/')}>
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-rose-500 bg-clip-text text-transparent"
               >
                 Where To Next?
               </motion.div>
@@ -362,23 +185,23 @@ const Header: React.FC = () => {
                 <>
                   <button 
                     onClick={() => { setIsLogin(true); setShowAuthModal(true); }}
-                    className="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium"
+                    className="text-gray-600 hover:text-emerald-600 transition-colors duration-200 font-medium"
                   >
                     Login
                   </button>
                   <button 
                     onClick={() => { setIsLogin(false); setShowAuthModal(true); }}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors duration-200 font-medium"
                   >
                     Register
                   </button>
                 </>
               )}
 
-              {/* Shared Document Icon - Show for all users */}
+              {/* Shared Document Icon */}
               <button 
                 onClick={() => setShowDocumentShareModal(true)}
-                className="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium flex items-center space-x-1"
+                className="text-gray-600 hover:text-emerald-600 transition-colors duration-200 font-medium flex items-center space-x-1"
                 title="View Document by Code"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -387,32 +210,20 @@ const Header: React.FC = () => {
                 <span>Shared</span>
               </button>
 
-              {/* Chat Button - Show for all users, but require auth for functionality */}
+              {/* Chat Button */}
               <button 
                 onClick={() => {
-                  console.log('🔍 [DEBUG] Header: Chat button clicked');
-                  
                   if (!user) {
-                    // User not logged in - show auth modal
-                    console.log('🔍 [DEBUG] Header: User not logged in - showing auth modal');
                     setIsLogin(true);
                     setShowAuthModal(true);
                     return;
                   }
                   
-                  console.log('🔍 [DEBUG] Header: Current room ID:', localStorage.getItem('current-room-id'));
-                  console.log('🔍 [DEBUG] Header: Has active room:', hasActiveRoom);
-                  console.log('🔍 [DEBUG] Header: Room ID state:', roomId);
-                  
                   if (hasActiveRoom) {
-                    // User has an active room - show chatbox
-                    console.log('🔍 [DEBUG] Header: User has active room - showing chatbox');
                     setHasNewMessages(false);
                     setUnreadMessageCount(0);
                     window.dispatchEvent(new CustomEvent('showChatbox'));
                   } else {
-                    // User doesn't have an active room - show chat room modal
-                    console.log('🔍 [DEBUG] Header: User has no active room - showing chat room modal');
                     setShowChatRoomModal(true);
                   }
                 }}
@@ -432,64 +243,18 @@ const Header: React.FC = () => {
               
               <button 
                 onClick={() => safeNavigate('/profile')}
-                className="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium"
+                className="text-gray-600 hover:text-emerald-600 transition-colors duration-200 font-medium"
               >
                 Profile
               </button>
-
-              {/* Trip Survey Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowDropdown((v) => !v)}
-                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium flex items-center space-x-1 focus:outline-none"
-                  aria-haspopup="true"
-                  aria-expanded={showDropdown}
-                >
-                  Trip Survey
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                <AnimatePresence>
-                  {showDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-                    >
-                      <button
-                        onClick={() => {
-                          setShowDropdown(false);
-                          safeNavigate('/big-picture');
-                        }}
-                        className="block w-full text-left px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors rounded-t-lg"
-                      >
-                        Big Idea
-                      </button>
-                      {(latestPreferences || savedPreferences.length > 0) && (
-                        <button
-                          onClick={handleTripTracingClick}
-                          className="block w-full text-left px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                      >
-                        Trip Tracing
-                        </button>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
             </nav>
           </div>
         </div>
       </motion.header>
 
-      {/* Preference Selection Modal */}
+      {/* Authentication Modal */}
       <AnimatePresence>
-        {showPreferenceModal && (
+        {showAuthModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -497,7 +262,7 @@ const Header: React.FC = () => {
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
-                setShowPreferenceModal(false);
+                setShowAuthModal(false);
               }
             }}
           >
@@ -505,174 +270,42 @@ const Header: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800">
-                  🎯 Select Trip Preferences
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {isLogin ? 'Login' : 'Register'}
                 </h2>
                 <button
-                  onClick={() => setShowPreferenceModal(false)}
+                  onClick={() => setShowAuthModal(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl transition-colors"
                 >
                   ✕
                 </button>
               </div>
-              
-              <p className="text-gray-600 mb-6">
-                Choose which trip preferences to use for your Trip Tracing survey:
-              </p>
 
-              <div className="space-y-4">
-                {/* Latest Preferences Option */}
-                {latestPreferences && (
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200 cursor-pointer"
-                    onClick={() => handlePreferenceSelect('latest')}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="text-xl font-bold text-gray-800">🌟 Latest Survey Results</h3>
-                      <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                        Current
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                      <p><strong>Group Size:</strong> {latestPreferences.groupSize || 'Not specified'}</p>
-                      <p><strong>Budget:</strong> ${latestPreferences.budget || 'Not specified'}</p>
-                      <p><strong>Trip Vibe:</strong> {latestPreferences.tripVibe || 'Not specified'}</p>
-                      <p><strong>Planning Style:</strong> {
-                        typeof latestPreferences.planningStyle === 'number' 
-                          ? `${latestPreferences.planningStyle}%`
-                          : latestPreferences.planningStyle || 'Not specified'
-                      }</p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Saved Preferences Options */}
-                {savedPreferences.length > 0 && (
-                  <>
-                    <div className="border-t border-gray-200 pt-4">
-                      <h4 className="text-lg font-semibold text-gray-800 mb-3">💾 Your Saved Preferences:</h4>
-                    </div>
-                    
-                    {savedPreferences.map((preferenceSet) => (
-                      <motion.div
-                        key={preferenceSet.id}
-                        whileHover={{ scale: 1.02 }}
-                        className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 border border-green-200 cursor-pointer"
-                        onClick={() => handlePreferenceSelect(preferenceSet)}
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-xl font-bold text-gray-800">{preferenceSet.name}</h3>
-                          <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                            Saved
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-2">
-                          <p><strong>Group Size:</strong> {preferenceSet.preferences.groupSize || 'Not specified'}</p>
-                          <p><strong>Budget:</strong> ${preferenceSet.preferences.budget || 'Not specified'}</p>
-                          <p><strong>Trip Vibe:</strong> {preferenceSet.preferences.tripVibe || 'Not specified'}</p>
-                          <p><strong>Created:</strong> {formatDate(preferenceSet.createdAt)}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </>
-                )}
-
-                {/* No Preferences Available */}
-                {!latestPreferences && savedPreferences.length === 0 && (
-                  <div className="text-center py-8">
-                    <div className="text-6xl mb-4">📝</div>
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No Preferences Found</h3>
-                    <p className="text-gray-600 mb-4">
-                      Complete a Big Idea survey first to create trip preferences for Trip Tracing.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setShowPreferenceModal(false);
-                        navigate('/big-picture-planning');
-                      }}
-                      className="btn-primary px-6 py-3"
-                    >
-                      Start Big Idea Survey
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {(latestPreferences || savedPreferences.length > 0) && (
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => setShowPreferenceModal(false)}
-                    className="btn-secondary px-6 py-3"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              <AuthForm 
+                isLogin={isLogin} 
+                onSubmit={handleAuth}
+                onToggleMode={() => setIsLogin(!isLogin)}
+              />
             </motion.div>
           </motion.div>
         )}
-
-        {/* Authentication Modal */}
-        <AnimatePresence>
-          {showAuthModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                  setShowAuthModal(false);
-                }
-              }}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    {isLogin ? '🔐 Login' : '📝 Register'}
-                  </h2>
-                  <button
-                    onClick={() => setShowAuthModal(false)}
-                    className="text-gray-400 hover:text-gray-600 text-2xl transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <AuthForm 
-                  isLogin={isLogin} 
-                  onSubmit={handleAuth}
-                  onToggleMode={() => setIsLogin(!isLogin)}
-                />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Chat Room Modal */}
-        <ChatRoomModal
-          isOpen={showChatRoomModal}
-          onClose={() => setShowChatRoomModal(false)}
-        />
-
-        {/* Document Share Modal */}
-        <DocumentShareModal
-          isOpen={showDocumentShareModal}
-          onClose={() => setShowDocumentShareModal(false)}
-        />
-
       </AnimatePresence>
+
+      {/* Chat Room Modal */}
+      <ChatRoomModal
+        isOpen={showChatRoomModal}
+        onClose={() => setShowChatRoomModal(false)}
+      />
+
+      {/* Document Share Modal */}
+      <DocumentShareModal
+        isOpen={showDocumentShareModal}
+        onClose={() => setShowDocumentShareModal(false)}
+      />
     </div>
   );
 };
@@ -703,7 +336,7 @@ const AuthForm: React.FC<{
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             required={!isLogin}
           />
         </div>
@@ -717,7 +350,7 @@ const AuthForm: React.FC<{
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           required
         />
       </div>
@@ -730,7 +363,7 @@ const AuthForm: React.FC<{
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           required
           minLength={8}
         />
@@ -738,7 +371,7 @@ const AuthForm: React.FC<{
 
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        className="w-full bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
       >
         {isLogin ? 'Login' : 'Register'}
       </button>
@@ -747,7 +380,7 @@ const AuthForm: React.FC<{
         <button
           type="button"
           onClick={onToggleMode}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
         >
           {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
         </button>
@@ -756,4 +389,4 @@ const AuthForm: React.FC<{
   );
 };
 
-export default Header; 
+export default Header;

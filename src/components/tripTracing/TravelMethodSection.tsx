@@ -113,11 +113,11 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
         const destinations = prefs.destinationApproach?.specificDestinations;
         
         if (travelType === 'abroad') {
-          return "✈️ International travel typically requires flights";
+          return "International travel typically requires flights";
         }
         
         if (travelType === 'domestic') {
-          return "🚗 You have more transportation options for domestic travel";
+          return "You have more transportation options for domestic travel";
         }
         
         if (destinations?.some((dest: string) => 
@@ -129,7 +129,7 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
         }
         
         if (destinationStatus === 'open') {
-          return "🌍 Consider your transportation preferences as we plan your destinations";
+          return "Consider your transportation preferences as we plan your destinations";
         }
       } catch (error) {
         console.error('Error parsing trip preferences:', error);
@@ -208,7 +208,7 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
     >
       <div className="text-center mb-8">
         <h2 className="text-4xl font-bold text-gray-800 mb-4">
-          🚀 How are you getting TO your destination?
+          How are you getting TO your destination?
         </h2>
         <p className="text-xl text-gray-600 mb-2">
           {getHelperText()}
@@ -228,8 +228,8 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
             onClick={() => handleTravelMethodChange(option.id as any)}
             className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left ${
               travelMethodData.travelMethod === option.id
-                ? 'border-blue-500 bg-blue-50 shadow-lg'
-                : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+                ? 'border-emerald-500 bg-emerald-50 shadow-lg'
+                : 'border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md'
             }`}
           >
             <div className="text-4xl mb-3">{option.emoji}</div>
@@ -291,7 +291,7 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
                   value={travelMethodData.publicTransportDetails}
                   onChange={(e) => handlePublicTransportDetailsChange(e.target.value)}
                   placeholder="e.g., Helicopter, Private charter, RV, etc."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg"
                 />
               </motion.div>
             )}
@@ -305,14 +305,14 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 mb-8"
+            className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 mb-8"
           >
-            <h4 className="text-lg font-semibold text-gray-800 mb-3">✅ Your Travel Method Plan:</h4>
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">Your Travel Method Plan:</h4>
             <div className="space-y-2 text-gray-700">
               <p>
                 <span className="font-medium">Method:</span> {
-                  travelMethodData.travelMethod === 'flights' ? '✈️ Flying' :
-                  travelMethodData.travelMethod === 'driving' ? '🚗 Driving' :
+                  travelMethodData.travelMethod === 'flights' ? 'Flying' :
+                  travelMethodData.travelMethod === 'driving' ? 'Driving' :
                   travelMethodData.travelMethod === 'public_transport' ? '🚂 Public Transportation' :
                   '🤔 Need guidance'
                 }
@@ -330,7 +330,7 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
               )}
             </div>
             <p className="text-sm text-gray-600 mt-3">
-              💡 Our AI will provide specific booking strategies and resources for your transportation method
+              Our AI will provide specific booking strategies and resources for your transportation method
             </p>
           </motion.div>
         )}
@@ -356,7 +356,7 @@ const TravelMethodSection: React.FC<TravelMethodSectionProps> = ({
           disabled={!canProceedToNext()}
           className={`btn-primary text-lg px-8 py-4 ${
             canProceedToNext()
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+              ? 'bg-gradient-to-r from-emerald-600 to-rose-500 hover:from-emerald-700 hover:to-rose-600'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >

@@ -134,17 +134,17 @@ const Question5DestinationStyle: React.FC<Question5DestinationStyleProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`option-card relative cursor-pointer transition-all ${
-                isSelected ? 'selected border-2 border-blue-500 bg-blue-50' : ''
+                isSelected ? 'selected border-2 border-emerald-500 bg-emerald-50' : ''
               }`}
               onClick={() => handleStyleToggle(style.value)}
             >
               {rank && (
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   {rank}
                 </div>
               )}
               
-              <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 flex items-center justify-center">
+              <div className="w-full h-32 bg-gradient-to-br from-emerald-100 to-rose-100 rounded-lg mb-3 flex items-center justify-center">
                 <div className="text-4xl">{style.emoji}</div>
               </div>
               
@@ -153,7 +153,7 @@ const Question5DestinationStyle: React.FC<Question5DestinationStyleProps> = ({
               
               <div className={`mt-3 p-2 rounded-lg text-center font-medium ${
                 isSelected 
-                  ? 'bg-blue-500 text-white' 
+                  ? 'bg-emerald-500 text-white' 
                   : 'bg-gray-200 text-gray-600'
               }`}>
                 {isSelected ? `Ranked #${rank}` : 'Click to select'}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
+// TypeScript interface defines Reactcomponent props structure
+// Props allow parent component to pass data and callbacks to child
 interface Question1GroupSizeProps {
   onAnswer: (questionNumber: number, answer: any) => void;
   onNext: () => void;
@@ -10,6 +12,8 @@ interface Question1GroupSizeProps {
   canProceed: boolean;
 }
 
+// Functional component receives props via destructuring
+// React.FC indicates this is a React functional component
 const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
   onAnswer,
   onNext,
@@ -18,19 +22,24 @@ const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
   totalQuestions,
   canProceed
 }) => {
+  // React useState hooks for component state management
+  // Component re-renders when selectedGroupSize changes
   const [selectedGroupSize, setSelectedGroupSize] = useState<string>('');
   const [customRange, setCustomRange] = useState<string>('');
 
-  // Load previous answers on component mount
+  // React useEffect hook runs once when component mounts
+  // Loads previously saved answer from localStorage
   useEffect(() => {
     const savedPreferences = localStorage.getItem('tripPreferences');
     if (savedPreferences) {
       try {
         const preferences = JSON.parse(savedPreferences);
         if (preferences.groupSize) {
+          // Updates component state with saved group size
           setSelectedGroupSize(preferences.groupSize);
         }
         if (preferences.customRange) {
+          // Updates component state with saved custom range
           setCustomRange(preferences.customRange);
         }
       } catch (error) {
@@ -84,15 +93,23 @@ const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
     }
   ];
 
+  // Event handler function updates local state and notifies parent
   const handleSelect = (groupSize: string) => {
+    // Updates the component state with selected group size
     setSelectedGroupSize(groupSize);
     if (groupSize === 'group-organizer') {
       if (customRange.trim()) {
+        // Notifies parent with both group size and custom range when custom range is provided
+        // Calls the onAnswer function with the group size and custom range
         onAnswer(1, { groupSize, customRange: customRange.trim() });
       } else {
+        // Notifies parent with group size when custom range is not provided
+        // Calls the onAnswer function with the group size
         onAnswer(1, { groupSize });
       }
     } else {
+      // Notifies parent with group size when group size is not provided
+      // Calls the onAnswer function with the group size
       onAnswer(1, { groupSize });
     }
   };
@@ -123,6 +140,8 @@ const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
           How many people are going?
         </h2>
+        {/* Map function renders list of options */}
+        {/* Each option calls handleSelect when clicked */}
         <p className="text-lg text-gray-600">
           This helps us understand the group dynamics and plan accordingly
         </p>
@@ -137,7 +156,7 @@ const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
             className={`option-card ${selectedGroupSize === option.value ? 'selected' : ''}`}
             onClick={() => handleSelect(option.value)}
           >
-            <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 flex items-center justify-center">
+            <div className="w-full h-32 bg-gradient-to-br from-emerald-100 to-rose-100 rounded-lg mb-3 flex items-center justify-center">
               <div className="text-4xl">{option.emoji}</div>
             </div>
             
@@ -151,7 +170,7 @@ const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-4 bg-blue-50 rounded-xl"
+          className="mb-6 p-4 bg-emerald-50 rounded-xl"
         >
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tell us about your group (e.g., "Grade 5 class trip", "Company retreat for 20 employees", "Family reunion with 3 generations")
@@ -161,7 +180,7 @@ const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
             onChange={(e) => handleCustomRangeChange(e.target.value)}
             placeholder="e.g., Grade 5 class trip with 25 students and 3 chaperones"
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">
             This helps us understand your group dynamics and provide better recommendations

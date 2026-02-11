@@ -85,7 +85,7 @@ const Question8PlanningStyle: React.FC<Question8PlanningStyleProps> = ({
     >
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          How much do you like to plan? 📋
+          How much do you like to plan?
         </h2>
         <p className="text-gray-600 text-lg">
           Help us understand your planning style so we can tailor recommendations to your preferences.
@@ -96,7 +96,7 @@ const Question8PlanningStyle: React.FC<Question8PlanningStyleProps> = ({
       <div className="mb-8">
         <div className="bg-gray-50 rounded-2xl p-6">
           <div className="text-center mb-6">
-            <div className="text-4xl font-bold text-blue-600 mb-2">
+            <div className="text-4xl font-bold text-emerald-600 mb-2">
               {planningStyle}%
             </div>
             <div className="text-xl font-semibold text-gray-800 mb-2">
@@ -137,11 +137,11 @@ const Question8PlanningStyle: React.FC<Question8PlanningStyleProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="bg-blue-50 rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-blue-800 mb-4">
+          <div className="bg-emerald-50 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-emerald-800 mb-4">
               Explain your built-in recess approach 🤔
             </h3>
-            <p className="text-blue-700 mb-4">
+            <p className="text-emerald-700 mb-4">
               Since you prefer a balanced planning style with built-in flexibility, help us understand how you like to structure your recess time and spontaneous decision-making.
             </p>
             <textarea
@@ -149,9 +149,9 @@ const Question8PlanningStyle: React.FC<Question8PlanningStyleProps> = ({
               onChange={(e) => handleLeewayExplanationChange(e.target.value)}
               placeholder="e.g., I plan morning activities but leave afternoons free for spontaneous discoveries. I book accommodation and main attractions but keep meal times flexible. I like to have 2-3 backup options ready for each day..."
               rows={4}
-              className="w-full p-4 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full p-4 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
             />
-            <p className="text-sm text-blue-600 mt-2">
+            <p className="text-sm text-emerald-600 mt-2">
               This explanation will be included in your travel companion contract to help your group understand your built-in recess approach.
             </p>
           </div>

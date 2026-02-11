@@ -188,7 +188,7 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
     >
       <div className="text-center mb-8">
         <h2 className="text-4xl font-bold text-gray-800 mb-4">
-          🗺️ Tell us about your destination approach
+          Tell us about your destination approach
         </h2>
         <p className="text-xl text-gray-600">
           This helps us tailor the perfect recommendations for you
@@ -209,8 +209,8 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
               onClick={() => handleTravelTypeSelect(option.id as 'abroad' | 'domestic')}
               className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left ${
                 approach.travelType === option.id
-                  ? 'border-blue-500 bg-blue-50 shadow-lg'
-                  : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+                  ? 'border-emerald-500 bg-emerald-50 shadow-lg'
+                  : 'border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md'
               }`}
             >
               <div className="text-4xl mb-3">{option.emoji}</div>
@@ -233,7 +233,7 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
             className="mb-8"
           >
             <h3 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
-              Where are you traveling from? 🏠
+              Where are you traveling from?
             </h3>
             <div className="max-w-2xl mx-auto">
               <input
@@ -241,7 +241,7 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
                 value={originLocation}
                 onChange={(e) => setOriginLocation(e.target.value)}
                 placeholder="e.g., New York, London, Tokyo, Los Angeles"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg"
               />
               <p className="text-sm text-gray-600 mt-2 text-center">
                 This helps us provide more accurate transportation information and travel times
@@ -311,7 +311,7 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
                     value={destination}
                     onChange={(e) => handleDestinationChange(index, e.target.value)}
                     placeholder={`Destination ${index + 1} (e.g., Tokyo, Paris, New York)`}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg"
                   />
                   {customDestinations.length > 1 && (
                     <button
@@ -327,7 +327,7 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
               <button
                 type="button"
                 onClick={addDestination}
-                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
               >
                 + Add another destination
               </button>
@@ -343,20 +343,20 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 mb-8"
+            className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 mb-8"
           >
-            <h4 className="text-lg font-semibold text-gray-800 mb-3">✅ Your Destination Approach:</h4>
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">Your Destination Approach:</h4>
             <div className="space-y-2 text-gray-700">
               <p>
                 <span className="font-medium">Travel Type:</span> {
-                  approach.travelType === 'abroad' ? '✈️ International Travel' : '🏞️ Domestic Travel'
+                  approach.travelType === 'abroad' ? 'International Travel' : 'Domestic Travel'
                 }
               </p>
               <p>
                 <span className="font-medium">Destination Status:</span> {
-                  approach.destinationStatus === 'chosen' ? '🎯 Destinations Chosen' :
+                  approach.destinationStatus === 'chosen' ? 'Destinations Chosen' :
                   approach.destinationStatus === 'in_mind' ? '💭 Destinations in Mind' :
-                  '🌍 Open to Suggestions'
+                  'Open to Suggestions'
                 }
               </p>
               {approach.specificDestinations && approach.specificDestinations.length > 0 && (
@@ -391,7 +391,7 @@ const Question4DestinationApproach: React.FC<Question4DestinationApproachProps> 
           disabled={!canProceedToNext()}
           className={`btn-primary text-xl px-8 py-4 ${
             canProceedToNext()
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+              ? 'bg-gradient-to-r from-emerald-600 to-rose-500 hover:from-emerald-700 hover:to-rose-600'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >

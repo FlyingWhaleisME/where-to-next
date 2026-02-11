@@ -362,24 +362,24 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
         <div className="grid grid-cols-3 gap-4">
           {/* Accommodation Options */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-600">🏨 Accommodation</h4>
+            <h4 className="text-sm font-medium text-gray-600">Accommodation</h4>
             {accommodationOptions.map((option, index) => (
               <div
                 key={`accommodation-${index}`}
                 draggable={!readOnly}
                 onDragStart={readOnly ? undefined : () => handleDragStart('accommodation', option)}
-                className={`p-2 bg-blue-50 border border-blue-200 rounded-lg transition-colors ${
-                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-blue-100'
+                className={`p-2 bg-emerald-50 border border-emerald-200 rounded-lg transition-colors ${
+                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-emerald-100'
                 }`}
               >
-                <span className="text-sm text-blue-800">{option}</span>
+                <span className="text-sm text-emerald-800">{option}</span>
               </div>
             ))}
           </div>
 
           {/* Meal Options */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-600">🍽️ Meals</h4>
+            <h4 className="text-sm font-medium text-gray-600">Meals</h4>
             {mealOptions.map((option, index) => (
               <div
                 key={`meal-${index}`}
@@ -396,17 +396,17 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
           {/* Activity Options */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-600">🎯 Activities</h4>
+            <h4 className="text-sm font-medium text-gray-600">Activities</h4>
             {activityOptions.map((option, index) => (
               <div
                 key={`activity-${index}`}
                 draggable={!readOnly}
                 onDragStart={readOnly ? undefined : () => handleDragStart('activity', option)}
-                className={`p-2 bg-purple-50 border border-purple-200 rounded-lg transition-colors ${
-                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-purple-100'
+                className={`p-2 bg-rose-50 border border-rose-200 rounded-lg transition-colors ${
+                  readOnly ? 'cursor-default opacity-60' : 'cursor-move hover:bg-rose-100'
                 }`}
               >
-                <span className="text-sm text-purple-800">{option}</span>
+                <span className="text-sm text-rose-700">{option}</span>
               </div>
             ))}
           </div>
@@ -466,9 +466,9 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className={`absolute rounded-lg p-2 text-xs font-medium ${
-                          (timeSlot as any).type === 'accommodation' ? 'bg-blue-50 border-2 border-blue-400 text-blue-800' :
+                          (timeSlot as any).type === 'accommodation' ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-800' :
                           (timeSlot as any).type === 'meal' ? 'bg-green-50 border-2 border-green-400 text-green-800' :
-                          'bg-purple-50 border-2 border-purple-400 text-purple-800'
+                          'bg-rose-50 border-2 border-rose-400 text-rose-700'
                         }`}
                         style={{
                           top: `${topPosition}%`,
@@ -480,8 +480,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                       >
                         <div className="truncate flex items-center gap-1">
                           <span>
-                            {(timeSlot as any).type === 'accommodation' ? '🏨' :
-                             (timeSlot as any).type === 'meal' ? '🍽️' : '🎯'}
+                            {(timeSlot as any).type === 'accommodation' ? 'Acc' :
+                             (timeSlot as any).type === 'meal' ? 'Meal' : 'Act'}
                           </span>
                           {timeSlot.activity}
                         </div>
@@ -551,7 +551,7 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                     hasTimeConflict 
                       ? 'border-red-300 focus:ring-red-500 bg-red-50' 
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-gray-300 focus:ring-emerald-500'
                   }`}
                 />
               </div>
@@ -567,7 +567,7 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                     hasTimeConflict 
                       ? 'border-red-300 focus:ring-red-500 bg-red-50' 
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-gray-300 focus:ring-emerald-500'
                   }`}
                 />
               </div>
@@ -600,7 +600,7 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
               <button
                 onClick={handleConfirmTimeSlot}
                 disabled={readOnly || !customTimes.startTime || !customTimes.endTime || customTimes.startTime >= customTimes.endTime || hasTimeConflict}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add Activity
               </button>

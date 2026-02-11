@@ -358,7 +358,7 @@ const SummaryPage: React.FC = () => {
 
   if (!tripPreferences) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white rounded-3xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h2>
@@ -370,7 +370,7 @@ const SummaryPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -379,7 +379,7 @@ const SummaryPage: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            📋 Summary & Next Steps
+            Summary & Next Steps
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             Review your preferences and get destination recommendations
@@ -394,7 +394,7 @@ const SummaryPage: React.FC = () => {
           className="bg-white rounded-3xl shadow-xl p-8 mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            🎯 Your Travel Profile
+            Your Travel Profile
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
@@ -420,9 +420,9 @@ const SummaryPage: React.FC = () => {
                                        'Range Undecided';
                       
                       if (duration.range.startMonth && duration.range.endMonth) {
-                        parts.push(`📅 ${rangeText}: ${duration.range.startMonth} ${duration.range.startDay ? duration.range.startDay + ', ' : ''}${duration.range.startYear} → ${duration.range.endMonth} ${duration.range.endDay ? duration.range.endDay + ', ' : ''}${duration.range.endYear}`);
+                        parts.push(`Duration: ${rangeText}: ${duration.range.startMonth} ${duration.range.startDay ? duration.range.startDay + ', ' : ''}${duration.range.startYear} → ${duration.range.endMonth} ${duration.range.endDay ? duration.range.endDay + ', ' : ''}${duration.range.endYear}`);
                       } else {
-                        parts.push(`📅 ${rangeText}`);
+                        parts.push(`Duration: ${rangeText}`);
                       }
                     }
                     
@@ -491,16 +491,16 @@ const SummaryPage: React.FC = () => {
                     <div className="space-y-2">
                       <p>
                         <span className="font-medium">Travel Type:</span> {
-                          tripPreferences.destinationApproach.travelType === 'abroad' ? '✈️ International Travel' : 
-                          tripPreferences.destinationApproach.travelType === 'domestic' ? '🏞️ Domestic Travel' : 
+                          tripPreferences.destinationApproach.travelType === 'abroad' ? 'International Travel' : 
+                          tripPreferences.destinationApproach.travelType === 'domestic' ? 'Domestic Travel' : 
                           'Not specified'
                         }
                       </p>
                       <p>
                         <span className="font-medium">Status:</span> {
-                          tripPreferences.destinationApproach.destinationStatus === 'chosen' ? '🎯 Destinations Chosen' :
+                          tripPreferences.destinationApproach.destinationStatus === 'chosen' ? 'Destinations Chosen' :
                           tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? '💭 Destinations in Mind' :
-                          tripPreferences.destinationApproach.destinationStatus === 'open' ? '🌍 Open to Suggestions' :
+                          tripPreferences.destinationApproach.destinationStatus === 'open' ? 'Open to Suggestions' :
                           'Not specified'
                         }
                       </p>
@@ -538,7 +538,7 @@ const SummaryPage: React.FC = () => {
                       return styles.map((style, index) => {
                         const label = styleLabels[style as keyof typeof styleLabels] || style;
                         return (
-                          <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
+                          <span key={index} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
                             #{index + 1} {label}
                           </span>
                         );
@@ -547,7 +547,7 @@ const SummaryPage: React.FC = () => {
                       return styles.split(',').map((style, index) => {
                         const label = styleLabels[style.trim() as keyof typeof styleLabels] || style.trim();
                         return (
-                          <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
+                          <span key={index} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
                             #{index + 1} {label}
                           </span>
                         );
@@ -569,19 +569,19 @@ const SummaryPage: React.FC = () => {
                     
                     // Vibe mapping for converting values to labels
                     const vibeLabels = {
-                      'relaxation': '😌 Relaxation',
-                      'entertainment': '🎭 Entertainment', 
-                      'educational': '📚 Educational Discovery',
+                      'relaxation': 'Relaxation',
+                      'entertainment': 'Entertainment', 
+                      'educational': 'Educational Discovery',
                       'cultural': '🏺 Cultural Immersion',
                       'shared': '💘 Shared Escape',
-                      'culinary': '🍽️ Culinary Adventure'
+                      'culinary': 'Culinary Adventure'
                     };
                     
                     if (typeof vibes === 'string' && vibes) {
                       return vibes.split(',').map((vibe, index) => {
                         const label = vibeLabels[vibe.trim() as keyof typeof vibeLabels] || vibe.trim();
                         return (
-                          <span key={index} className="inline-block bg-purple-100 text-purple-800 px-3 py-2 rounded-full text-sm mr-2 mb-2 font-medium">
+                          <span key={index} className="inline-block bg-rose-100 text-rose-700 px-3 py-2 rounded-full text-sm mr-2 mb-2 font-medium">
                             #{index + 1} {label}
                           </span>
                         );
@@ -618,7 +618,7 @@ const SummaryPage: React.FC = () => {
                     
                     // Add leeway explanation if provided (for <50%)
                     if (tripPreferences.leewayExplanation) {
-                      parts.push(`📝 Leeway Explanation: ${tripPreferences.leewayExplanation}`);
+                      parts.push(`Leeway Explanation: ${tripPreferences.leewayExplanation}`);
                     }
                     
                     // Add surprise preference
@@ -641,10 +641,10 @@ const SummaryPage: React.FC = () => {
                       'eco-friendliness': '🌱 Eco-friendliness',
                       'safety': '🛡️ Safety', 
                       'accessibility': '♿ Accessibility',
-                      'cost-efficiency': '💰 Cost-efficiency',
+                      'cost-efficiency': 'Cost-efficiency',
                       'time-efficiency': '⏰ Time-efficiency',
                       'cost-effectiveness': '⚖️ Cost effectiveness',
-                      'number-of-options': '📋 Number of options'
+                      'number-of-options': 'Number of options'
                     };
                     
                     if (Array.isArray(priorities) && priorities.length > 0) {
@@ -685,7 +685,7 @@ const SummaryPage: React.FC = () => {
                 onClick={handleChosenDestinationsSubmit}
                 className="bg-red-500 text-white px-4 py-2 rounded text-sm"
               >
-                🔧 Test Document Creation (Debug Button)
+                Test Document Creation (Debug)
               </button>
             </div>
           </div>
@@ -701,7 +701,7 @@ const SummaryPage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
             <div className="text-center">
-              <div className="text-6xl mb-4">🎯</div>
+              <div className="text-xl mb-4 font-bold text-gray-500">Ready</div>
               <h2 className="text-3xl font-bold text-gray-800 mb-4">
                 Destinations Already Selected!
               </h2>
@@ -712,11 +712,11 @@ const SummaryPage: React.FC = () => {
               {/* Show chosen destinations */}
               {tripPreferences.destinationApproach.specificDestinations && 
                tripPreferences.destinationApproach.specificDestinations.length > 0 && (
-                <div className="bg-blue-50 rounded-xl p-4 mb-6">
+                <div className="bg-emerald-50 rounded-xl p-4 mb-6">
                   <h3 className="font-semibold text-gray-800 mb-2">Your Chosen Destinations:</h3>
                   <div className="flex flex-wrap justify-center gap-2">
                     {tripPreferences.destinationApproach.specificDestinations.map((destination, index) => (
-                      <span key={index} className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+                      <span key={index} className="bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">
                         {destination}
                       </span>
                     ))}
@@ -737,7 +737,7 @@ const SummaryPage: React.FC = () => {
                   }}
                   className="btn-primary text-lg px-8 py-4 w-full sm:w-auto"
                 >
-                  Continue to Trip Tracing 🚀
+                  Continue to Trip Tracing
                 </button>
                 <p className="text-sm text-gray-500">
                   Documents were created automatically when you completed the Big Idea survey
@@ -768,11 +768,11 @@ const SummaryPage: React.FC = () => {
               {/* Show destinations in mind */}
               {tripPreferences.destinationApproach.specificDestinations && 
                tripPreferences.destinationApproach.specificDestinations.length > 0 && (
-                <div className="bg-purple-50 rounded-xl p-4 mb-6">
+                <div className="bg-rose-50 rounded-xl p-4 mb-6">
                   <h3 className="font-semibold text-gray-800 mb-2">Destinations You're Considering:</h3>
                   <div className="flex flex-wrap justify-center gap-2">
                     {tripPreferences.destinationApproach.specificDestinations.map((destination, index) => (
-                      <span key={index} className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm">
+                      <span key={index} className="bg-rose-500 text-white px-3 py-1 rounded-full text-sm">
                         {destination}
                       </span>
                     ))}
@@ -793,7 +793,7 @@ const SummaryPage: React.FC = () => {
                   }}
                   className="btn-primary text-lg px-8 py-4 w-full sm:w-auto"
                 >
-                  Continue to Trip Tracing 🚀
+                  Continue to Trip Tracing
                 </button>
                 <p className="text-sm text-gray-500">
                   You can edit or delete destination documents based on AI recommendations
@@ -813,7 +813,7 @@ const SummaryPage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              🌍 How Many Destinations?
+              How Many Destinations?
             </h2>
             <p className="text-lg text-gray-600 mb-6 text-center">
               Choose how many destination recommendations you'd like to receive
@@ -827,7 +827,7 @@ const SummaryPage: React.FC = () => {
                     onClick={() => setDestinationCount(count)}
                     className={`w-12 h-12 rounded-full font-bold text-lg transition-all ${
                       destinationCount === count
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-emerald-500 text-white'
                         : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                     }`}
                   >
@@ -842,7 +842,7 @@ const SummaryPage: React.FC = () => {
                 onClick={handleDestinationCountSubmit}
                 className="btn-primary text-lg px-8 py-4"
               >
-                Get Destination Recommendations 🚀
+                Get Destination Recommendations
               </button>
             </div>
           </motion.div>
@@ -871,7 +871,7 @@ const SummaryPage: React.FC = () => {
                     value={destination}
                     onChange={(e) => updateDestination(index, e.target.value)}
                     placeholder={`Destination ${index + 1}`}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                   {destinations.length > 1 && (
                     <button
@@ -909,7 +909,7 @@ const SummaryPage: React.FC = () => {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                Continue to Trip Tracing 🚀
+                Continue to Trip Tracing
               </button>
               
               <div className="text-sm text-gray-600">
@@ -940,7 +940,7 @@ const SummaryPage: React.FC = () => {
               onClick={() => navigate('/profile')}
               className="btn-primary text-lg px-8 py-4"
             >
-              View Documents 📋
+              View Documents
             </button>
         </div>
           

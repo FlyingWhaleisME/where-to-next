@@ -223,7 +223,7 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
     >
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          📅 Trip Duration & Timing
+          Trip Duration & Timing
         </h2>
         <p className="text-lg text-gray-600">
           Help us understand your timing preferences and constraints
@@ -249,21 +249,21 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
           Category
         </div>
         <div className="bg-green-100 p-4 rounded-lg text-center font-bold text-green-800">
-          <div>📅 Dates</div>
+          <div>Dates</div>
           <div className="text-xs font-normal text-green-600 mt-1">
             When you'll travel
           </div>
         </div>
-        <div className="bg-blue-100 p-4 rounded-lg text-center font-bold text-blue-800">
+        <div className="bg-emerald-100 p-4 rounded-lg text-center font-bold text-emerald-800">
           <div>⏱️ Duration</div>
-          <div className="text-xs font-normal text-blue-600 mt-1">
+          <div className="text-xs font-normal text-emerald-600 mt-1">
             How long you'll stay
           </div>
         </div>
 
         {/* Status Options Row 1: Decided */}
         <div className="bg-gray-50 p-4 rounded-lg font-semibold text-gray-700">
-          ✅ Decided
+          Decided
         </div>
         <div className="p-2">
           <button
@@ -282,14 +282,14 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
             onClick={() => handleDurationStatusChange('decided')}
             className={`w-full p-3 rounded-lg transition-all relative ${
               durationData.duration.status === 'decided'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-gray-200 hover:bg-gray-300'
             }`}
           >
             {durationData.duration.status === 'decided' ? '✓' : 'Select'}
             {durationData.dates.status === 'decided' && durationData.duration.status !== 'decided' && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-xs text-white">🔄</span>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center">
+                
               </div>
             )}
           </button>
@@ -316,14 +316,14 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
             onClick={() => handleDurationStatusChange('in_mind')}
             className={`w-full p-3 rounded-lg transition-all relative ${
               durationData.duration.status === 'in_mind'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-gray-200 hover:bg-gray-300'
             }`}
           >
             {durationData.duration.status === 'in_mind' ? '✓' : 'Select'}
             {durationData.dates.status === 'decided' && durationData.duration.status !== 'in_mind' && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-xs text-white">🔄</span>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center">
+                
               </div>
             )}
           </button>
@@ -350,14 +350,14 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
             onClick={() => handleDurationStatusChange('undecided')}
             className={`w-full p-3 rounded-lg transition-all relative ${
               durationData.duration.status === 'undecided'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-gray-200 hover:bg-gray-300'
             }`}
           >
             {durationData.duration.status === 'undecided' ? '✓' : 'Select'}
             {durationData.dates.status === 'decided' && durationData.duration.status !== 'undecided' && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-xs text-white">🔄</span>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center">
+                
               </div>
             )}
           </button>
@@ -383,9 +383,9 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
           
           {/* Info message for decided dates */}
           {durationData.dates.status === 'decided' && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
-                💡 <strong>Tip:</strong> When you select specific dates, the trip duration will be automatically calculated. 
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <p className="text-sm text-emerald-700">
+                <strong>Tip:</strong> When you select specific dates, the trip duration will be automatically calculated. 
                 You can still change the duration status if you prefer a different approach.
               </p>
             </div>
@@ -443,8 +443,8 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
                   }))}
                   className={`p-3 rounded-lg border-2 transition-all ${
                     durationData.dates.seasonPreference === 'peak'
-                      ? 'border-blue-500 bg-blue-50 text-blue-800'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                      : 'border-gray-200 hover:border-emerald-300'
                   }`}
                 >
                   <div className="text-2xl mb-1">🌞</div>
@@ -473,11 +473,11 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
                   }))}
                   className={`p-3 rounded-lg border-2 transition-all ${
                     durationData.dates.seasonPreference === 'flexible'
-                      ? 'border-purple-500 bg-purple-50 text-purple-800'
-                      : 'border-gray-200 hover:border-purple-300'
+                      ? 'border-rose-500 bg-rose-50 text-rose-700'
+                      : 'border-gray-200 hover:border-rose-300'
                   }`}
                 >
-                  <div className="text-2xl mb-1">🔄</div>
+                  <div className="text-lg mb-1 font-bold text-gray-400">Flexible</div>
                   <div className="font-medium">Flexible</div>
                   <div className="text-xs text-gray-600">Any time</div>
                 </button>
@@ -492,12 +492,12 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-6 bg-blue-50 rounded-xl"
+          className="mb-6 p-6 bg-emerald-50 rounded-xl"
         >
           <h4 className="text-lg font-semibold text-gray-800 mb-2">
             ⏱️ How long will you stay?
           </h4>
-          <p className="text-sm text-blue-700 mb-4">
+          <p className="text-sm text-emerald-700 mb-4">
             Specify the exact duration of your trip
           </p>
           
@@ -509,7 +509,7 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
                 min="0"
                 value={durationData.duration.days}
                 onChange={(e) => handleDurationChange('days', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                 placeholder="0"
               />
             </div>
@@ -520,7 +520,7 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
                 min="0"
                 value={durationData.duration.weeks}
                 onChange={(e) => handleDurationChange('weeks', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                 placeholder="0"
               />
             </div>
@@ -531,7 +531,7 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
                 min="0"
                 value={durationData.duration.months}
                 onChange={(e) => handleDurationChange('months', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                 placeholder="0"
               />
             </div>
@@ -539,7 +539,7 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
           
           {/* Auto-conversion display */}
           {(parseInt(durationData.duration.days) > 0 || parseInt(durationData.duration.weeks) > 0 || parseInt(durationData.duration.months) > 0) && (
-            <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
+            <div className="mt-4 p-3 bg-white rounded-lg border border-emerald-200">
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Total Duration:</span> {
                   [
@@ -559,12 +559,12 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-6 bg-blue-50 rounded-xl"
+          className="mb-6 p-6 bg-emerald-50 rounded-xl"
         >
           <h4 className="text-lg font-semibold text-gray-800 mb-2">
             ⏱️ How long might you stay?
           </h4>
-          <p className="text-sm text-blue-700 mb-4">
+          <p className="text-sm text-emerald-700 mb-4">
             Give us a range of possible durations
           </p>
           
@@ -668,7 +668,7 @@ const Question2Duration: React.FC<Question2DurationProps> = ({
           disabled={!canProceedToNext()}
           className={`px-6 py-3 rounded-xl transition-colors ${
             canProceedToNext()
-              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              ? 'bg-emerald-500 text-white hover:bg-emerald-600'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >

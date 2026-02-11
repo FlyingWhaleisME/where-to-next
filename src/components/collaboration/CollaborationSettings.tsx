@@ -76,7 +76,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
-            🔧 Communication Settings
+            Communication Settings
           </h2>
           <button
             onClick={onClose}
@@ -95,7 +95,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             <select
               value={settings.roomType}
               onChange={(e) => setSettings(prev => ({ ...prev, roomType: e.target.value as 'private' | 'public' | 'invite-only' }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             >
               <option value="private">Private</option>
               <option value="public">Public</option>
@@ -113,7 +113,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
               value={settings.roomName}
               onChange={(e) => setSettings(prev => ({ ...prev, roomName: e.target.value }))}
               placeholder="My Trip Planning Room"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
           </div>
 
@@ -124,7 +124,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
               id="allowAnonymous"
               checked={settings.allowAnonymous}
               onChange={(e) => setSettings(prev => ({ ...prev, allowAnonymous: e.target.checked }))}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
             />
             <label htmlFor="allowAnonymous" className="ml-2 block text-sm text-gray-700">
               Allow anonymous users to join
@@ -138,7 +138,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
               id="requireApproval"
               checked={settings.requireApproval}
               onChange={(e) => setSettings(prev => ({ ...prev, requireApproval: e.target.checked }))}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
             />
             <label htmlFor="requireApproval" className="ml-2 block text-sm text-gray-700">
               Require approval for new members
@@ -156,7 +156,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
               onChange={(e) => setSettings(prev => ({ ...prev, maxUsers: parseInt(e.target.value) || 2 }))}
               min="2"
               max="100"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
             <p className="text-sm text-gray-500 mt-1">
               How many people can join this room? (2-100)
@@ -164,8 +164,8 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
           </div>
 
           {/* Share Code */}
-          <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-800">Share Code</h3>
+          <div className="space-y-4 p-4 bg-emerald-50 rounded-lg">
+            <h3 className="font-medium text-emerald-800">Share Code</h3>
             
             <div className="flex items-center space-x-3">
               <input
@@ -174,17 +174,17 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                 onChange={(e) => setSettings(prev => ({ ...prev, shareCode: e.target.value.toUpperCase() }))}
                 placeholder="Share Code"
                 maxLength={8}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-center"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-center"
               />
               <button
                 onClick={generateShareCode}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 Generate
               </button>
             </div>
             
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-emerald-700">
               Share this code with others to let them join your room. They can enter it on the website to join.
             </p>
           </div>

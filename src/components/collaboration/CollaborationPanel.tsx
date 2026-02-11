@@ -91,7 +91,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
           className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 z-50 flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-rose-50">
             <div className="flex items-center space-x-2">
               <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <h3 className="text-lg font-semibold text-gray-800">Collaboration</h3>
@@ -121,21 +121,21 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
               onClick={() => setActiveTab('chat')}
               className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                 activeTab === 'chat'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                  ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              💬 Chat ({messages.length})
+              Chat ({messages.length})
             </button>
             <button
               onClick={() => setActiveTab('users')}
               className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                 activeTab === 'users'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                  ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              👥 Users ({onlineUsers.length})
+              Users ({onlineUsers.length})
             </button>
           </div>
 
@@ -147,7 +147,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {messages.length === 0 ? (
                     <div className="text-center text-gray-500 py-8">
-                      <div className="text-4xl mb-2">💬</div>
+                      <div className="text-xl mb-2 font-bold text-gray-400">No Messages</div>
                       <p>No messages yet</p>
                       <p className="text-sm">Start the conversation!</p>
                     </div>
@@ -202,12 +202,12 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
                       onChange={handleTyping}
                       placeholder={isConnected ? "Type a message..." : "Connecting..."}
                       disabled={!isConnected}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                     <button
                       type="submit"
                       disabled={!isConnected || !newMessage.trim()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                     >
                       Send
                     </button>
@@ -219,7 +219,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
               <div className="flex-1 overflow-y-auto p-4">
                 {onlineUsers.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
-                    <div className="text-4xl mb-2">👥</div>
+                    <div className="text-xl mb-2 font-bold text-gray-400">No Users</div>
                     <p>No other users online</p>
                     <p className="text-sm">Invite others to collaborate!</p>
                   </div>
@@ -232,7 +232,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
                       >
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-rose-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1">

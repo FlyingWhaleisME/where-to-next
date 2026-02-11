@@ -86,8 +86,8 @@ const CollaborationToggle: React.FC<CollaborationToggleProps> = ({ tripId, onCol
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={handleToggle}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-          isEnabled ? 'bg-blue-600' : 'bg-gray-200'
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+          isEnabled ? 'bg-emerald-600' : 'bg-gray-200'
         }`}
       >
         <span
@@ -119,7 +119,7 @@ const CollaborationToggle: React.FC<CollaborationToggleProps> = ({ tripId, onCol
           animate={{ opacity: 1, scale: 1 }}
           className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs"
         >
-          <span>👥</span>
+          <span>Users</span>
           <span>{onlineUsers}</span>
         </motion.div>
       )}
@@ -161,7 +161,7 @@ const CollaborationToggle: React.FC<CollaborationToggleProps> = ({ tripId, onCol
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleShowPanel}
-          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           title="Open collaboration panel"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

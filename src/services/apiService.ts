@@ -270,6 +270,14 @@ export const healthApi = {
   }
 };
 
+// Debug API calls
+export const debugApi = {
+  getAllData: async (): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/debug/all-data`);
+    return handleResponse<any>(response);
+  }
+};
+
 // Utility functions
 export const isAuthenticated = (): boolean => {
   const token = localStorage.getItem('token');

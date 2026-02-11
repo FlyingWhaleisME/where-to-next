@@ -139,7 +139,7 @@ const FoodPreferencesSection: React.FC<FoodPreferencesSectionProps> = ({
                 </h4>
                 <p className="text-gray-600">{option.description}</p>
                 {isSelected && (
-                  <div className={`absolute top-2 right-2 ${isExclusive ? 'bg-orange-500' : 'bg-blue-500'} text-white rounded-full w-6 h-6 flex items-center justify-center text-sm`}>
+                  <div className={`absolute top-2 right-2 ${isExclusive ? 'bg-orange-500' : 'bg-emerald-500'} text-white rounded-full w-6 h-6 flex items-center justify-center text-sm`}>
                     ✓
                   </div>
                 )}
@@ -163,7 +163,7 @@ const FoodPreferencesSection: React.FC<FoodPreferencesSectionProps> = ({
             id="popularity"
             checked={foodPreferences.popularity}
             onChange={handlePopularityToggle}
-            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
           />
           <label htmlFor="popularity" className="text-lg text-gray-700">
             I prefer popular/well-reviewed places
@@ -176,7 +176,7 @@ const FoodPreferencesSection: React.FC<FoodPreferencesSectionProps> = ({
             id="vegan"
             checked={foodPreferences.vegan}
             onChange={handleVeganToggle}
-            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
           />
           <label htmlFor="vegan" className="text-lg text-gray-700">
             I need vegan/vegetarian options
@@ -189,7 +189,7 @@ const FoodPreferencesSection: React.FC<FoodPreferencesSectionProps> = ({
             id="goodPicVibe"
             checked={foodPreferences.goodPicVibe}
             onChange={handleGoodPicVibeToggle}
-            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
           />
           <label htmlFor="goodPicVibe" className="text-lg text-gray-700">
             I expect good pic/good vibe
@@ -200,12 +200,12 @@ const FoodPreferencesSection: React.FC<FoodPreferencesSectionProps> = ({
       {foodPreferences.styles.length > 0 && (
         <div className="text-center mb-6">
           <p className="text-lg text-gray-700">
-            Selected: <span className={`font-semibold ${foodPreferences.styles.includes('dont-mind') ? 'text-orange-600' : 'text-blue-600'}`}>
+            Selected: <span className={`font-semibold ${foodPreferences.styles.includes('dont-mind') ? 'text-orange-600' : 'text-emerald-600'}`}>
               {foodPreferences.styles.includes('dont-mind') ? 'I don\'t mind (any food type)' : foodPreferences.styles.join(', ')}
             </span>
           </p>
           {foodPreferences.styles.includes('dont-mind') && (
-            <p className="text-sm text-orange-600 mt-1">✨ You're open to any food recommendations!</p>
+            <p className="text-sm text-orange-600 mt-1">You're open to any food recommendations!</p>
           )}
         </div>
       )}

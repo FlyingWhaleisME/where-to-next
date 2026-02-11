@@ -156,7 +156,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
     >
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          ✈️ Flight Preferences
+          Flight Preferences
         </h2>
         <p className="text-lg text-gray-600">
           What's most important to you when booking flights?
@@ -196,8 +196,8 @@ const FlightSection: React.FC<FlightSectionProps> = ({
               <div className="text-4xl mb-3">{option.emoji}</div>
               <h4 className="text-lg font-semibold text-gray-800 mb-2">{option.label}</h4>
               <p className="text-gray-600 text-sm mb-2">{option.description}</p>
-              <div className="text-xs text-blue-600 font-medium">
-                <div>💰 {option.costInfo}</div>
+              <div className="text-xs text-emerald-600 font-medium">
+                <div>{option.costInfo}</div>
                 <div>🌐 {option.website}</div>
               </div>
             </motion.div>
@@ -215,8 +215,8 @@ const FlightSection: React.FC<FlightSectionProps> = ({
             onClick={() => setStrategyChoice('provide')}
             className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left ${
               strategyChoice === 'provide'
-                ? 'border-blue-500 bg-blue-50 shadow-lg'
-                : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+                ? 'border-emerald-500 bg-emerald-50 shadow-lg'
+                : 'border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md'
             }`}
           >
             <div className="text-3xl mb-3">✍️</div>
@@ -261,7 +261,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
                         loadSavedStrategy(e.target.value);
                       }
                     }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   >
                     <option value="">Select a saved strategy...</option>
                     {savedStrategies.map((strategy) => (
@@ -283,7 +283,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
                   value={strategyName}
                   onChange={(e) => setStrategyName(e.target.value)}
                   placeholder="e.g., 'Budget International Flights', 'Last-Minute Domestic'"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
 
@@ -296,7 +296,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
                   value={customStrategy}
                   onChange={(e) => setCustomStrategy(e.target.value)}
                   placeholder="Describe your flight booking approach, life-hacks, preferred websites, timing strategies, etc..."
-                  className="w-full h-32 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full h-32 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
                 />
               </div>
 
@@ -311,7 +311,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  💾 Save Strategy
+                  Save Strategy
                 </button>
               </div>
             </motion.div>
@@ -320,16 +320,16 @@ const FlightSection: React.FC<FlightSectionProps> = ({
       </div>
 
       {/* Flight Booking Strategy Footer */}
-      <div className="mb-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
-        <h4 className="text-lg font-semibold text-blue-800 mb-3">Maybe check out some infos?</h4>
-        <p className="text-blue-700 mb-3">
+      <div className="mb-8 p-6 bg-emerald-50 rounded-xl border border-emerald-200">
+        <h4 className="text-lg font-semibold text-emerald-800 mb-3">Maybe check out some infos?</h4>
+        <p className="text-emerald-700 mb-3">
           Search for tips on flight booking strategies, best times to book, and money-saving hacks you wish your AI assistant would know.
         </p>
         <a
           href="https://www.google.com/search?q=flight+booking+strategy&oq=flight+booking+strategy&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgFGB4yCAgCEAAYBRgeMgcIAxAAGO8FMgcIBBAAGO8FMgcIBRAAGO8FMgcIBhAAGO8FMgcIBxAAGO8F0gEINDMzM2owajeoAgCwAgA&sourceid=chrome&ie=UTF-8"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
         >
           🔍 Flight Booking Strategies
           <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,7 +357,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
           disabled={!canProceedToNext()}
           className={`btn-primary text-lg px-8 py-4 ${
             canProceedToNext()
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+              ? 'bg-gradient-to-r from-emerald-600 to-rose-500 hover:from-emerald-700 hover:to-rose-600'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >

@@ -184,7 +184,7 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
                   </div>
                 )}
                 
-                <div className="w-full h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg mb-3 flex items-center justify-center">
+                <div className="w-full h-32 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg mb-3 flex items-center justify-center">
                   <div className="text-4xl">{vibe.emoji}</div>
                 </div>
                 
@@ -207,7 +207,7 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
 
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="w-4 h-4 bg-purple-500 rounded-full mr-2"></span>
+          <span className="w-4 h-4 bg-rose-500 rounded-full mr-2"></span>
           Growth Zone
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -221,17 +221,17 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`option-card relative cursor-pointer transition-all ${
-                  isSelected ? 'selected border-2 border-purple-500 bg-purple-50' : ''
+                  isSelected ? 'selected border-2 border-rose-500 bg-rose-50' : ''
                 }`}
                 onClick={() => handleVibeToggle(vibe.value)}
               >
                 {rank > 0 && (
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                     {rank}
                   </div>
                 )}
                 
-                <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
+                <div className="w-full h-32 bg-gradient-to-br from-rose-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
                   <div className="text-4xl">{vibe.emoji}</div>
                 </div>
                 
@@ -241,7 +241,7 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
                 
                 <div className={`mt-3 p-2 rounded-lg text-center font-medium ${
                   isSelected 
-                    ? 'bg-purple-500 text-white' 
+                    ? 'bg-rose-500 text-white' 
                     : 'bg-gray-200 text-gray-600'
                 }`}>
                   {isSelected ? `Ranked #${rank}` : 'Click to select'}
@@ -256,9 +256,9 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200"
+          className="mb-6 p-4 bg-emerald-50 rounded-xl border border-emerald-200"
         >
-          <h4 className="font-semibold text-blue-800 mb-2">Your Vibe Selection:</h4>
+          <h4 className="font-semibold text-emerald-800 mb-2">Your Vibe Selection:</h4>
           <div className="flex flex-wrap gap-2">
             {selectedVibes.map((vibeValue, index) => {
               const vibe = tripVibes.find(v => v.value === vibeValue);

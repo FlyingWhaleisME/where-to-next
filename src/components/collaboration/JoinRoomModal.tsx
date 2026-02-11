@@ -109,7 +109,7 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
                   setError(''); // Clear error when user types
                 }}
                 placeholder="Enter share code (e.g., TOKYO1)"
-                className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-center text-base sm:text-lg"
+                className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-center text-base sm:text-lg"
                 maxLength={8}
                 disabled={isLoading}
               />
@@ -117,9 +117,9 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
           </div>
 
           {/* How to get code */}
-          <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-            <h4 className="font-medium text-blue-800 mb-2 text-sm sm:text-base">How to get a share code:</h4>
-            <ol className="text-xs sm:text-sm text-blue-700 space-y-1">
+          <div className="bg-emerald-50 rounded-lg p-3 sm:p-4">
+            <h4 className="font-medium text-emerald-800 mb-2 text-sm sm:text-base">How to get a share code:</h4>
+            <ol className="text-xs sm:text-sm text-emerald-700 space-y-1">
               <li>1. Ask your friend to create a communication room</li>
               <li>2. They'll get a share code (like "TOKYO1")</li>
               <li>3. They share the code with you</li>
@@ -152,7 +152,7 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
           <button
             onClick={handleJoinByCode}
             disabled={!shareCode.trim() || isLoading}
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {isLoading ? (
               <>

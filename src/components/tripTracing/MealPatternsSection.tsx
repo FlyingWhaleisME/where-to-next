@@ -163,7 +163,7 @@ const MealPatternsSection: React.FC<MealPatternsSectionProps> = ({
     >
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          🍽️ Meal Patterns
+          Meal Patterns
         </h2>
         <p className="text-lg text-gray-600">
           Select your preferred meal patterns during the trip
@@ -184,21 +184,21 @@ const MealPatternsSection: React.FC<MealPatternsSectionProps> = ({
                 whileTap={{ scale: 0.98 }}
                 className={`option-card cursor-pointer transition-all ${
                   isSelected 
-                    ? 'selected border-2 border-blue-500 bg-blue-50' 
+                    ? 'selected border-2 border-emerald-500 bg-emerald-50' 
                     : 'hover:border-gray-300'
-                } ${isExclusive ? 'ring-2 ring-purple-200' : ''}`}
+                } ${isExclusive ? 'ring-2 ring-rose-200' : ''}`}
                 onClick={() => handleMealToggle(option.value)}
               >
                 <div className="text-4xl mb-3">{option.emoji}</div>
                 <h4 className="text-lg font-semibold text-gray-800 mb-2">{option.label}</h4>
                 <p className="text-gray-600 text-sm">{option.description}</p>
                 {isExclusive && (
-                  <div className="mt-2 text-xs text-purple-600 font-medium">
-                    ⚠️ Exclusive option
+                  <div className="mt-2 text-xs text-rose-500 font-medium">
+                    Exclusive option
                   </div>
                 )}
                 {isSelected && (
-                  <div className="mt-2 text-sm text-blue-600 font-medium">
+                  <div className="mt-2 text-sm text-emerald-600 font-medium">
                     ✓ Selected
                   </div>
                 )}
@@ -237,7 +237,7 @@ const MealPatternsSection: React.FC<MealPatternsSectionProps> = ({
             id="mealChangeThroughTrip"
             checked={changeThroughTrip}
             onChange={(e) => setChangeThroughTrip(e.target.checked)}
-            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
           />
           <label htmlFor="mealChangeThroughTrip" className="text-lg text-gray-700">
             Change meal patterns through the trip
@@ -250,7 +250,7 @@ const MealPatternsSection: React.FC<MealPatternsSectionProps> = ({
             id="mealChangeType"
             checked={changeType}
             onChange={(e) => setChangeType(e.target.checked)}
-            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
           />
           <label htmlFor="mealChangeType" className="text-lg text-gray-700">
             Change meal types during the trip

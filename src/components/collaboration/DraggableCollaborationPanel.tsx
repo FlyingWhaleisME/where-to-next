@@ -552,7 +552,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                 }, 1000);
               }
             }}
-            className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="text-xs px-2 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors"
             title="Refresh room data"
           >
             Refresh
@@ -716,7 +716,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   );
                 }
               }}
-              className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors touch-manipulation"
+              className="text-xs px-2 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors touch-manipulation"
               title="Go online"
               style={{ touchAction: 'manipulation' }}
             >
@@ -843,22 +843,22 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           onClick={() => setActiveTab('chat')}
           className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${
             activeTab === 'chat'
-              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+              ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          <span>💬</span>
+          <span>Chat</span>
           <span>Chat ({messages.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('users')}
           className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${
             activeTab === 'users'
-              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+              ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          <span>👥</span>
+          <span>Users</span>
           <span>Users ({onlineUsers.length})</span>
         </button>
       </div>
@@ -915,12 +915,12 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   onKeyPress={handleKeyPress}
                   placeholder={isConnected ? "Type a message..." : "Type a message... (offline)"}
                   disabled={false}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {isConnected ? 'Send' : 'Send (Offline)'}
                 </button>
@@ -938,14 +938,14 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                 }
                 return (
                   <div key={user.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                       {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div className="flex-1">
                       <div className="font-medium text-gray-900 flex items-center space-x-2">
                         <span>{user.name || 'Unknown User'}</span>
                         {user.isCreator && (
-                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full">
                             (Initiator)
                           </span>
                         )}
@@ -965,7 +965,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               
               {onlineUsers.length === 0 && (
                 <div className="text-center text-gray-500 py-8">
-                  <div className="text-4xl mb-2">👥</div>
+                  <div className="text-xl mb-2 font-bold text-gray-400">No Users</div>
                   <p>No users in room</p>
                   <p className="text-sm">Share your room code to invite others!</p>
                 </div>

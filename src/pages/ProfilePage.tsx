@@ -630,7 +630,7 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -665,7 +665,7 @@ const ProfilePage: React.FC = () => {
               {savedTripPreferences.map((preferenceSet) => (
                 <motion.div
                   key={preferenceSet.id}
-                  className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100"
+                  className="bg-gradient-to-r from-emerald-50 to-rose-50 rounded-2xl p-6 border border-emerald-100"
                   whileHover={{ scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
@@ -675,7 +675,7 @@ const ProfilePage: React.FC = () => {
                       <Tooltip text="Resume from this survey">
                         <button
                           onClick={() => resumeFromSavedPreferences(preferenceSet)}
-                          className="text-blue-500 hover:text-blue-700 transition-colors text-xl"
+                          className="text-emerald-500 hover:text-emerald-700 transition-colors text-xl"
                         >
                           ▶️
                         </button>
@@ -683,9 +683,9 @@ const ProfilePage: React.FC = () => {
                       <Tooltip text="Get AI Prompt">
                         <button
                           onClick={() => generateAIPrompt(preferenceSet.preferences)}
-                          className="text-purple-500 hover:text-purple-700 transition-colors text-xl"
+                          className="text-rose-500 hover:text-rose-600 transition-colors text-xl"
                         >
-                          💬
+                          Chat
                         </button>
                       </Tooltip>
                       <Tooltip text="Delete preference set">
@@ -693,7 +693,7 @@ const ProfilePage: React.FC = () => {
                           onClick={() => deleteSavedPreferences(preferenceSet.id)}
                           className="text-red-500 hover:text-red-700 transition-colors text-xl"
                         >
-                          ❌
+                          Delete
                         </button>
                       </Tooltip>
                     </div>
@@ -742,9 +742,9 @@ const ProfilePage: React.FC = () => {
                 <Tooltip text="Get AI Prompt">
             <button
                     onClick={() => generateAIPrompt(tripPreferences)}
-                    className="text-purple-500 hover:text-purple-700 transition-colors text-xl"
+                    className="text-rose-500 hover:text-rose-600 transition-colors text-xl"
             >
-                    💬
+                    Chat
             </button>
                 </Tooltip>
               </div>
@@ -781,16 +781,16 @@ const ProfilePage: React.FC = () => {
                       <div className="space-y-2">
                         <p>
                           <span className="font-medium">Travel Type:</span> {
-                            tripPreferences.destinationApproach.travelType === 'abroad' ? '✈️ International Travel' : 
-                            tripPreferences.destinationApproach.travelType === 'domestic' ? '🏞️ Domestic Travel' : 
+                            tripPreferences.destinationApproach.travelType === 'abroad' ? 'International Travel' : 
+                            tripPreferences.destinationApproach.travelType === 'domestic' ? 'Domestic Travel' : 
                             'Not specified'
                           }
                         </p>
                         <p>
                           <span className="font-medium">Status:</span> {
-                            tripPreferences.destinationApproach.destinationStatus === 'chosen' ? '🎯 Destinations Chosen' :
+                            tripPreferences.destinationApproach.destinationStatus === 'chosen' ? 'Destinations Chosen' :
                             tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? '💭 Destinations in Mind' :
-                            tripPreferences.destinationApproach.destinationStatus === 'open' ? '🌍 Open to Suggestions' :
+                            tripPreferences.destinationApproach.destinationStatus === 'open' ? 'Open to Suggestions' :
                             'Not specified'
                           }
                         </p>
@@ -828,7 +828,7 @@ const ProfilePage: React.FC = () => {
                         return styles.map((style, index) => {
                           const label = styleLabels[style as keyof typeof styleLabels] || style;
                           return (
-                            <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
+                            <span key={index} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
                               #{index + 1} {label}
                             </span>
                           );
@@ -837,7 +837,7 @@ const ProfilePage: React.FC = () => {
                         return styles.split(',').map((style, index) => {
                           const label = styleLabels[style.trim() as keyof typeof styleLabels] || style.trim();
                           return (
-                            <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
+                            <span key={index} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
                               #{index + 1} {label}
                             </span>
                           );
@@ -859,19 +859,19 @@ const ProfilePage: React.FC = () => {
                       
                       // Vibe mapping for converting values to labels
                       const vibeLabels = {
-                        'relaxation': '😌 Relaxation',
-                        'entertainment': '🎭 Entertainment', 
-                        'educational': '📚 Educational Discovery',
+                        'relaxation': 'Relaxation',
+                        'entertainment': 'Entertainment', 
+                        'educational': 'Educational Discovery',
                         'cultural': '🏺 Cultural Immersion',
                         'shared': '💘 Shared Escape',
-                        'culinary': '🍽️ Culinary Adventure'
+                        'culinary': 'Culinary Adventure'
                       };
                       
                       if (typeof vibes === 'string' && vibes) {
                         return vibes.split(',').map((vibe, index) => {
                           const label = vibeLabels[vibe.trim() as keyof typeof vibeLabels] || vibe.trim();
                           return (
-                            <span key={index} className="inline-block bg-purple-100 text-purple-800 px-3 py-2 rounded-full text-sm mr-2 mb-2 font-medium">
+                            <span key={index} className="inline-block bg-rose-100 text-rose-700 px-3 py-2 rounded-full text-sm mr-2 mb-2 font-medium">
                               #{index + 1} {label}
                             </span>
                           );
@@ -911,10 +911,10 @@ const ProfilePage: React.FC = () => {
                         'eco-friendliness': '🌱 Eco-friendliness',
                         'safety': '🛡️ Safety', 
                         'accessibility': '♿ Accessibility',
-                        'cost-efficiency': '💰 Cost-efficiency',
+                        'cost-efficiency': 'Cost-efficiency',
                         'time-efficiency': '⏰ Time-efficiency',
                         'cost-effectiveness': '⚖️ Cost effectiveness',
-                        'number-of-options': '📋 Number of options'
+                        'number-of-options': 'Number of options'
                       };
                       
                       if (Array.isArray(priorities) && priorities.length > 0) {
@@ -947,7 +947,7 @@ const ProfilePage: React.FC = () => {
               Continue from Last Big Idea Survey
             </h2>
             <div className="text-center py-8">
-              <div className="text-6xl mb-4">📝</div>
+              <div className="text-2xl mb-4 font-bold text-gray-400">No Data</div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">No Big Idea Survey Data Found</h3>
               <p className="text-gray-600 mb-4">
                 You haven't completed the Big Idea survey yet, or the data wasn't saved properly.
@@ -979,10 +979,10 @@ const ProfilePage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-4 mb-6"
+              className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-green-200 rounded-xl p-4 mb-6"
             >
               <div className="flex items-center space-x-3">
-                <div className="text-2xl">🎉</div>
+                <div className="text-lg font-bold text-emerald-600">Complete</div>
                 <div>
                   <h3 className="font-semibold text-green-800">Trip Tracing Complete!</h3>
                   <p className="text-green-700 text-sm">
@@ -1016,7 +1016,7 @@ const ProfilePage: React.FC = () => {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleEditDocument(doc)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        className="text-emerald-600 hover:text-emerald-800 transition-colors"
                         title="Edit document"
                       >
                         ✏️
@@ -1026,14 +1026,14 @@ const ProfilePage: React.FC = () => {
                         className="text-green-600 hover:text-green-800 transition-colors"
                         title="Finalize document"
                       >
-                        ✅
+                        Complete
                       </button>
                       <button
                         onClick={() => handleDeleteDocument(doc.id)}
                         className="text-red-600 hover:text-red-800 transition-colors"
                         title="Delete document"
                       >
-                        ❌
+                        Incomplete
                       </button>
                     </div>
                   </div>
@@ -1060,19 +1060,19 @@ const ProfilePage: React.FC = () => {
                   </div>
                   
                   {/* Survey Origin Information */}
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="font-semibold text-blue-800 mb-2 text-sm">📋 Survey Origin</h4>
-                    <div className="space-y-1 text-xs text-blue-700">
+                  <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <h4 className="font-semibold text-emerald-800 mb-2 text-sm">Survey Origin</h4>
+                    <div className="space-y-1 text-xs text-emerald-700">
                       {doc.surveyOrigin?.bigIdeaSurveyName ? (
                         <div>
                           <strong>Big Idea:</strong> {doc.surveyOrigin.bigIdeaSurveyName}
                           <br />
-                          <span className="text-blue-600">
+                          <span className="text-emerald-600">
                             {new Date(doc.surveyOrigin.bigIdeaSurveyDate || '').toLocaleDateString()}
                           </span>
                         </div>
                       ) : (
-                        <div className="text-blue-600">
+                        <div className="text-emerald-600">
                           <strong>Big Idea:</strong> Legacy survey (no tracking)
                         </div>
                       )}
@@ -1081,12 +1081,12 @@ const ProfilePage: React.FC = () => {
                         <div className="mt-1">
                           <strong>Trip Tracing:</strong> Completed
                           <br />
-                          <span className="text-blue-600">
+                          <span className="text-emerald-600">
                             {new Date(doc.surveyOrigin.tripTracingSurveyDate || '').toLocaleDateString()}
                           </span>
                         </div>
                       ) : (
-                        <div className="mt-1 text-blue-500">
+                        <div className="mt-1 text-emerald-500">
                           <strong>Trip Tracing:</strong> Not completed
                         </div>
                       )}
@@ -1095,7 +1095,7 @@ const ProfilePage: React.FC = () => {
                       {(doc.bigIdeaSurveyData?.groupSize || doc.surveyData?.groupSize) !== 'solo' && (
                         <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
                           <div className="text-green-700 text-xs">
-                            🤝 <strong>Group Travel:</strong> Companion contract available in finalized document
+                            <strong>Group Travel:</strong> Companion contract available in finalized document
                           </div>
                         </div>
                       )}
@@ -1151,7 +1151,7 @@ const ProfilePage: React.FC = () => {
                       className="text-red-600 hover:text-red-800 transition-colors"
                       title="Delete strategy"
                     >
-                      ❌
+                      Delete
                     </button>
                   </div>
                   
@@ -1216,7 +1216,7 @@ const ProfilePage: React.FC = () => {
                       className="text-red-600 hover:text-red-800 transition-colors"
                       title="Delete policy set"
                     >
-                      ❌
+                      Delete
                     </button>
                   </div>
                   
@@ -1234,7 +1234,7 @@ const ProfilePage: React.FC = () => {
                     <ul className="space-y-1">
                       {policySet.policies.map((policy: string, index: number) => (
                         <li key={index} className="text-gray-700 text-sm flex items-start">
-                          <span className="text-blue-500 mr-2">•</span>
+                          <span className="text-emerald-500 mr-2">•</span>
                           {policy}
                         </li>
                       ))}

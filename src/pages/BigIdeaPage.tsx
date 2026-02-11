@@ -549,7 +549,7 @@ const BigIdeaPage: React.FC = () => {
   };
 
   return ( 
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-rose-50 py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -559,7 +559,7 @@ const BigIdeaPage: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            🎯 Big Picture Planning
+            Big Picture Planning
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             Answer these 7 key questions to get personalized AI prompts for your dream trip!
@@ -568,7 +568,7 @@ const BigIdeaPage: React.FC = () => {
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
             <motion.div
-              className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full"
+              className="bg-gradient-to-r from-emerald-500 to-rose-500 h-3 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
               transition={{ duration: 0.5 }}
@@ -615,7 +615,7 @@ const BigIdeaPage: React.FC = () => {
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-gray-800">
-                  📋 Review Your Big Idea Survey Responses
+                  Review Your Big Idea Survey Responses
                 </h2>
                 <button
                   onClick={() => setShowSummary(false)}
@@ -653,16 +653,16 @@ const BigIdeaPage: React.FC = () => {
                         <div className="space-y-2">
                           <p>
                             <span className="font-medium">Travel Type:</span> {
-                              tripPreferences.destinationApproach.travelType === 'abroad' ? '✈️ International Travel' : 
-                              tripPreferences.destinationApproach.travelType === 'domestic' ? '🏞️ Domestic Travel' : 
+                              tripPreferences.destinationApproach.travelType === 'abroad' ? 'International Travel' : 
+                              tripPreferences.destinationApproach.travelType === 'domestic' ? 'Domestic Travel' : 
                               'Not specified'
                             }
                           </p>
                           <p>
                             <span className="font-medium">Status:</span> {
-                              tripPreferences.destinationApproach.destinationStatus === 'chosen' ? '🎯 Destinations Chosen' :
+                              tripPreferences.destinationApproach.destinationStatus === 'chosen' ? 'Destinations Chosen' :
                               tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? '💭 Destinations in Mind' :
-                              tripPreferences.destinationApproach.destinationStatus === 'open' ? '🌍 Open to Suggestions' :
+                              tripPreferences.destinationApproach.destinationStatus === 'open' ? 'Open to Suggestions' :
                               'Not specified'
                             }
                           </p>
@@ -700,7 +700,7 @@ const BigIdeaPage: React.FC = () => {
                           return styles.map((style, index) => {
                             const label = styleLabels[style as keyof typeof styleLabels] || style;
                             return (
-                              <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
+                              <span key={index} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
                                 #{index + 1} {label}
                               </span>
                             );
@@ -709,7 +709,7 @@ const BigIdeaPage: React.FC = () => {
                           return styles.split(',').map((style, index) => {
                             const label = styleLabels[style.trim() as keyof typeof styleLabels] || style.trim();
                             return (
-                              <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
+                              <span key={index} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm mr-2 mb-1">
                                 #{index + 1} {label}
                               </span>
                             );
@@ -731,19 +731,19 @@ const BigIdeaPage: React.FC = () => {
                         
                         // Vibe mapping for converting values to labels
                         const vibeLabels = {
-                          'relaxation': '😌 Relaxation',
-                          'entertainment': '🎭 Entertainment', 
-                          'educational': '📚 Educational Discovery',
+                          'relaxation': 'Relaxation',
+                          'entertainment': 'Entertainment', 
+                          'educational': 'Educational Discovery',
                           'cultural': '🏺 Cultural Immersion',
                           'shared': '💘 Shared Escape',
-                          'culinary': '🍽️ Culinary Adventure'
+                          'culinary': 'Culinary Adventure'
                         };
                         
                         if (typeof vibes === 'string' && vibes) {
                           return vibes.split(',').map((vibe, index) => {
                             const label = vibeLabels[vibe.trim() as keyof typeof vibeLabels] || vibe.trim();
                             return (
-                              <span key={index} className="inline-block bg-purple-100 text-purple-800 px-3 py-2 rounded-full text-sm mr-2 mb-2 font-medium">
+                              <span key={index} className="inline-block bg-rose-100 text-rose-700 px-3 py-2 rounded-full text-sm mr-2 mb-2 font-medium">
                                 #{index + 1} {label}
                               </span>
                             );
@@ -783,10 +783,10 @@ const BigIdeaPage: React.FC = () => {
                           'eco-friendliness': '🌱 Eco-friendliness',
                           'safety': '🛡️ Safety', 
                           'accessibility': '♿ Accessibility',
-                          'cost-efficiency': '💰 Cost-efficiency',
+                          'cost-efficiency': 'Cost-efficiency',
                           'time-efficiency': '⏰ Time-efficiency',
                           'cost-effectiveness': '⚖️ Cost effectiveness',
-                          'number-of-options': '📋 Number of options'
+                          'number-of-options': 'Number of options'
                         };
                         
                         if (Array.isArray(priorities) && priorities.length > 0) {
@@ -813,7 +813,7 @@ const BigIdeaPage: React.FC = () => {
                     onClick={() => setShowSavePreferences(true)}
                     className="bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-all"
                   >
-                    💾 Save These Preferences
+                    Save These Preferences
                   </button>
                 </div>
                 
@@ -863,7 +863,7 @@ const BigIdeaPage: React.FC = () => {
                     className="btn-primary text-lg px-8 py-4"
                     style={{ zIndex: 1000, position: 'relative' }}
                   >
-                    Continue to AI Prompt 🚀
+                    Continue to AI Prompt
                   </button>
                 </div>
               </div>
@@ -893,7 +893,7 @@ const BigIdeaPage: React.FC = () => {
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">
-                  💾 Save Trip Preferences
+                  Save Trip Preferences
                 </h2>
                 <button
                   onClick={() => setShowSavePreferences(false)}
@@ -912,7 +912,7 @@ const BigIdeaPage: React.FC = () => {
                   value={preferencesName}
                   onChange={(e) => setPreferencesName(e.target.value)}
                   placeholder="e.g., Family Summer Vacation, Solo Adventure, etc."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && preferencesName.trim()) {
                       savePreferencesSet();
@@ -937,7 +937,7 @@ const BigIdeaPage: React.FC = () => {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  💾 Save Preferences
+                  Save Preferences
                 </button>
               </div>
             </motion.div>
