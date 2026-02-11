@@ -549,7 +549,7 @@ const BigIdeaPage: React.FC = () => {
   };
 
   return ( 
-    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-rose-50 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-white py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -568,7 +568,7 @@ const BigIdeaPage: React.FC = () => {
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
             <motion.div
-              className="bg-gradient-to-r from-hawaii-green to-hawaii-coral h-3 rounded-full"
+              className="bg-gradient-to-r from-hawaii-light to-hawaii-green h-3 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
               transition={{ duration: 0.5 }}

@@ -91,7 +91,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
           className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 z-50 flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-hawaii-mint to-rose-50">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-hawaii-mint to-white">
             <div className="flex items-center space-x-2">
               <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <h3 className="text-lg font-semibold text-gray-800">Collaboration</h3>
@@ -232,7 +232,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
                       >
-                        <div className="w-8 h-8 bg-gradient-to-r from-hawaii-green to-hawaii-coral rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        <div className="w-8 h-8 bg-hawaii-coral rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1">

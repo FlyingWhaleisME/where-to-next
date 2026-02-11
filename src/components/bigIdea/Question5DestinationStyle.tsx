@@ -144,7 +144,7 @@ const Question5DestinationStyle: React.FC<Question5DestinationStyleProps> = ({
                 </div>
               )}
               
-              <div className="w-full h-32 bg-gradient-to-br from-emerald-100 to-rose-100 rounded-lg mb-3 flex items-center justify-center">
+              <div className="w-full h-32 bg-gradient-to-br from-hawaii-mint to-hawaii-light rounded-lg mb-3 flex items-center justify-center">
                 <div className="text-4xl">{style.emoji}</div>
               </div>
               

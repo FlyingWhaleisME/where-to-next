@@ -357,7 +357,7 @@ const FlightSection: React.FC<FlightSectionProps> = ({
           disabled={!canProceedToNext()}
           className={`btn-primary text-lg px-8 py-4 ${
             canProceedToNext()
-              ? 'bg-gradient-to-r from-emerald-600 to-hawaii-coral hover:from-emerald-700 hover:to-rose-600'
+              ? 'bg-gradient-to-r from-emerald-600 to-emerald-400 hover:from-emerald-700 hover:to-emerald-500'
               : 'bg-gray-300 cursor-not-allowed'
           }`}
         >
