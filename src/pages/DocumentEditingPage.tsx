@@ -477,11 +477,11 @@ const DocumentEditingPage: React.FC = () => {
       }
       
       // Ensure existing documents have creatorId if missing
-      const currentUser = getCurrentUser();
-      if (currentUser && existingDocIndex >= 0) {
+      const currentUserCheck = getCurrentUser();
+      if (currentUserCheck && existingDocIndex >= 0) {
         const existingDoc = docs[existingDocIndex];
         if (!existingDoc.creatorId) {
-          docs[existingDocIndex] = { ...existingDoc, creatorId: currentUser.id };
+          docs[existingDocIndex] = { ...existingDoc, creatorId: currentUserCheck.id };
           console.log('Added creatorId to existing document');
         }
       }

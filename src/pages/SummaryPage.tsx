@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AIPromptDisplay from '../components/AIPromptDisplay';
 import promptService from '../services/promptService';
 import { TripPreferences, GeneratedPrompt } from '../types';
+import { documentsApi } from '../services/apiService';
 
 const SummaryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ const SummaryPage: React.FC = () => {
     }
   };
 
-  const handleDestinationsSubmit = () => {
+  const handleDestinationsSubmit = async () => {
     const validDestinations = destinations.filter(dest => dest.trim() !== '');
     if (validDestinations.length > 0) {
       // Create destination documents in localStorage with survey data
@@ -179,7 +180,7 @@ const SummaryPage: React.FC = () => {
     }
   };
 
-  const handleChosenDestinationsSubmit = () => {
+  const handleChosenDestinationsSubmit = async () => {
     console.log('=== handleChosenDestinationsSubmit called ===');
     console.log('tripPreferences:', tripPreferences);
     console.log('destinationApproach:', tripPreferences?.destinationApproach);

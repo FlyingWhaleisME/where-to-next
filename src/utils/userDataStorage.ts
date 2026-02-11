@@ -81,7 +81,7 @@ export const removeUserData = (baseKey: string): void => {
     return;
   }
   
-  const key = getUserStorageKey(baseKey, user.id);s
+  const key = getUserStorageKey(baseKey, user.id);
   localStorage.removeItem(key);
 };
 
