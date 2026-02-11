@@ -41,15 +41,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       
       if (!currentAuth || !currentUser) {
         console.log('❌ [PROTECTED ROUTE] User not authenticated, redirecting to home');
-        console.log('🔒 [PROTECTED ROUTE] Details:', {
-          hasToken: !!localStorage.getItem('token'),
-          hasUserStr: !!localStorage.getItem('user'),
-          currentAuth,
-          currentUser
-        });
         setIsAuthorized(false);
         setIsChecking(false);
-        // Use window.location for immediate redirect
+        // Show login required popup
+        alert('🔒 Please log in to access this feature.\n\nClick "Login" or "Register" in the top navigation bar.');
         window.location.href = '/';
         return;
       }
@@ -134,15 +129,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // CRITICAL: Don't render anything if not authenticated (even during check)
   if (!authenticated || !user) {
-    console.log('❌ [PROTECTED ROUTE] Blocking render - not authenticated:', {
-      authenticated,
-      hasUser: !!user,
-      userId: user?.id,
-      timestamp: new Date().toISOString()
-    });
-    // Redirect immediately
+    console.log('❌ [PROTECTED ROUTE] Blocking render - not authenticated');
+    // Show login required popup and redirect
     if (typeof window !== 'undefined') {
-      window.location.href = '/';
+      // Use setTimeout to avoid blocking render cycle
+      setTimeout(() => {
+        alert('🔒 Please log in to access this feature.\n\nClick "Login" or "Register" in the top navigation bar.');
+        window.location.href = '/';
+      }, 0);
     }
     return null;
   }

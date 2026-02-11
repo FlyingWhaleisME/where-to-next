@@ -239,7 +239,7 @@ const BigIdeaPage: React.FC = () => {
   };
 
 
-  const handleNext = () => {
+  const handleNext = async () => {
     console.log('handleNext called! Current question:', currentQuestion, 'Total questions:', totalQuestions);
     console.log('Current tripPreferences:', tripPreferences);
     console.log('isComplete() result:', isComplete());
@@ -302,6 +302,23 @@ const BigIdeaPage: React.FC = () => {
             tripPreferences.destinationApproach.specificDestinations.length > 0) {
           console.log(`Flow ${tripPreferences.destinationApproach.destinationStatus === 'chosen' ? '1' : '2'}: Creating documents immediately`);
           createDestinationDocuments(tripPreferences.destinationApproach.specificDestinations, tripPreferences);
+        }
+        
+        // Save survey preferences to MongoDB for persistent storage across devices/sessions
+        try {
+          const { preferencesApi } = require('../services/apiService');
+          const prefResult = await preferencesApi.create({
+            ...tripPreferences,
+            surveyName: `Big Idea Survey - ${new Date().toLocaleDateString()}`,
+            completedAt: new Date().toISOString()
+          });
+          if (prefResult.data) {
+            console.log('✅ Survey preferences saved to MongoDB:', prefResult.data._id);
+          } else {
+            console.error('Failed to save preferences to MongoDB:', prefResult.error);
+          }
+        } catch (e) {
+          console.error('Error saving preferences to MongoDB:', e);
         }
         
         // Show summary instead of AI prompt

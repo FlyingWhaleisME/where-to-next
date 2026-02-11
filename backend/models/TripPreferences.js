@@ -53,7 +53,10 @@ const tripPreferencesSchema = new mongoose.Schema({
   destinationApproach: destinationApproachSchema,
   destinationStyle: String,
   destinationStyles: [String],
-  tripVibe: [String], // Array of trip vibes (max 3)
+  tripVibe: {
+    type: mongoose.Schema.Types.Mixed, // Can be comma-separated string or array
+    default: ''
+  },
   planningStyle: {
     type: mongoose.Schema.Types.Mixed, // Can be string or number
     default: ''
@@ -70,6 +73,8 @@ const tripPreferencesSchema = new mongoose.Schema({
   priorityOrder: [Number],
   // Add activities from Question 7
   activities: [String], // Activities from Question 7
+  surveyName: String,
+  completedAt: String,
   createdAt: {
     type: Date,
     default: Date.now
@@ -78,7 +83,7 @@ const tripPreferencesSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-});
+}, { strict: false }); // Allow extra fields from frontend without validation errors
 
 // Update lastModified on save
 tripPreferencesSchema.pre('save', function(next) {

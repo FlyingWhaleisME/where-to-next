@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { DocumentData } from '../types';
 import promptService from '../services/promptService';
 import AIPromptDisplay from '../components/AIPromptDisplay';
-import { getCurrentUser, isAuthenticated, documentsApi } from '../services/apiService';
+import { getCurrentUser, isAuthenticated, documentsApi, preferencesApi } from '../services/apiService';
 import { getUserData, setUserData } from '../utils/userDataStorage';
 
 // Tooltip component
@@ -218,8 +218,31 @@ const ProfilePage: React.FC = () => {
         return;
       }
 
-      // Use userDataStorage utility to load user-specific preferences
-      const savedPrefs = getUserData<any>('tripPreferences');
+      // Load survey preferences from MongoDB first (persistent), then fallback to localStorage (cache)
+      let savedPrefs: any = null;
+      
+      try {
+        const prefsResult = await preferencesApi.getAll();
+        if (prefsResult.data && prefsResult.data.length > 0) {
+          // Use the most recent completed survey from MongoDB
+          savedPrefs = prefsResult.data[0]; // Already sorted by lastModified desc
+          console.log('[DEBUG] ProfilePage: Loaded preferences from MongoDB:', savedPrefs._id);
+          
+          // Also cache to localStorage for offline access
+          try {
+            const { setUserData } = require('../utils/userDataStorage');
+            setUserData('tripPreferences', savedPrefs);
+          } catch (e) { /* ignore cache errors */ }
+        }
+      } catch (e) {
+        console.warn('[DEBUG] ProfilePage: Failed to load preferences from MongoDB, using localStorage:', e);
+      }
+      
+      // Fallback to localStorage if MongoDB didn't return anything
+      if (!savedPrefs) {
+        savedPrefs = getUserData<any>('tripPreferences');
+      }
+      
       if (savedPrefs) {
         // Final check before setting preferences state
         const finalCheck = getCurrentUser();
@@ -229,11 +252,10 @@ const ProfilePage: React.FC = () => {
         }
         
         // Only show trip preferences if the survey is complete
-        // This prevents displaying incomplete/in-progress survey results
+        // Note: duration is optional (user can choose "undecided")
         const prefsComplete = !!(
           savedPrefs.groupSize &&
-          savedPrefs.duration &&
-          (savedPrefs.budget !== undefined && savedPrefs.budget !== null) &&
+          ((savedPrefs.budget !== undefined && savedPrefs.budget !== null) || savedPrefs.isNotSure) &&
           savedPrefs.destinationApproach &&
           savedPrefs.destinationApproach.travelType &&
           savedPrefs.destinationApproach.destinationStatus &&
