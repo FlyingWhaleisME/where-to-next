@@ -91,7 +91,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ tripId, isVisib
           className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 z-50 flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-hawaii-mint to-white">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-rose-50 to-white">
             <div className="flex items-center space-x-2">
               <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <h3 className="text-lg font-semibold text-gray-800">Collaboration</h3>

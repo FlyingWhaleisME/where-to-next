@@ -717,7 +717,7 @@ const DocumentEditingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl mb-4 font-bold text-gray-400">Loading</div>
           <p className="text-xl text-gray-600">Loading document...</p>
@@ -728,7 +728,7 @@ const DocumentEditingPage: React.FC = () => {
 
   if (!document) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl mb-4 font-bold text-red-400">Error</div>
           <p className="text-xl text-gray-600">Document not found</p>
@@ -738,7 +738,7 @@ const DocumentEditingPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-white py-20">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div

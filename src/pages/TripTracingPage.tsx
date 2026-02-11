@@ -428,7 +428,7 @@ const TripTracingPage: React.FC = () => {
 
   if (!tripPreferences) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-white py-20">
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white rounded-3xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h2>
@@ -440,7 +440,7 @@ const TripTracingPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-hawaii-mint to-white py-20">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
