@@ -579,6 +579,25 @@ app.get('/api/debug/all-data', async (req, res) => {
   }
 });
 
+// Debug: Delete a user account and all their data by email
+app.delete('/api/debug/delete-user/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    // Delete all user's data
+    await Document.deleteMany({ userId: user._id });
+    await TripPreferences.deleteMany({ userId: user._id });
+    await TripTracingState.deleteMany({ userId: user._id });
+    await User.findByIdAndDelete(user._id);
+    res.json({ success: true, message: `Deleted user ${email} and all associated data` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ===== ADDITIONAL ENDPOINTS =====
 
 // Get user profile
