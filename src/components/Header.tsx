@@ -164,7 +164,7 @@ const Header: React.FC = () => {
               <img src="/logo512.png" alt="Logo" className="h-9 w-9 rounded-lg" />
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent"
+                className="text-2xl font-bold bg-gradient-to-r from-hawaii-coral to-rose-300 bg-clip-text text-transparent"
               >
                 Where To Next?
               </motion.div>

@@ -157,7 +157,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
 
             {/* Header with Gradient */}
             <div className="relative mb-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-t-2xl -mx-6 -mt-6 h-24 opacity-80"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-hawaii-coral to-rose-300 rounded-t-2xl -mx-6 -mt-6 h-24 opacity-80"></div>
               <h2 className="relative text-3xl font-bold text-white text-center pt-6 pb-4 z-10">
                 Start Collaborating
               </h2>
@@ -168,7 +168,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
               <button
                 className={`flex-1 py-3 text-center font-medium text-lg transition-colors ${
                   activeTab === 'create'
-                    ? 'border-b-2 border-emerald-600 text-emerald-600'
+                    ? 'border-b-2 border-hawaii-coral text-hawaii-coral'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 onClick={() => setActiveTab('create')}
@@ -178,7 +178,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
               <button
                 className={`flex-1 py-3 text-center font-medium text-lg transition-colors ${
                   activeTab === 'join'
-                    ? 'border-b-2 border-emerald-600 text-emerald-600'
+                    ? 'border-b-2 border-hawaii-coral text-hawaii-coral'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 onClick={() => setActiveTab('join')}
@@ -219,7 +219,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
                         type="text"
                         value={createSettings.roomName}
                         onChange={(e) => setCreateSettings(prev => ({ ...prev, roomName: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
                         placeholder="Enter room name"
                       />
                     </div>
@@ -234,7 +234,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
                         max="20"
                         value={createSettings.maxUsers}
                         onChange={(e) => setCreateSettings(prev => ({ ...prev, maxUsers: parseInt(e.target.value) }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -242,7 +242,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
                   <button
                     onClick={handleCreateRoom}
                     disabled={isCreating || !createSettings.roomName.trim()}
-                    className="w-full mt-6 bg-emerald-600 text-white py-3 px-6 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    className="w-full mt-6 bg-hawaii-coral text-white py-3 px-6 rounded-lg hover:bg-rose-500 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                   >
                     {isCreating ? (
                       <>
@@ -278,7 +278,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
                         type="text"
                         value={joinShareCode}
                         onChange={(e) => setJoinShareCode(e.target.value.toUpperCase())}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-center text-lg font-mono tracking-widest"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-center text-lg font-mono tracking-widest"
                         placeholder="Enter share code"
                         maxLength={6}
                       />
@@ -288,7 +288,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
                   <button
                     onClick={handleJoinRoom}
                     disabled={isJoining || !joinShareCode.trim()}
-                    className="w-full mt-6 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    className="w-full mt-6 bg-hawaii-coral text-white py-3 px-6 rounded-lg hover:bg-rose-500 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                   >
                     {isJoining ? (
                       <>
@@ -301,25 +301,6 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
                   </button>
                 </motion.div>
               )}
-            </div>
-
-            {/* Features Showcase */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h4 className="text-lg font-semibold text-gray-700 mb-4">What you get:</h4>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 text-sm">
-                <li className="flex items-center">
-                  Real-time Chat
-                </li>
-                <li className="flex items-center">
-                  User Management
-                </li>
-                <li className="flex items-center">
-                  Shared Planning
-                </li>
-                <li className="flex items-center">
-                  Seamless Collaboration
-                </li>
-              </ul>
             </div>
           </motion.div>
         </motion.div>

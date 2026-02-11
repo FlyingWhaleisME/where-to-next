@@ -460,7 +460,7 @@ const TripTracingPage: React.FC = () => {
         {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
             <motion.div
-              className="bg-gradient-to-r from-hawaii-light to-hawaii-green h-3 rounded-full"
+              className="bg-gradient-to-r from-hawaii-peach to-hawaii-coral h-3 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${(currentSection / totalSections) * 100}%` }}
               transition={{ duration: 0.5 }}

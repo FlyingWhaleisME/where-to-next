@@ -639,11 +639,8 @@ const ProfilePage: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            Profile
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
             Manage your travel preferences and planning documents
-          </p>
+          </h1>
         </motion.div>
 
         {/* Saved Trip Preferences Section */}
@@ -685,7 +682,7 @@ const ProfilePage: React.FC = () => {
                           onClick={() => generateAIPrompt(preferenceSet.preferences)}
                           className="text-rose-500 hover:text-rose-600 transition-colors text-xl"
                         >
-                          Chat
+                          🤖
                         </button>
                       </Tooltip>
                       <Tooltip text="Delete preference set">
@@ -1026,14 +1023,14 @@ const ProfilePage: React.FC = () => {
                         className="text-green-600 hover:text-green-800 transition-colors"
                         title="Finalize document"
                       >
-                        Complete
+                        ✅
                       </button>
                       <button
                         onClick={() => handleDeleteDocument(doc.id)}
                         className="text-red-600 hover:text-red-800 transition-colors"
                         title="Delete document"
                       >
-                        Incomplete
+                        ❌
                       </button>
                     </div>
                   </div>
@@ -1262,7 +1259,7 @@ const ProfilePage: React.FC = () => {
           
           <button
             onClick={() => navigate('/big-picture')}
-            className="btn-primary text-lg px-8 py-4"
+            className="text-lg px-8 py-4 bg-gradient-to-r from-hawaii-coral to-rose-300 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-rose-500 hover:to-rose-400 transform hover:-translate-y-1 transition-all duration-200"
           >
             Start planning a new trip.
           </button>

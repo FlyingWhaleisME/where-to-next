@@ -140,7 +140,7 @@ const HomePage: React.FC = () => {
               </p>
               <button
                 onClick={() => safeNavigate('/big-picture')}
-                className="btn-primary w-full text-sm sm:text-base py-2 sm:py-3"
+                className="w-full text-sm sm:text-base py-2 sm:py-3 bg-gradient-to-r from-hawaii-coral to-rose-300 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-rose-500 hover:to-rose-400 transform hover:-translate-y-1 transition-all duration-200"
               >
                 Start Big Idea Survey
               </button>
@@ -159,14 +159,14 @@ const HomePage: React.FC = () => {
               {hasTripPreferences ? (
                 <button
                   onClick={() => safeNavigate('/trip-tracing')}
-                  className="btn-primary w-full text-sm sm:text-base py-2 sm:py-3"
+                  className="w-full text-sm sm:text-base py-2 sm:py-3 bg-gradient-to-r from-hawaii-coral to-rose-300 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-rose-500 hover:to-rose-400 transform hover:-translate-y-1 transition-all duration-200"
                 >
                   Continue Trip Tracing
                 </button>
               ) : (
                 <button
                   onClick={() => safeNavigate('/big-picture')}
-                  className="btn-secondary w-full text-sm sm:text-base py-2 sm:py-3"
+                  className="w-full text-sm sm:text-base py-2 sm:py-3 bg-rose-200 text-rose-700 font-semibold rounded-xl shadow-md hover:shadow-lg hover:bg-rose-300 transform hover:-translate-y-1 transition-all duration-200 border border-rose-300"
                 >
                   Complete Big Idea First
                 </button>

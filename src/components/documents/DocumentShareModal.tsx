@@ -124,7 +124,6 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <Eye className="w-6 h-6 text-emerald-600" />
             <h2 className="text-xl font-bold text-gray-900">
               {sharedDocument ? 'Shared Document' : 'View Document by Code'}
             </h2>
@@ -148,15 +147,12 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                 className="max-w-md mx-auto"
               >
                 <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Eye className="w-8 h-8 text-emerald-600" />
+                  <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Eye className="w-8 h-8 text-hawaii-coral" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Enter Document Share Code
-                  </h3>
-                  <p className="text-gray-600">
                     Enter the 6-character code to view a shared trip document
-                  </p>
+                  </h3>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -167,7 +163,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                       onChange={(e) => setShareCode(e.target.value.toUpperCase())}
                       placeholder="Enter 6-character code"
                       maxLength={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-center text-lg font-mono tracking-widest"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-center text-lg font-mono tracking-widest"
                       disabled={isLoading}
                     />
                   </div>
@@ -185,7 +181,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                   <button
                     type="submit"
                     disabled={!shareCode.trim() || isLoading}
-                    className="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+                    className="w-full bg-hawaii-coral text-white py-3 px-4 rounded-lg hover:bg-rose-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
                   >
                     {isLoading ? (
                       <div className="flex items-center justify-center gap-2">
@@ -215,7 +211,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleCopyShareCode}
-                        className="flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md hover:bg-emerald-200 transition-colors text-sm"
+                        className="flex items-center gap-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-md hover:bg-rose-200 transition-colors text-sm"
                       >
                         <Copy className="w-4 h-4" />
                         {copied ? 'Copied!' : 'Copy Code'}
@@ -233,7 +229,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                       </button>
                       <button
                         onClick={handleDownload}
-                        className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors text-sm"
+                        className="flex items-center gap-2 px-3 py-1 bg-rose-50 text-rose-500 rounded-md hover:bg-rose-100 transition-colors text-sm"
                       >
                         <Download className="w-4 h-4" />
                         Download
@@ -274,7 +270,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                   </button>
                   <button
                     onClick={handleClose}
-                    className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                    className="px-6 py-2 bg-hawaii-coral text-white rounded-lg hover:bg-rose-500 transition-colors"
                   >
                     Close
                   </button>
