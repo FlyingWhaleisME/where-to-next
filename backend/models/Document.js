@@ -65,8 +65,7 @@ const surveyOriginSchema = new mongoose.Schema({
   tripTracingSurveyDate: String
 });
 
-// Document schema defines the structure of trip documents stored in MongoDB
-// Schema enforces data structure and validation rules
+// MongoDB schema for trip documents that enforces data structure and validation rules
 const documentSchema = new mongoose.Schema({
   // Reference to User collection - links document to creator
   userId: {
@@ -82,22 +81,28 @@ const documentSchema = new mongoose.Schema({
     trim: true                             // Remove leading/trailing whitespace
   },
 
-  // Flexible nested data structure for survey responses
-  surveyData: {
+  // Below are flexible nested data structures for survey responses
+  surveyData: { // Legacy support
     type: mongoose.Schema.Types.Mixed
   },
-  bigIdeaSurveyData: {
+  // Nested key-value structures for big idea survey results stored as flexible JSON object
+  bigIdeaSurveyData: { 
     type: mongoose.Schema.Types.Mixed
+    // Key: "bigIdeaSurveyData", Value: Any JSON object
   },
-  tripTracingSurveyData: {
+  // Nested key-value structures for trip tracing survey results stored as flexible JSON object
+  tripTracingSurveyData: { 
     type: mongoose.Schema.Types.Mixed
+    // Key: "tripTracingSurveyData", Value: Any JSON object
   },
-  isAutoCreated: { type: Boolean, default: false },
-  surveyOrigin: surveyOriginSchema,
-  // Nested schema for calendar planning data
-  calendarPlanner: calendarPlannerSchema,  // Reusable sub-schema defined above
-  optionsOrganizer: optionsOrganizerSchema,
-  editableFields: editableFieldsSchema,
+  isAutoCreated: { type: Boolean, default: false }, // Flag for auto-created documents
+  // Key: "isAutoCreated", Value: Boolean
+  
+  // Below are nested schemas for other data structures
+  surveyOrigin: surveyOriginSchema, // Survey origin data
+  calendarPlanner: calendarPlannerSchema, // Calendar planner data
+  optionsOrganizer: optionsOrganizerSchema, // Options organizer data
+  editableFields: editableFieldsSchema, // Editable fields data
 
   // Automatic timestamp management
   createdAt: {
@@ -110,12 +115,12 @@ const documentSchema = new mongoose.Schema({
   }
 });
 
-// Execute before document save operation
-// Automatically updates lastModified timestamp
+// Function of documentSchema for Mongoose middleware to be executed before document save operation
 documentSchema.pre('save', function(next) {
   this.lastModified = new Date();          // Update timestamp
   next();                                  // Continue with save operation
 });
 
 // Export Mongoose model for use in other files
+// 'Document' is the model name, documentSchema defines the structure
 module.exports = mongoose.model('Document', documentSchema);

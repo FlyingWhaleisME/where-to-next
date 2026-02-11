@@ -116,8 +116,8 @@ app.get('/api/test', (req, res) => {
 
 // ===== AUTHENTICATION ENDPOINTS =====
 
-// POST endpoint for user registration
-// Array contains validation middleware functions
+// POST endpoint for user registration by using Express.js middleware functions
+// Array contains validation middleware functions for email and password
 app.post('/api/auth/register', [
   // Validate email format using express-validator
   body('email').isEmail().withMessage('Please provide a valid email'),
@@ -145,8 +145,10 @@ app.post('/api/auth/register', [
       return res.status(400).json({ error: 'User already exists with this email' });
     }
     
+    // Use Mongoose model to create and save a new user
     const user = new User({ email, password, name });
-    // Save user to MongoDB database
+    // Await pauses execution until user is saved to MongoDB database
+    // Returns Promise that resolves to the saved user
     await user.save();
     
     // Generate JWT authentication token
@@ -158,12 +160,15 @@ app.post('/api/auth/register', [
     );
     
     // Return success response with token and user data
+    // 201 status code is a created resource response
     res.status(201).json({
       message: 'User created successfully',
       token,
       user: { id: user._id, email: user.email, name: user.name }
     });
   } catch (error) {
+    // Return what went wrong as a JSON error response if user registration fails
+    // 500 status code is a generic server error
     res.status(500).json({ error: error.message });
   }
 });
@@ -336,9 +341,11 @@ app.post('/api/documents', authenticateToken, async (req, res) => {
     await document.save();
 
     // Return the created document as JSON success response
+    // MongoDB automatically converts document to JSON format
     res.status(201).json(document);
   } catch (error) {
     // Return what went wrong (validation or database) as a JSON error response if document creation fails
+    // 400 status code is a bad request error
     res.status(400).json({ error: error.message });
   }
 });
