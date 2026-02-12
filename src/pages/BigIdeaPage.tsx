@@ -559,7 +559,7 @@ const BigIdeaPage: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            Big Picture Planning
+            Big idea
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             Answer these 7 key questions to get personalized AI prompts for your dream trip!

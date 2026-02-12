@@ -254,6 +254,15 @@ export const userApi = {
     });
     
     return handleResponse<any>(response);
+  },
+
+  deleteAccount: async (): Promise<ApiResponse<{ success: boolean; message: string }>> => {
+    const response = await fetch(`${API_BASE_URL}/user/account`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    return handleResponse<{ success: boolean; message: string }>(response);
   }
 };
 

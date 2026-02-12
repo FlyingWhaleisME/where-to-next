@@ -17,10 +17,16 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
   
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
   const [isEditingDestination, setIsEditingDestination] = useState(false);
+  const [isEditingLegacyPrompt, setIsEditingLegacyPrompt] = useState(false);
+  const [originalPreferencesPrompt] = useState(prompt.preferencesPrompt || '');
+  const [originalDestinationPrompt] = useState(prompt.destinationPrompt || '');
+  const [originalLegacyPrompt] = useState(prompt.prompt || '');
   const [editedPreferencesPrompt, setEditedPreferencesPrompt] = useState(prompt.preferencesPrompt || '');
   const [editedDestinationPrompt, setEditedDestinationPrompt] = useState(prompt.destinationPrompt || '');
+  const [editedLegacyPrompt, setEditedLegacyPrompt] = useState(prompt.prompt || '');
   const [showCopiedPreferences, setShowCopiedPreferences] = useState(false);
   const [showCopiedDestination, setShowCopiedDestination] = useState(false);
+  const [showCopiedLegacy, setShowCopiedLegacy] = useState(false);
 
   const handleCopyPreferencesPrompt = async () => {
     try {
@@ -57,13 +63,35 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
   };
 
   const handleResetPreferences = () => {
-    setEditedPreferencesPrompt(prompt.preferencesPrompt || '');
+    setEditedPreferencesPrompt(originalPreferencesPrompt);
     setIsEditingPreferences(false);
   };
 
   const handleResetDestination = () => {
-    setEditedDestinationPrompt(prompt.destinationPrompt || '');
+    setEditedDestinationPrompt(originalDestinationPrompt);
     setIsEditingDestination(false);
+  };
+
+  const handleResetLegacyPrompt = () => {
+    setEditedLegacyPrompt(originalLegacyPrompt);
+    setIsEditingLegacyPrompt(false);
+  };
+
+  const handleSaveLegacyPrompt = () => {
+    if (prompt.prompt) {
+      prompt.prompt = editedLegacyPrompt;
+    }
+    setIsEditingLegacyPrompt(false);
+  };
+
+  const handleCopyLegacyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(editedLegacyPrompt);
+      setShowCopiedLegacy(true);
+      setTimeout(() => setShowCopiedLegacy(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy legacy prompt:', err);
+    }
   };
 
   return (
@@ -254,21 +282,51 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-gray-800">Your AI Prompt</h3>
                 <div className="flex space-x-2">
+                  {isEditingLegacyPrompt ? (
+                    <>
+                      <button
+                        onClick={handleSaveLegacyPrompt}
+                        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={handleResetLegacyPrompt}
+                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        Reset
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setIsEditingLegacyPrompt(true)}
+                      className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
+                    >
+                      Edit Prompt
+                    </button>
+                  )}
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(prompt.prompt || '');
-                    }}
-                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-500 transition-colors"
+                    onClick={handleCopyLegacyPrompt}
+                    className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors relative"
                   >
-                    Copy Prompt
+                    {showCopiedLegacy ? 'Copied!' : 'Copy Prompt'}
                   </button>
                 </div>
               </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
-                  {prompt.prompt}
-                </pre>
-              </div>
+              {isEditingLegacyPrompt ? (
+                <textarea
+                  value={editedLegacyPrompt}
+                  onChange={(e) => setEditedLegacyPrompt(e.target.value)}
+                  className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none font-mono text-sm"
+                  placeholder="Edit your AI prompt here..."
+                />
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+                    {editedLegacyPrompt}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
         </div>

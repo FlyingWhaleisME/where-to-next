@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { DocumentData } from '../types';
 import promptService from '../services/promptService';
 import AIPromptDisplay from '../components/AIPromptDisplay';
-import { getCurrentUser, isAuthenticated, documentsApi, preferencesApi } from '../services/apiService';
+import { getCurrentUser, isAuthenticated, documentsApi, preferencesApi, userApi } from '../services/apiService';
 import { getUserData, setUserData } from '../utils/userDataStorage';
 
 // Tooltip component
@@ -629,9 +629,54 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!isAuthenticated() || !getCurrentUser()) {
+      alert('Please log in to delete your account');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      '⚠️ WARNING: This will permanently delete your account and ALL associated data:\n\n' +
+      '• All your documents\n' +
+      '• All your saved trip preferences\n' +
+      '• All your flight strategies\n' +
+      '• All your expense policies\n' +
+      '• Your account information\n\n' +
+      'This action CANNOT be undone.\n\n' +
+      'Are you absolutely sure you want to delete your account?'
+    );
+
+    if (!confirmed) return;
+
+    const doubleConfirm = window.confirm(
+      'This is your last chance. Type "DELETE" in the next prompt to confirm.\n\n' +
+      'Are you sure you want to proceed?'
+    );
+
+    if (!doubleConfirm) return;
+
+    try {
+      const result = await userApi.deleteAccount();
+      if (result.data?.success) {
+        // Clear all local storage
+        localStorage.clear();
+        // Redirect to home
+        window.location.href = '/';
+        alert('Your account has been deleted successfully.');
+      } else {
+        alert(`Failed to delete account: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      alert(`Error deleting account: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white py-20">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main Content */}
+          <div className="flex-1">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -741,7 +786,7 @@ const ProfilePage: React.FC = () => {
                     onClick={() => generateAIPrompt(tripPreferences)}
                     className="text-rose-500 hover:text-rose-600 transition-colors text-xl"
             >
-                    Chat
+                    🤖
             </button>
                 </Tooltip>
               </div>
@@ -944,8 +989,6 @@ const ProfilePage: React.FC = () => {
               Continue from Last Big Idea Survey
             </h2>
             <div className="text-center py-8">
-              <div className="text-2xl mb-4 font-bold text-gray-400">No Data</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Big Idea Survey Data Found</h3>
               <p className="text-gray-600 mb-4">
                 You haven't completed the Big Idea survey yet, or the data wasn't saved properly.
               </p>
@@ -1264,6 +1307,29 @@ const ProfilePage: React.FC = () => {
             Start planning a new trip.
           </button>
         </motion.div>
+          </div>
+
+          {/* Sidebar - Delete Account */}
+          <div className="lg:w-64 flex-shrink-0">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="bg-white rounded-3xl shadow-xl p-6 sticky top-8"
+            >
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Account settings</h3>
+              <button
+                onClick={handleDeleteAccount}
+                className="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
+              >
+                Delete account
+              </button>
+              <p className="text-xs text-gray-500 mt-3">
+                This will permanently delete your account and all associated data.
+              </p>
+            </motion.div>
+          </div>
+        </div>
       </div>
 
       {/* AI Prompt Display */}

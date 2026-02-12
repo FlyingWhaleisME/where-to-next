@@ -158,7 +158,7 @@ const HomePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-left">
               <div>
                 <div className="text-xl sm:text-2xl mb-2">1️⃣</div>
-                <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">Big Idea Survey</h3>
+                <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">Big idea</h3>
                 <p className="text-gray-600 text-xs sm:text-sm">
                   Answer questions about your travel preferences to identify your dream trip.
                 </p>

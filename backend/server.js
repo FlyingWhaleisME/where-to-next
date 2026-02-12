@@ -591,8 +591,29 @@ app.delete('/api/debug/delete-user/:email', async (req, res) => {
     await Document.deleteMany({ userId: user._id });
     await TripPreferences.deleteMany({ userId: user._id });
     await TripTracingState.deleteMany({ userId: user._id });
+    await DocumentShare.deleteMany({ creatorId: user._id });
     await User.findByIdAndDelete(user._id);
     res.json({ success: true, message: `Deleted user ${email} and all associated data` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete authenticated user's own account
+app.delete('/api/user/account', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    // Delete all user's data
+    await Document.deleteMany({ userId: user._id });
+    await TripPreferences.deleteMany({ userId: user._id });
+    await TripTracingState.deleteMany({ userId: user._id });
+    await DocumentShare.deleteMany({ creatorId: user._id });
+    await User.findByIdAndDelete(user._id);
+    res.json({ success: true, message: 'Account and all associated data deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -940,6 +961,26 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.error(' Failed to start collaboration server:', error);
   }
 });
+
+// ADVANCED TECHNIQUE 15: GRACEFUL SHUTDOWN WITH SIGNAL HANDLING
+// Process signal handlers for clean application termination
+// Ensures proper resource cleanup and prevents data corruption
+process.on('SIGINT', () => {
+  console.log('� Shutting down servers...');
+  if (collaborationServer) {
+    collaborationServer.shutdown();
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('� Shutting down servers...');
+  if (collaborationServer) {
+    collaborationServer.shutdown();
+  }
+  process.exit(0);
+});
+
 
 // ADVANCED TECHNIQUE 15: GRACEFUL SHUTDOWN WITH SIGNAL HANDLING
 // Process signal handlers for clean application termination

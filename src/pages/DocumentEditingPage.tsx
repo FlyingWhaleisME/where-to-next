@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DocumentData } from '../types';
 import { getCurrentUser, isAuthenticated, documentsApi } from '../services/apiService';
+import { getUserData } from '../utils/userDataStorage';
 
 const DocumentEditingPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,9 @@ const DocumentEditingPage: React.FC = () => {
   const [transportationWithin, setTransportationWithin] = useState('');
   const [transportationToNotes, setTransportationToNotes] = useState('');
   const [transportationWithinNotes, setTransportationWithinNotes] = useState('');
+  const [isFlightPrimary, setIsFlightPrimary] = useState(false);
+  const [selectedFlightStrategy, setSelectedFlightStrategy] = useState('');
+  const [flightStrategies, setFlightStrategies] = useState<any[]>([]);
   const [expenseSharingPolicy, setExpenseSharingPolicy] = useState('');
   const [customExpensePolicies, setCustomExpensePolicies] = useState<string[]>(['']);
   const [groupMembers, setGroupMembers] = useState<string[]>(['']);
@@ -294,6 +298,63 @@ const DocumentEditingPage: React.FC = () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [id, navigate]);
+
+  // Auto-calculate duration from start and end dates
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end >= start) {
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+        
+        let durationText = '';
+        if (diffDays === 1) {
+          durationText = '1 day';
+        } else if (diffDays < 7) {
+          durationText = `${diffDays} days`;
+        } else if (diffDays < 30) {
+          const weeks = Math.floor(diffDays / 7);
+          const days = diffDays % 7;
+          if (days === 0) {
+            durationText = weeks === 1 ? '1 week' : `${weeks} weeks`;
+          } else {
+            durationText = `${weeks} week${weeks > 1 ? 's' : ''}, ${days} day${days > 1 ? 's' : ''}`;
+          }
+        } else {
+          const months = Math.floor(diffDays / 30);
+          const remainingDays = diffDays % 30;
+          if (remainingDays === 0) {
+            durationText = months === 1 ? '1 month' : `${months} months`;
+          } else {
+            const weeks = Math.floor(remainingDays / 7);
+            const days = remainingDays % 7;
+            let remainingText = '';
+            if (weeks > 0) {
+              remainingText = `${weeks} week${weeks > 1 ? 's' : ''}`;
+            }
+            if (days > 0) {
+              remainingText += remainingText ? `, ${days} day${days > 1 ? 's' : ''}` : `${days} day${days > 1 ? 's' : ''}`;
+            }
+            durationText = `${months} month${months > 1 ? 's' : ''}${remainingText ? ', ' + remainingText : ''}`;
+          }
+        }
+        
+        setDuration(durationText);
+      }
+    }
+  }, [startDate, endDate]);
+
+  // Load flight strategies
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (isAuthenticated() && currentUser) {
+      const savedStrategies = getUserData<any[]>('flightStrategies');
+      if (savedStrategies && Array.isArray(savedStrategies)) {
+        setFlightStrategies(savedStrategies);
+      }
+    }
+  }, []);
 
   // Handles saving the document to MongoDB and localStorage
   const handleSave = async () => {
@@ -1046,6 +1107,52 @@ const DocumentEditingPage: React.FC = () => {
                 Your chosen method for reaching the destination. Intelligently populated from your comprehensive travel survey.
               </p>
             </div>
+
+            <div>
+              <label className="flex items-center space-x-2 mb-2">
+                <input
+                  type="checkbox"
+                  checked={isFlightPrimary}
+                  onChange={(e) => setIsFlightPrimary(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Taking flight as primary transportation method
+                </span>
+              </label>
+            </div>
+
+            {isFlightPrimary && flightStrategies.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select saved flight booking strategy
+                </label>
+                <select
+                  value={selectedFlightStrategy}
+                  onChange={(e) => {
+                    setSelectedFlightStrategy(e.target.value);
+                    const strategy = flightStrategies.find(s => s.id === e.target.value);
+                    if (strategy) {
+                      setTransportationToNotes(prev => {
+                        const strategyText = `Flight booking strategy: ${strategy.name}\n\n${strategy.strategy}`;
+                        return prev ? `${prev}\n\n${strategyText}` : strategyText;
+                      });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Select a strategy...</option>
+                  {flightStrategies.map((strategy) => (
+                    <option key={strategy.id} value={strategy.id}>
+                      {strategy.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select a saved flight booking strategy to add notes to the transportation planning notes below.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
