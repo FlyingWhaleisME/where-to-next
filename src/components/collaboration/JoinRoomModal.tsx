@@ -108,7 +108,7 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
                   setShareCode(e.target.value.toUpperCase());
                   setError(''); // Clear error when user types
                 }}
-                placeholder="Enter share code (e.g., TOKYO1)"
+                placeholder="Enter share code (e.g., SEOUL1)"
                 className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-center text-base sm:text-lg"
                 maxLength={8}
                 disabled={isLoading}
@@ -121,7 +121,7 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
             <h4 className="font-medium text-emerald-800 mb-2 text-sm sm:text-base">How to get a share code:</h4>
             <ol className="text-xs sm:text-sm text-emerald-700 space-y-1">
               <li>1. Ask your friend to create a communication room</li>
-              <li>2. They'll get a share code (like "TOKYO1")</li>
+              <li>2. They'll get a share code (like "SEOUL1")</li>
               <li>3. They share the code with you</li>
               <li>4. Enter it here to join!</li>
             </ol>
@@ -131,11 +131,11 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
           <div className="bg-green-50 rounded-lg p-3 sm:p-4">
             <h4 className="font-medium text-green-800 mb-2 text-sm sm:text-base">Example:</h4>
             <p className="text-xs sm:text-sm text-green-700">
-              Your friend: "Hey! I created a room for our Tokyo trip. 
-              Join code: <strong>TOKYO1</strong>"
+              Your friend: "Hey! I created a room for our Seoul trip. 
+              Join code: <strong>SEOUL1</strong>"
             </p>
             <p className="text-xs sm:text-sm text-green-700 mt-1">
-              You: Enter "TOKYO1" in the box above and click "Join Room"
+              You: Enter "SEOUL1" in the box above and click "Join room"
             </p>
           </div>
         </div>
@@ -160,7 +160,7 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
                 <span>Joining...</span>
               </>
             ) : (
-              <span>Join Room</span>
+              <span>Join room</span>
             )}
           </button>
         </div>

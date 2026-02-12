@@ -340,7 +340,7 @@ const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBa
                 className="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-all flex items-center space-x-2"
               >
                 <span>←</span>
-                <span>Back to Survey</span>
+                <span>Back to survey</span>
               </button>
             )}
             <button

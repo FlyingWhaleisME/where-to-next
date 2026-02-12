@@ -847,7 +847,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          <span>Chat</span>
           <span>Chat ({messages.length})</span>
         </button>
         <button
@@ -858,7 +857,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          <span>Users</span>
           <span>Users ({onlineUsers.length})</span>
         </button>
       </div>

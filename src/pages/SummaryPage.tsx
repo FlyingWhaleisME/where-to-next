@@ -933,7 +933,7 @@ const SummaryPage: React.FC = () => {
               onClick={() => navigate('/big-picture')}
               className="btn-secondary text-lg px-8 py-4"
             >
-              ← Back to Big Picture
+              ← Back to big picture
             </button>
             
             <button

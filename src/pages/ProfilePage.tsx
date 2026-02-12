@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DocumentData } from '../types';
 import promptService from '../services/promptService';
 import AIPromptDisplay from '../components/AIPromptDisplay';
@@ -42,6 +42,9 @@ const ProfilePage: React.FC = () => {
   const [expensePolicySets, setExpensePolicySets] = useState<any[]>([]);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
   const [aiPrompt, setAiPrompt] = useState<any>(null);
+  const [showNameChangeModal, setShowNameChangeModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [currentUserName, setCurrentUserName] = useState('');
 
   // Helper function to format budget with currency and type
   const formatBudget = (preferences: any): string => {
@@ -138,6 +141,9 @@ const ProfilePage: React.FC = () => {
 
     // Log user ID for debugging
     console.log('[DEBUG] ProfilePage: Loading data for user ID:', currentUser.id);
+    
+    // Load current user name
+    setCurrentUserName(currentUser.name || '');
 
     // Filters documents to show only those owned by current user
     // 1. Re-verify authentication before loading documents (prevents race conditions)
@@ -629,6 +635,41 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleChangeName = async () => {
+    if (!newName.trim()) {
+      alert('Please enter a name');
+      return;
+    }
+
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        alert('Please log in to change your name');
+        return;
+      }
+
+      const result = await userApi.updateProfile(newName.trim(), currentUser.email);
+      if (result.data) {
+        // Update localStorage
+        const updatedUser = { ...currentUser, name: newName.trim() };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setCurrentUserName(newName.trim());
+        setShowNameChangeModal(false);
+        setNewName('');
+        alert('Name updated successfully!');
+        
+        // Dispatch event to update header
+        window.dispatchEvent(new CustomEvent('userLogin', {
+          detail: { user: updatedUser }
+        }));
+      } else {
+        alert(`Failed to update name: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      alert(`Error updating name: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!isAuthenticated() || !getCurrentUser()) {
       alert('Please log in to delete your account');
@@ -700,7 +741,7 @@ const ProfilePage: React.FC = () => {
               Your Saved Trip Preferences
             </h2>
             <p className="text-gray-600 text-center mb-6">
-              Resume from any of your saved Big Idea survey preferences (up to 4 most recent)
+              Resume from any of your saved big idea survey preferences (up to 4 most recent)
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -722,7 +763,7 @@ const ProfilePage: React.FC = () => {
                           ▶️
                         </button>
                       </Tooltip>
-                      <Tooltip text="Get AI Prompt">
+                      <Tooltip text="Get AI prompt">
                         <button
                           onClick={() => generateAIPrompt(preferenceSet.preferences)}
                           className="text-rose-500 hover:text-rose-600 transition-colors text-xl"
@@ -770,10 +811,10 @@ const ProfilePage: React.FC = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold text-gray-800">
-                Latest Big Idea Survey Results
+                Latest big idea survey results
               </h2>
               <div className="flex space-x-2">
-                <Tooltip text="Continue to Trip Tracing">
+                <Tooltip text="Continue to trip tracing">
                   <button
                     onClick={() => navigate('/trip-tracing')}
                     className="text-green-500 hover:text-green-700 transition-colors text-xl"
@@ -781,7 +822,7 @@ const ProfilePage: React.FC = () => {
                     ▶️
                   </button>
                 </Tooltip>
-                <Tooltip text="Get AI Prompt">
+                <Tooltip text="Get AI prompt">
             <button
                     onClick={() => generateAIPrompt(tripPreferences)}
                     className="text-rose-500 hover:text-rose-600 transition-colors text-xl"
@@ -792,7 +833,7 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
             <p className="text-gray-600 text-center mb-6">
-              Your most recent Big Idea survey preferences - continue to Trip Tracing or edit
+              Your most recent big idea survey preferences - continue to trip tracing or edit
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
@@ -986,17 +1027,17 @@ const ProfilePage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              Continue from Last Big Idea Survey
+              Continue from last big idea survey
             </h2>
             <div className="text-center py-8">
               <p className="text-gray-600 mb-4">
-                You haven't completed the Big Idea survey yet, or the data wasn't saved properly.
+                You haven't completed the big idea survey yet, or the data wasn't saved properly.
               </p>
               <button
                 onClick={() => navigate('/big-picture')}
                 className="btn-primary text-lg px-8 py-4"
               >
-                Start Big Idea Survey
+                Start big idea survey
               </button>
             </div>
           </motion.div>
@@ -1024,7 +1065,7 @@ const ProfilePage: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <div className="text-lg font-bold text-emerald-600">Complete</div>
                 <div>
-                  <h3 className="font-semibold text-green-800">Trip Tracing Complete!</h3>
+                  <h3 className="font-semibold text-green-800">Trip tracing complete!</h3>
                   <p className="text-green-700 text-sm">
                     Your documents are ready for editing. Click on any document below to start planning your itinerary.
                   </p>
@@ -1105,7 +1146,7 @@ const ProfilePage: React.FC = () => {
                     <div className="space-y-1 text-xs text-emerald-700">
                       {doc.surveyOrigin?.bigIdeaSurveyName ? (
                         <div>
-                          <strong>Big Idea:</strong> {doc.surveyOrigin.bigIdeaSurveyName}
+                          <strong>Big idea:</strong> {doc.surveyOrigin.bigIdeaSurveyName}
                           <br />
                           <span className="text-emerald-600">
                             {new Date(doc.surveyOrigin.bigIdeaSurveyDate || '').toLocaleDateString()}
@@ -1113,13 +1154,13 @@ const ProfilePage: React.FC = () => {
                         </div>
                       ) : (
                         <div className="text-emerald-600">
-                          <strong>Big Idea:</strong> Legacy survey (no tracking)
+                          <strong>Big idea:</strong> Legacy survey (no tracking)
                         </div>
                       )}
                       
                       {doc.surveyOrigin?.tripTracingSurveyId ? (
                         <div className="mt-1">
-                          <strong>Trip Tracing:</strong> Completed
+                          <strong>Trip tracing:</strong> Completed
                           <br />
                           <span className="text-emerald-600">
                             {new Date(doc.surveyOrigin.tripTracingSurveyDate || '').toLocaleDateString()}
@@ -1127,7 +1168,7 @@ const ProfilePage: React.FC = () => {
                         </div>
                       ) : (
                         <div className="mt-1 text-emerald-500">
-                          <strong>Trip Tracing:</strong> Not completed
+                          <strong>Trip tracing:</strong> Not completed
                         </div>
                       )}
                       
@@ -1161,7 +1202,7 @@ const ProfilePage: React.FC = () => {
           {flightStrategies.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">
-                Create custom flight booking strategies during Trip Tracing to reuse them later!
+                Create custom flight booking strategies during trip tracing to reuse them later!
               </p>
             </div>
           ) : (
@@ -1226,7 +1267,7 @@ const ProfilePage: React.FC = () => {
           {expensePolicySets.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">
-                Create custom expense sharing policies during Trip Tracing to reuse them later!
+                Create custom expense sharing policies during trip tracing to reuse them later!
               </p>
             </div>
           ) : (
@@ -1318,15 +1359,31 @@ const ProfilePage: React.FC = () => {
               className="bg-white rounded-3xl shadow-xl p-6 sticky top-8"
             >
               <h3 className="text-xl font-bold text-gray-800 mb-4">Account settings</h3>
-              <button
-                onClick={handleDeleteAccount}
-                className="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
-              >
-                Delete account
-              </button>
-              <p className="text-xs text-gray-500 mt-3">
-                This will permanently delete your account and all associated data.
-              </p>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Current name: <strong>{currentUserName || 'Not set'}</strong></p>
+                <button
+                  onClick={() => {
+                    setNewName(currentUserName);
+                    setShowNameChangeModal(true);
+                  }}
+                  className="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm"
+                >
+                  Change name
+                </button>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <button
+                  onClick={handleDeleteAccount}
+                  className="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
+                >
+                  Delete account
+                </button>
+                <p className="text-xs text-gray-500 mt-3">
+                  This will permanently delete your account and all associated data.
+                </p>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -1339,6 +1396,66 @@ const ProfilePage: React.FC = () => {
           onClose={handlePromptClose}
         />
       )}
+
+      {/* Name Change Modal */}
+      <AnimatePresence>
+        {showNameChangeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowNameChangeModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Change name</h2>
+                <button
+                  onClick={() => setShowNameChangeModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New name
+                </label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Enter your name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowNameChangeModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleChangeName}
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

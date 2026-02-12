@@ -137,8 +137,7 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors touch-manipulation"
               style={{ touchAction: 'manipulation' }}
             >
-              <span>Copy</span>
-              <span>Copy Code</span>
+              <span>Copy code</span>
             </button>
           </div>
 
@@ -147,7 +146,7 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
             <h4 className="font-medium text-emerald-800 mb-2">How to join:</h4>
             <ol className="text-sm text-emerald-700 space-y-1">
               <li>1. Go to the website</li>
-              <li>2. Click "Join Room" button</li>
+              <li>2. Click "Join room" button</li>
               <li>3. Enter the share code: <strong>{shareCode}</strong></li>
               <li>4. Start collaborating!</li>
             </ol>

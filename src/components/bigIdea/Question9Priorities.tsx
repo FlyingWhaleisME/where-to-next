@@ -309,7 +309,7 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
             className="px-6 py-3 rounded-xl font-semibold bg-rose-500 text-white hover:bg-rose-500 transition-all ml-2"
             style={{ zIndex: 1000, position: 'relative', cursor: 'pointer' }}
           >
-            Get AI Summary Now
+            Get AI summary now
           </button>
         )}
       </div>
