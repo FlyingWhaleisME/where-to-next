@@ -123,6 +123,26 @@ const ProfilePage: React.FC = () => {
     }
   }, [location]);
 
+  // Helper function to check if preferences are complete
+  const isPreferencesComplete = (prefs: any): boolean => {
+    return !!(
+      prefs.groupSize &&
+      ((prefs.budget !== undefined && prefs.budget !== null) || prefs.isNotSure) &&
+      prefs.destinationApproach &&
+      prefs.destinationApproach.travelType &&
+      prefs.destinationApproach.destinationStatus &&
+      prefs.tripVibe &&
+      (typeof prefs.tripVibe === 'string' && prefs.tripVibe.trim().length > 0) &&
+      prefs.planningStyle &&
+      prefs.priorities &&
+      prefs.priorities.length > 0 &&
+      ((prefs.destinationApproach.destinationStatus === 'open' || 
+        prefs.destinationApproach.destinationStatus === 'in_mind')
+        ? !!(prefs.destinationStyle || (prefs.destinationStyles && prefs.destinationStyles.length > 0))
+        : true)
+    );
+  };
+
   // Helper function to load all user data
   const loadUserData = async () => {
     // Get current logged-in user
@@ -145,6 +165,34 @@ const ProfilePage: React.FC = () => {
     // Load current user name
     setCurrentUserName(currentUser.name || '');
 
+    // PRIORITY: Load latest preferences from localStorage FIRST (synchronous, immediate display)
+    const cachedPrefs = getUserData<any>('tripPreferences');
+    if (cachedPrefs && isPreferencesComplete(cachedPrefs)) {
+      setTripPreferences(cachedPrefs);
+      console.log('[DEBUG] ProfilePage: Loaded preferences from localStorage (immediate display)');
+    }
+
+    // Load other cached data immediately
+    const savedStrategies = getUserData<any[]>('flightStrategies');
+    if (savedStrategies && Array.isArray(savedStrategies)) {
+      setFlightStrategies(savedStrategies);
+    }
+
+    const savedPolicySets = getUserData<any[]>('expensePolicySets');
+    if (savedPolicySets && Array.isArray(savedPolicySets)) {
+      setExpensePolicySets(savedPolicySets);
+    }
+
+    const savedTripPrefs = getUserData<any[]>('savedTripPreferences');
+    if (savedTripPrefs && Array.isArray(savedTripPrefs)) {
+      const completeSurveys = savedTripPrefs.filter((prefSet: any) => {
+        const prefs = prefSet.preferences;
+        if (!prefs) return false;
+        return isPreferencesComplete(prefs);
+      });
+      setSavedTripPreferences(completeSurveys);
+    }
+
     // Filters documents to show only those owned by current user
     // 1. Re-verify authentication before loading documents (prevents race conditions)
     const currentUserCheck = getCurrentUser();
@@ -155,11 +203,23 @@ const ProfilePage: React.FC = () => {
     }
 
     try {
-      // 2. Load documents from MongoDB (persistent cloud storage)
-      const result = await documentsApi.getAll();
+      // 2. Load documents and preferences from MongoDB in parallel (background update)
+      const [documentsResult, prefsResult] = await Promise.all([
+        documentsApi.getAll(),
+        preferencesApi.getAll()
+      ]);
       
-      if (result.error) {
-        console.error('[DEBUG] ProfilePage: Error loading documents from MongoDB:', result.error);
+      // Re-verify authentication before processing results
+      const verifyUser = getCurrentUser();
+      if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
+        console.log('[DEBUG] ProfilePage: User logged out during data load, aborting');
+        setDocuments([]);
+        return;
+      }
+
+      // Process documents
+      if (documentsResult.error) {
+        console.error('[DEBUG] ProfilePage: Error loading documents from MongoDB:', documentsResult.error);
         // Fallback to localStorage if MongoDB fails
         const savedDocs = localStorage.getItem('destinationDocuments');
         if (savedDocs) {
@@ -170,171 +230,53 @@ const ProfilePage: React.FC = () => {
           });
           setDocuments(userDocs);
         }
-        return;
-      }
-      
-      // 3. Re-verify authentication before filtering (prevents showing data after logout)
-      const verifyUser = getCurrentUser();
-      if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
-        console.log('[DEBUG] ProfilePage: User logged out during document load, aborting');
-        setDocuments([]);
-        return;
-      }
-      
-      // 4. For each document: extract creatorId and verify ownership
-      // MongoDB documents have userId field, convert to creatorId for consistency
-      const allDocs = (result.data || []).map((doc: any) => ({
-        ...doc,
-        id: doc._id || doc.id,
-        creatorId: doc.userId || (doc as any).creatorId
-      })) as DocumentData[];
-      
-      const userDocs = allDocs.filter((doc: DocumentData) => {
-        // Type assertion to access optional creatorId property
-        const creatorId = (doc as any).creatorId || (doc as any).userId;
-        // 5. If creatorId missing: exclude documents without creatorId (prevents unauthorized access)
-        if (!creatorId) {
-          console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
-          return false; // Don't show documents without creatorId
-        }
-        // 6. If creatorId matches current user ID: include document
-        return creatorId === currentUser.id;
-      });
-      
-      // 7. Final verification before setting state (prevents race conditions)
-      const finalUserCheck = getCurrentUser();
-      if (!isAuthenticated() || !finalUserCheck || finalUserCheck.id !== currentUser.id) {
-        console.log('[DEBUG] ProfilePage: User logged out before setting documents, aborting');
-        setDocuments([]);
-        return;
-      }
-      
-      console.log('[DEBUG] ProfilePage: User documents loaded from MongoDB. Total docs:', allDocs.length, 'User docs:', userDocs.length, 'User ID:', currentUser.id);
-      // 8. Update state with filtered documents, triggers re-render
-      setDocuments(userDocs);
-      
-      // Also sync to localStorage as cache
-      localStorage.setItem('destinationDocuments', JSON.stringify(userDocs));
-
-      // Load user-specific data (only if user is still authenticated)
-      // Re-verify authentication before loading preferences
-      const prefsUserCheck = getCurrentUser();
-      if (!isAuthenticated() || !prefsUserCheck || prefsUserCheck.id !== currentUser.id) {
-        console.log('[DEBUG] ProfilePage: User logged out before loading preferences, aborting');
-        return;
-      }
-
-      // Load survey preferences from MongoDB first (persistent), then fallback to localStorage (cache)
-      let savedPrefs: any = null;
-      
-      try {
-        const prefsResult = await preferencesApi.getAll();
-        if (prefsResult.data && prefsResult.data.length > 0) {
-          // Use the most recent completed survey from MongoDB
-          savedPrefs = prefsResult.data[0]; // Already sorted by lastModified desc
-          console.log('[DEBUG] ProfilePage: Loaded preferences from MongoDB:', savedPrefs._id);
-          
-          // Also cache to localStorage for offline access
-          try {
-            const { setUserData } = require('../utils/userDataStorage');
-            setUserData('tripPreferences', savedPrefs);
-          } catch (e) { /* ignore cache errors */ }
-        }
-      } catch (e) {
-        console.warn('[DEBUG] ProfilePage: Failed to load preferences from MongoDB, using localStorage:', e);
-      }
-      
-      // Fallback to localStorage if MongoDB didn't return anything
-      if (!savedPrefs) {
-        savedPrefs = getUserData<any>('tripPreferences');
-      }
-      
-      if (savedPrefs) {
-        // Final check before setting preferences state
-        const finalCheck = getCurrentUser();
-        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) {
-          console.log('[DEBUG] ProfilePage: User logged out before setting preferences, aborting');
-          return;
-        }
+      } else {
+        // For each document: extract creatorId and verify ownership
+        // MongoDB documents have userId field, convert to creatorId for consistency
+        const allDocs = (documentsResult.data || []).map((doc: any) => ({
+          ...doc,
+          id: doc._id || doc.id,
+          creatorId: doc.userId || (doc as any).creatorId
+        })) as DocumentData[];
         
-        // Only show trip preferences if the survey is complete
-        // Note: duration is optional (user can choose "undecided")
-        const prefsComplete = !!(
-          savedPrefs.groupSize &&
-          ((savedPrefs.budget !== undefined && savedPrefs.budget !== null) || savedPrefs.isNotSure) &&
-          savedPrefs.destinationApproach &&
-          savedPrefs.destinationApproach.travelType &&
-          savedPrefs.destinationApproach.destinationStatus &&
-          savedPrefs.tripVibe &&
-          (typeof savedPrefs.tripVibe === 'string' && savedPrefs.tripVibe.trim().length > 0) &&
-          savedPrefs.planningStyle &&
-          savedPrefs.priorities &&
-          savedPrefs.priorities.length > 0 &&
-          ((savedPrefs.destinationApproach.destinationStatus === 'open' || 
-            savedPrefs.destinationApproach.destinationStatus === 'in_mind')
-            ? !!(savedPrefs.destinationStyle || (savedPrefs.destinationStyles && savedPrefs.destinationStyles.length > 0))
-            : true)
-        );
-        
-        if (prefsComplete) {
-          setTripPreferences(savedPrefs);
-        } else {
-          console.log('[DEBUG] ProfilePage: Trip preferences incomplete, not displaying');
-          setTripPreferences(null);
-        }
-      }
-
-      // Load flight strategies
-      const savedStrategies = getUserData<any[]>('flightStrategies');
-      if (savedStrategies && Array.isArray(savedStrategies)) {
-        const finalCheck = getCurrentUser();
-        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) return;
-        setFlightStrategies(savedStrategies);
-      }
-
-      // Load expense policy sets
-      const savedPolicySets = getUserData<any[]>('expensePolicySets');
-      if (savedPolicySets && Array.isArray(savedPolicySets)) {
-        const finalCheck = getCurrentUser();
-        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) return;
-        setExpensePolicySets(savedPolicySets);
-      }
-
-      // Load saved trip preferences - only show complete surveys
-      const savedTripPrefs = getUserData<any[]>('savedTripPreferences');
-      if (savedTripPrefs && Array.isArray(savedTripPrefs)) {
-        const finalCheck = getCurrentUser();
-        if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) return;
-        
-        // Filter to only show complete surveys
-        const completeSurveys = savedTripPrefs.filter((prefSet: any) => {
-          const prefs = prefSet.preferences;
-          if (!prefs) return false;
-          
-          // Check if Big Idea survey is complete
-          const isBigIdeaComplete = !!(
-            prefs.groupSize &&
-            prefs.duration &&
-            (prefs.budget !== undefined && prefs.budget !== null) &&
-            prefs.destinationApproach &&
-            prefs.destinationApproach.travelType &&
-            prefs.destinationApproach.destinationStatus &&
-            prefs.tripVibe &&
-            (typeof prefs.tripVibe === 'string' && prefs.tripVibe.trim().length > 0) &&
-            prefs.planningStyle &&
-            prefs.priorities &&
-            prefs.priorities.length > 0 &&
-            // Check destination style completion
-            ((prefs.destinationApproach.destinationStatus === 'open' || 
-              prefs.destinationApproach.destinationStatus === 'in_mind')
-              ? !!(prefs.destinationStyle || (prefs.destinationStyles && prefs.destinationStyles.length > 0))
-              : true)
-          );
-          
-          return isBigIdeaComplete;
+        const userDocs = allDocs.filter((doc: DocumentData) => {
+          const creatorId = (doc as any).creatorId || (doc as any).userId;
+          if (!creatorId) {
+            console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
+            return false;
+          }
+          return creatorId === currentUser.id;
         });
         
-        setSavedTripPreferences(completeSurveys);
+        // Final verification before setting state
+        const finalUserCheck = getCurrentUser();
+        if (isAuthenticated() && finalUserCheck && finalUserCheck.id === currentUser.id) {
+          console.log('[DEBUG] ProfilePage: User documents loaded from MongoDB. Total docs:', allDocs.length, 'User docs:', userDocs.length);
+          setDocuments(userDocs);
+          // Also sync to localStorage as cache
+          localStorage.setItem('destinationDocuments', JSON.stringify(userDocs));
+        }
+      }
+
+      // Process preferences from MongoDB (update if newer than localStorage)
+      if (prefsResult.data && prefsResult.data.length > 0) {
+        const mongoPrefs = prefsResult.data[0]; // Already sorted by lastModified desc
+        
+        // Final check before updating preferences
+        const finalCheck = getCurrentUser();
+        if (isAuthenticated() && finalCheck && finalCheck.id === currentUser.id) {
+          if (isPreferencesComplete(mongoPrefs)) {
+            // Update preferences from MongoDB (may be newer than localStorage)
+            setTripPreferences(mongoPrefs);
+            console.log('[DEBUG] ProfilePage: Updated preferences from MongoDB:', mongoPrefs._id);
+            
+            // Cache to localStorage for next time
+            try {
+              const { setUserData } = require('../utils/userDataStorage');
+              setUserData('tripPreferences', mongoPrefs);
+            } catch (e) { /* ignore cache errors */ }
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
