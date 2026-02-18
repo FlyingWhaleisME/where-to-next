@@ -735,6 +735,23 @@ app.post('/api/documents/share', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Document data and ID are required' });
     }
 
+    // Check if a share code already exists for this document
+    const existingShare = await DocumentShare.findOne({ 
+      documentId: documentId,
+      creatorId: user.userId,
+      isDeleted: { $ne: true } // Not deleted
+    });
+
+    if (existingShare) {
+      // Return existing share code instead of creating a new one
+      console.log('[DEBUG] Found existing share code for document:', documentId, 'Share code:', existingShare.shareCode);
+      return res.json({
+        success: true,
+        shareCode: existingShare.shareCode,
+        message: 'Document already shared'
+      });
+    }
+
     // ADVANCED TECHNIQUE 12: COLLISION AVOIDANCE WITH RETRY MECHANISM
     // Implements a retry loop to ensure unique share codes
     // Prevents race conditions in concurrent share code generation

@@ -198,6 +198,35 @@ const FinalizedDocumentPage: React.FC = () => {
               setDocument(foundDoc);
               // Check if current user is the creator
               setIsCreator(foundDoc.creatorId === currentUser.id);
+              
+              // Load existing share code if it exists
+              const loadExistingShareCode = async () => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) return;
+                  
+                  const getResponse = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': `Bearer ${token}`
+                    }
+                  });
+
+                  if (getResponse.ok) {
+                    const getResult = await getResponse.json();
+                    const existingShare = getResult.documents?.find((doc: any) => doc.documentId === foundDoc.id);
+                    
+                    if (existingShare && existingShare.shareCode) {
+                      console.log('[DEBUG] Loaded existing share code:', existingShare.shareCode);
+                      setShareCode(existingShare.shareCode);
+                    }
+                  }
+                } catch (err) {
+                  console.warn('[DEBUG] Failed to load existing share code:', err);
+                }
+              };
+              
+              loadExistingShareCode();
             } else {
               setError('Document not found');
             }
@@ -277,13 +306,12 @@ const FinalizedDocumentPage: React.FC = () => {
         return;
       }
 
-      console.log('[DEBUG] FinalizedDocumentPage: Creating document share via backend API');
+      console.log('[DEBUG] FinalizedDocumentPage: Checking for existing share code');
       console.log('[DEBUG] FinalizedDocumentPage: Document ID:', document.id);
       
       // Debug: Check the token being used
       const token = localStorage.getItem('token');
       console.log('[DEBUG] Token being used:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
-      console.log('[DEBUG] Full token for debugging:', token);
       
       // Simple token check
       if (!token) {
@@ -295,12 +323,39 @@ const FinalizedDocumentPage: React.FC = () => {
       
       console.log('[DEBUG] Token found, proceeding with API call...');
 
+      // First, check if a share code already exists for this document
+      try {
+        const getResponse = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (getResponse.ok) {
+          const getResult = await getResponse.json();
+          const existingShare = getResult.documents?.find((doc: any) => doc.documentId === document.id);
+          
+          if (existingShare && existingShare.shareCode) {
+            console.log('✅ [SUCCESS] Found existing share code:', existingShare.shareCode);
+            setShareCode(existingShare.shareCode);
+            setShowInviteModal(true);
+            return; // Use existing share code, don't create a new one
+          }
+        }
+      } catch (err) {
+        console.warn('[DEBUG] Failed to check for existing share code, will create new one:', err);
+      }
+
+      // No existing share code found, create a new one
+      console.log('[DEBUG] FinalizedDocumentPage: No existing share code found, creating new one');
+
       // Call backend API to create document share
       const response = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           documentId: document.id,
