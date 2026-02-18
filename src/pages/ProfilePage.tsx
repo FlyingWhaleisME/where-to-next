@@ -165,6 +165,24 @@ const ProfilePage: React.FC = () => {
     // Load current user name
     setCurrentUserName(currentUser.name || '');
 
+    // PRIORITY: Load cached documents from localStorage FIRST (synchronous, immediate display)
+    const cachedDocsRaw = localStorage.getItem('destinationDocuments');
+    if (cachedDocsRaw) {
+      try {
+        const cachedDocs = JSON.parse(cachedDocsRaw) as DocumentData[];
+        const userDocs = (cachedDocs || []).filter((doc: DocumentData) => {
+          const creatorId = (doc as any).creatorId || (doc as any).userId;
+          return creatorId && creatorId === currentUser.id;
+        });
+        if (userDocs.length > 0) {
+          setDocuments(userDocs);
+          console.log('[DEBUG] ProfilePage: Loaded documents from localStorage (immediate display). Count:', userDocs.length);
+        }
+      } catch (e) {
+        console.warn('[DEBUG] ProfilePage: Failed to parse cached documents:', e);
+      }
+    }
+
     // PRIORITY: Load latest preferences from localStorage FIRST (synchronous, immediate display)
     const cachedPrefs = getUserData<any>('tripPreferences');
     if (cachedPrefs && isPreferencesComplete(cachedPrefs)) {
@@ -725,7 +743,7 @@ const ProfilePage: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2 mb-4 text-sm text-gray-600">
-                    <p><strong>Group Size:</strong> {preferenceSet.preferences.groupSize || 'Not specified'}</p>
+                    <p><strong>👥 group size:</strong> {preferenceSet.preferences.groupSize || 'Not specified'}</p>
                     <p><strong>Duration:</strong> {
                       typeof preferenceSet.preferences.duration === 'string' 
                         ? preferenceSet.preferences.duration 
@@ -781,7 +799,7 @@ const ProfilePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Group Size</h3>
+                  <h3 className="font-semibold text-gray-700 mb-2">👥 group size</h3>
                   <p className="text-gray-900">{tripPreferences.groupSize || 'Not specified'}</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -800,7 +818,7 @@ const ProfilePage: React.FC = () => {
                   <p className="text-gray-900">{formatBudget(tripPreferences)}</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Destination Approach</h3>
+                  <h3 className="font-semibold text-gray-700 mb-2">🧭 destination approach</h3>
                   <div className="text-gray-900">
                     {tripPreferences.destinationApproach ? (
                       <div className="space-y-2">
@@ -814,7 +832,7 @@ const ProfilePage: React.FC = () => {
                         <p>
                           <span className="font-medium">Status:</span> {
                             tripPreferences.destinationApproach.destinationStatus === 'chosen' ? 'Destinations Chosen' :
-                            tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? '💭 Destinations in Mind' :
+                            tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? 'Destinations in mind' :
                             tripPreferences.destinationApproach.destinationStatus === 'open' ? 'Open to Suggestions' :
                             'Not specified'
                           }
@@ -877,7 +895,7 @@ const ProfilePage: React.FC = () => {
               </div>
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Trip Vibe</h3>
+                  <h3 className="font-semibold text-gray-700 mb-2">✨ trip vibe</h3>
                   <p className="text-gray-900">
                     {(() => {
                       const vibes = tripPreferences.tripVibe;
@@ -887,8 +905,8 @@ const ProfilePage: React.FC = () => {
                         'relaxation': 'Relaxation',
                         'entertainment': 'Entertainment', 
                         'educational': 'Educational Discovery',
-                        'cultural': '🏺 Cultural Immersion',
-                        'shared': '💘 Shared Escape',
+                        'cultural': 'Cultural Immersion',
+                        'shared': 'Shared Escape',
                         'culinary': 'Culinary Adventure'
                       };
                       
@@ -926,19 +944,19 @@ const ProfilePage: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Priorities</h3>
+                  <h3 className="font-semibold text-gray-700 mb-2">⭐ priorities</h3>
                   <p className="text-gray-900">
                     {(() => {
                       const priorities = tripPreferences.priorities;
                       
                       // Priority mapping for converting values to labels
                       const priorityLabels = {
-                        'eco-friendliness': '🌱 Eco-friendliness',
-                        'safety': '🛡️ Safety', 
-                        'accessibility': '♿ Accessibility',
+                        'eco-friendliness': 'Eco-friendliness',
+                        'safety': 'Safety', 
+                        'accessibility': 'Accessibility',
                         'cost-efficiency': 'Cost-efficiency',
-                        'time-efficiency': '⏰ Time-efficiency',
-                        'cost-effectiveness': '⚖️ Cost effectiveness',
+                        'time-efficiency': 'Time-efficiency',
+                        'cost-effectiveness': 'Cost-effectiveness',
                         'number-of-options': 'Number of options'
                       };
                       
