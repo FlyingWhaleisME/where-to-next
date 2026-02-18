@@ -499,7 +499,7 @@ const SummaryPage: React.FC = () => {
                       <p>
                         <span className="font-medium">Status:</span> {
                           tripPreferences.destinationApproach.destinationStatus === 'chosen' ? 'Destinations Chosen' :
-                          tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? '💭 Destinations in Mind' :
+                          tripPreferences.destinationApproach.destinationStatus === 'in_mind' ? 'Destinations in Mind' :
                           tripPreferences.destinationApproach.destinationStatus === 'open' ? 'Open to Suggestions' :
                           'Not specified'
                         }
@@ -572,8 +572,8 @@ const SummaryPage: React.FC = () => {
                       'relaxation': 'Relaxation',
                       'entertainment': 'Entertainment', 
                       'educational': 'Educational Discovery',
-                      'cultural': '🏺 Cultural Immersion',
-                      'shared': '💘 Shared Escape',
+                      'cultural': 'Cultural Immersion',
+                      'shared': 'Shared Escape',
                       'culinary': 'Culinary Adventure'
                     };
                     
@@ -613,7 +613,7 @@ const SummaryPage: React.FC = () => {
                     
                     // Add leeway amount if provided (for ≤25%)
                     if (tripPreferences.leewayAmount) {
-                      parts.push(`💭 Leeway Amount: ${tripPreferences.leewayAmount}`);
+                      parts.push(`Leeway Amount: ${tripPreferences.leewayAmount}`);
                     }
                     
                     // Add leeway explanation if provided (for <50%)
@@ -623,7 +623,7 @@ const SummaryPage: React.FC = () => {
                     
                     // Add surprise preference
                     if (tripPreferences.surpriseFromClaude) {
-                      parts.push(`🎁 Wants surprise from Claude`);
+                      parts.push(`Wants surprise from Claude`);
                     }
                     
                     return parts.join('\n');
@@ -638,12 +638,12 @@ const SummaryPage: React.FC = () => {
                     
                     // Priority mapping for converting values to labels
                     const priorityLabels = {
-                      'eco-friendliness': '🌱 Eco-friendliness',
-                      'safety': '🛡️ Safety', 
-                      'accessibility': '♿ Accessibility',
+                      'eco-friendliness': 'Eco-friendliness',
+                      'safety': 'Safety', 
+                      'accessibility': 'Accessibility',
                       'cost-efficiency': 'Cost-efficiency',
-                      'time-efficiency': '⏰ Time-efficiency',
-                      'cost-effectiveness': '⚖️ Cost effectiveness',
+                      'time-efficiency': 'Time-efficiency',
+                      'cost-effectiveness': 'Cost-effectiveness',
                       'number-of-options': 'Number of options'
                     };
                     
@@ -757,7 +757,6 @@ const SummaryPage: React.FC = () => {
             className="bg-white rounded-3xl shadow-xl p-8 mb-8"
           >
             <div className="text-center">
-              <div className="text-6xl mb-4">💭</div>
               <h2 className="text-3xl font-bold text-gray-800 mb-4">
                 Destinations You're Considering
               </h2>

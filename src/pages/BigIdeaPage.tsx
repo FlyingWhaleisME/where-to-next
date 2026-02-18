@@ -734,8 +734,8 @@ const BigIdeaPage: React.FC = () => {
                           'relaxation': 'Relaxation',
                           'entertainment': 'Entertainment', 
                           'educational': 'Educational Discovery',
-                          'cultural': '🏺 Cultural Immersion',
-                          'shared': '💘 Shared Escape',
+                          'cultural': 'Cultural Immersion',
+                          'shared': 'Shared Escape',
                           'culinary': 'Culinary Adventure'
                         };
                         
@@ -780,12 +780,12 @@ const BigIdeaPage: React.FC = () => {
                         
                         // Priority mapping for converting values to labels
                         const priorityLabels = {
-                          'eco-friendliness': '🌱 Eco-friendliness',
-                          'safety': '🛡️ Safety', 
-                          'accessibility': '♿ Accessibility',
+                          'eco-friendliness': 'Eco-friendliness',
+                          'safety': 'Safety', 
+                          'accessibility': 'Accessibility',
                           'cost-efficiency': 'Cost-efficiency',
-                          'time-efficiency': '⏰ Time-efficiency',
-                          'cost-effectiveness': '⚖️ Cost effectiveness',
+                          'time-efficiency': 'Time-efficiency',
+                          'cost-effectiveness': 'Cost effectiveness',
                           'number-of-options': 'Number of options'
                         };
                         
