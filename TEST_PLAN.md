@@ -11,6 +11,11 @@ This test plan outlines the expected results for testing all features of the Whe
 
 **Method of Testing:** Alpha testing
 
+**Test Data:**
+- **Normal:** Typical user login credentials (email: user@example.com, password: password123), standard device sizes (1920x1080 desktop, 768x1024 tablet, 375x667 mobile), standard browser (Chrome), normal internet speed (WiFi)
+- **Abnormal:** Very long email addresses (50+ characters), very short passwords (exactly 8 characters), unusual device sizes (4K monitor, small tablet), less common browsers (Opera, Brave), slow but stable internet (3G)
+- **Extreme:** Invalid email formats (no @ symbol, spaces in email), passwords with special characters that might break SQL, extremely small screens (240x320), unsupported browsers (IE11), no internet connection, malformed authentication tokens
+
 ### Normal:
 **Expected:**
 - User can navigate between all pages (Home, Big Idea, Trip Tracing, Profile, etc.) using header navigation buttons
@@ -51,6 +56,11 @@ This test plan outlines the expected results for testing all features of the Whe
 **Success Criterion:** The website helps the user to identify their expectations for this trip and their preferences for any options.
 
 **Method of Testing:** Alpha testing
+
+**Test Data:**
+- **Normal:** Group size: 2-4 people, duration: 1-2 weeks, budget: $2000-5000, common destinations (Paris, Tokyo, New York), standard preferences (relaxation, cultural), typical planning style (balanced)
+- **Abnormal:** Very large groups (10+ people), very long trips (3+ months), very high budgets ($50,000+), unusual destinations (Antarctica, remote islands), uncommon combinations (solo travel with group activities), extreme planning styles (completely unplanned or completely planned)
+- **Extreme:** Negative budget values, zero duration, group size of 0 or negative numbers, destinations with special characters that break parsing, emoji-only inputs, SQL injection attempts in text fields, XSS attempts in custom fields, extremely long text inputs (10,000+ characters), binary data in text fields
 
 ### Normal:
 **Expected:**
@@ -99,6 +109,11 @@ This test plan outlines the expected results for testing all features of the Whe
 
 **Method of Testing:** Alpha testing
 
+**Test Data:**
+- **Normal:** 1-3 saved preference sets, 2-5 documents, 1-2 flight strategies, 1-2 expense policy sets, standard preference names (e.g., "Summer Trip 2024"), typical document names (e.g., "Paris Vacation")
+- **Abnormal:** Maximum number of saved preferences (4 sets), many documents (20+), many flight strategies (10+), very old saved preferences (6+ months old), very long preference/document names (50+ characters), preference sets with all possible options selected
+- **Extreme:** Preference names with special characters (SQL injection attempts), document names with emoji only, empty preference sets, corrupted preference data, preference sets with null/undefined values, extremely long names (200+ characters), names with script tags (XSS attempts), binary data in preference names
+
 ### Normal:
 **Expected:**
 - User can access profile page from header "Profile" button
@@ -143,6 +158,11 @@ This test plan outlines the expected results for testing all features of the Whe
 **Success Criterion:** The website provides an AI prompt for creating the vacation plan with the summary of the user's preferences.
 
 **Method of Testing:** Alpha testing
+
+**Test Data:**
+- **Normal:** Complete survey with all questions answered, standard preferences (2-3 trip vibes, 3-5 priorities), typical destination approach (1-2 specific destinations or open to suggestions), normal prompt length (500-2000 characters)
+- **Abnormal:** Survey with all possible options selected, maximum number of trip vibes and priorities, very long custom destination lists (10+ destinations), prompts with maximum length (5000+ characters), surveys with unusual preference combinations
+- **Extreme:** Incomplete survey data (missing required fields), null/undefined values in preferences, prompts with SQL injection attempts, prompts with XSS attempts, prompts with binary data, extremely long prompts (50,000+ characters), prompts with only special characters, corrupted survey data structure
 
 ### Normal:
 **Expected:**
@@ -190,6 +210,11 @@ This test plan outlines the expected results for testing all features of the Whe
 
 **Method of Testing:** Alpha testing
 
+**Test Data:**
+- **Normal:** Document name: "Paris Trip 2024", dates: valid date range (e.g., 2024-06-01 to 2024-06-14), budget: $3000-5000, 3-5 accommodation options, 5-10 meal options, 5-10 activity options, standard transportation methods
+- **Abnormal:** Very long document names (100+ characters), very long date ranges (6+ months), very high budgets ($100,000+), many options (50+ accommodation, 50+ meal, 50+ activity), unusual date ranges (past dates, far future dates 10+ years), very long notes (2000+ characters per field)
+- **Extreme:** Document names with SQL injection attempts, dates with invalid formats (text instead of dates), negative budget values, dates where end is before start, document names with XSS attempts, binary data in all fields, extremely long inputs (100,000+ characters), null/undefined values in required fields, special characters that break JSON parsing
+
 ### Normal:
 **Expected:**
 - User can create new documents from summary page after completing surveys
@@ -236,6 +261,11 @@ This test plan outlines the expected results for testing all features of the Whe
 
 **Method of Testing:** Alpha testing
 
+**Test Data:**
+- **Normal:** Valid 6-character share code (e.g., "ABC123"), document with standard content, 1-3 users accessing shared document, share code used within 24 hours of creation
+- **Abnormal:** Share codes with mixed case (e.g., "AbC123"), very old share codes (months old), documents with maximum content (all fields filled), many users accessing simultaneously (10+), share codes used multiple times by different users
+- **Extreme:** Invalid share code formats (wrong length: "ABC" or "ABCDEFG", special characters: "ABC!@#", SQL injection: "'; DROP--", XSS attempts: "<script>"), non-existent share codes, deleted document share codes, share codes with only numbers, share codes with only letters, empty share codes, share codes with spaces, share codes with unicode characters
+
 ### Normal:
 **Expected:**
 - User can finalize a document from profile page using finalize button (✅)
@@ -280,6 +310,11 @@ This test plan outlines the expected results for testing all features of the Whe
 **Success Criterion:** The users can communicate with other users on the website through private chat.
 
 **Method of Testing:** Alpha testing
+
+**Test Data:**
+- **Normal:** Room name: "Paris Trip Planning", 2-5 users in room, messages: 10-50 messages, message length: 50-200 characters, standard message content (text only), share code: valid 6-character code
+- **Abnormal:** Very long room names (50+ characters), maximum users in room (20 users), many messages (1000+ messages), very long messages (1000+ characters), messages with emoji and special characters, room with users joining/leaving frequently, very old rooms (weeks old)
+- **Extreme:** Room names with SQL injection attempts, room names with XSS attempts, messages with binary data, messages with script tags, extremely long messages (100,000+ characters), invalid share codes, share codes that don't exist, empty room names, room names with only special characters, messages with null/undefined values, malformed WebSocket messages
 
 ### Normal:
 **Expected:**
