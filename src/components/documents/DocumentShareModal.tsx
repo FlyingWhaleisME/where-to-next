@@ -49,13 +49,29 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
       console.log('🔍 [DEBUG] DocumentShareModal: Backend API response:', result);
       
       // Convert to the expected format
-      setSharedDocument({
+      const sharedDoc = {
         id: result.document.id,
         data: result.document.data,
         creatorName: result.document.creatorName,
         createdAt: result.document.createdAt,
         accessCount: result.document.accessCount
-      });
+      };
+      
+      setSharedDocument(sharedDoc);
+      
+      // Cache the document for immediate loading when user clicks "View Full Document"
+      try {
+        const cacheKey = `sharedDocument_${upperShareCode}`;
+        localStorage.setItem(cacheKey, JSON.stringify({
+          data: result.document.data,
+          creatorName: result.document.creatorName,
+          id: result.document.id,
+          createdAt: result.document.createdAt
+        }));
+        console.log('🔍 [DEBUG] DocumentShareModal: Cached shared document for immediate loading');
+      } catch (e) {
+        console.warn('🔍 [DEBUG] DocumentShareModal: Failed to cache document:', e);
+      }
       
       console.log('🔍 [DEBUG] DocumentShareModal: Successfully set sharedDocument from backend API.');
     } catch (err) {

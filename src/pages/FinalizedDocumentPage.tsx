@@ -84,8 +84,25 @@ const FinalizedDocumentPage: React.FC = () => {
         if (shareCode) {
           console.log('[DEBUG] Loading shared document with code:', shareCode);
           setIsSharedView(true);
+          setShareCode(shareCode);
           
-          // Retrieve shared document from backend API
+          // PRIORITY: Load from localStorage cache FIRST (synchronous, immediate display)
+          const cacheKey = `sharedDocument_${shareCode.toUpperCase()}`;
+          const cachedDoc = localStorage.getItem(cacheKey);
+          if (cachedDoc) {
+            try {
+              const cached = JSON.parse(cachedDoc);
+              setDocument(cached.data);
+              setCreatorName(cached.creatorName || 'Unknown Creator');
+              setIsCreator(false);
+              setLoading(false);
+              console.log('[DEBUG] Loaded shared document from cache (immediate display)');
+            } catch (e) {
+              console.warn('[DEBUG] Failed to parse cached document:', e);
+            }
+          }
+          
+          // Retrieve shared document from backend API (background update)
           const loadSharedDocument = async () => {
             try {
               const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode.toUpperCase()}`, {
@@ -101,16 +118,36 @@ const FinalizedDocumentPage: React.FC = () => {
               }
 
               console.log('[DEBUG] Shared document retrieved from backend:', result);
+              
+              // Cache the document for next time
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify({
+                  data: result.document.data,
+                  creatorName: result.document.creatorName,
+                  id: result.document.id,
+                  createdAt: result.document.createdAt
+                }));
+              } catch (e) {
+                console.warn('[DEBUG] Failed to cache document:', e);
+              }
+              
+              // Update state with fresh data from API
               setDocument(result.document.data);
               setCreatorName(result.document.creatorName || 'Unknown Creator');
               setIsCreator(false); // This is a shared view, not creator
-    } catch (err) {
+            } catch (err) {
               console.error('[ERROR] Failed to load shared document:', err);
-              setError(err instanceof Error ? err.message : 'Shared document not found or invalid share code');
-    } finally {
-      setLoading(false);
-    }
-  };
+              // Only show error if we don't have cached data
+              if (!cachedDoc) {
+                setError(err instanceof Error ? err.message : 'Shared document not found or invalid share code');
+                setLoading(false);
+              }
+            } finally {
+              if (!cachedDoc) {
+                setLoading(false);
+              }
+            }
+          };
 
           loadSharedDocument();
         } else {
