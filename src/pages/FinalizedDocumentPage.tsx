@@ -477,8 +477,8 @@ const FinalizedDocumentPage: React.FC = () => {
             {!isSharedView && (
               <button
                 onClick={async () => {
-                  if (!document || !shareCode) {
-                    alert('Please create a share code first to save changes');
+                  if (!document) {
+                    alert('Document not found');
                     return;
                   }
                   
@@ -489,11 +489,42 @@ const FinalizedDocumentPage: React.FC = () => {
                   }
 
                   try {
-                    const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode}`, {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                      alert('Please log in to save changes');
+                      return;
+                    }
+
+                    // Get existing share code for this document
+                    let codeToUse = shareCode;
+                    if (!codeToUse) {
+                      const shareResponse = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
+                        method: 'GET',
+                        headers: {
+                          'Authorization': `Bearer ${token}`
+                        }
+                      });
+
+                      if (shareResponse.ok) {
+                        const shareResult = await shareResponse.json();
+                        const existingShare = shareResult.documents?.find((doc: any) => doc.documentId === document.id);
+                        if (existingShare && existingShare.shareCode) {
+                          codeToUse = existingShare.shareCode;
+                          setShareCode(codeToUse);
+                        }
+                      }
+                    }
+
+                    if (!codeToUse) {
+                      alert('Please create a share code first by clicking "Invite Others" button');
+                      return;
+                    }
+
+                    const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${codeToUse}`, {
                       method: 'PUT',
                       headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                       },
                       body: JSON.stringify({
                         documentData: document
