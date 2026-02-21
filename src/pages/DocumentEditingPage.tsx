@@ -549,6 +549,49 @@ const DocumentEditingPage: React.FC = () => {
       
       localStorage.setItem('destinationDocuments', JSON.stringify(docs));
       
+      // Update shared document if it exists
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Get existing share code for this document
+          const shareResponse = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (shareResponse.ok) {
+            const shareResult = await shareResponse.json();
+            const existingShare = shareResult.documents?.find((doc: any) => doc.documentId === document.id);
+            
+            if (existingShare && existingShare.shareCode) {
+              // Update the shared document with the latest document data
+              const finalDocument = existingDocIndex >= 0 ? docs[existingDocIndex] : documentToSave;
+              const updateResponse = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${existingShare.shareCode}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  documentData: finalDocument
+                })
+              });
+
+              if (updateResponse.ok) {
+                console.log('✅ Shared document updated for invited users');
+              } else {
+                console.warn('⚠️ Failed to update shared document');
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Error updating shared document:', error);
+        // Don't block save if share update fails
+      }
+      
       // Show success message briefly before navigating
       alert('Document saved successfully! Returning to profile...');
       

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, Copy } from 'lucide-react';
+import { X, Eye } from 'lucide-react';
 
 interface DocumentShareModalProps {
   isOpen: boolean;
@@ -23,7 +23,6 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
   const [sharedDocument, setSharedDocument] = useState<SharedDocument | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,13 +81,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
     }
   };
 
-  const handleCopyShareCode = () => {
-    if (sharedDocument) {
-      navigator.clipboard.writeText(shareCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  // Copy code functionality removed - not needed in preview
 
   // Download button removed - PDF generation would require complex library integration
 
@@ -96,7 +89,6 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
     setShareCode('');
     setSharedDocument(null);
     setError('');
-    setCopied(false);
   };
 
   const handleClose = () => {
@@ -210,70 +202,25 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                     <h3 className="text-lg font-semibold text-gray-900">
                       Trip Document
                     </h3>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleCopyShareCode}
-                        className="flex items-center gap-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-md hover:bg-rose-200 transition-colors text-sm"
-                      >
-                        <Copy className="w-4 h-4" />
-                        {copied ? 'Copied!' : 'Copy Code'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Navigate to the full document page with share code
-                          navigate(`/finalized-document/${sharedDocument.id}?code=${shareCode}`);
-                          onClose(); // Close the modal
-                        }}
-                        className="flex items-center gap-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-md hover:bg-rose-200 transition-colors text-sm"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Full Document
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => {
+                        // Navigate to the full document page with share code
+                        navigate(`/finalized-document/${sharedDocument.id}?code=${shareCode}`);
+                        onClose(); // Close the modal
+                      }}
+                      className="flex items-center gap-2 px-3 py-1 bg-rose-100 text-rose-600 rounded-md hover:bg-rose-200 transition-colors text-sm"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Full Document
+                    </button>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                     <div>
                       <span className="font-medium">Creator:</span> {sharedDocument.creatorName}
                     </div>
                     <div>
                       <span className="font-medium">Created:</span> {formatDate(sharedDocument.createdAt)}
-                    </div>
-                    <div>
-                      <span className="font-medium">Views:</span> {sharedDocument.accessCount}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Document Preview */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Document Preview</h4>
-                  <div className="space-y-4 text-sm text-gray-700">
-                    <div>
-                      <span className="font-medium">Destination:</span>{' '}
-                      {sharedDocument.data?.destinationName || 'Not specified'}
-                    </div>
-                    {sharedDocument.data?.editableFields?.dates?.startDate && (
-                      <div>
-                        <span className="font-medium">Travel Dates:</span>{' '}
-                        {new Date(sharedDocument.data.editableFields.dates.startDate).toLocaleDateString()}
-                        {' - '}
-                        {sharedDocument.data.editableFields.dates.endDate && 
-                          new Date(sharedDocument.data.editableFields.dates.endDate).toLocaleDateString()}
-                      </div>
-                    )}
-                    {sharedDocument.data?.editableFields?.budget?.amount && (
-                      <div>
-                        <span className="font-medium">Budget:</span>{' '}
-                        ${sharedDocument.data.editableFields.budget.amount.toLocaleString()}{' '}
-                        {sharedDocument.data.editableFields.budget.currency}
-                        {sharedDocument.data.editableFields.budget.perDay ? ' per day' : ' total'}
-                      </div>
-                    )}
-                    <div className="pt-2 border-t border-gray-200">
-                      <p className="text-gray-600 text-xs">
-                        Click "View Full Document" to see the complete itinerary planner, travel handbook, and all document details.
-                      </p>
                     </div>
                   </div>
                 </div>

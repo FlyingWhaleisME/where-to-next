@@ -132,9 +132,22 @@ const FinalizedDocumentPage: React.FC = () => {
               }
               
               // Update state with fresh data from API
-              setDocument(result.document.data);
+              const freshDocument = result.document.data;
+              setDocument(freshDocument);
               setCreatorName(result.document.creatorName || 'Unknown Creator');
               setIsCreator(false); // This is a shared view, not creator
+              
+              // Update cache with fresh data
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify({
+                  data: freshDocument,
+                  creatorName: result.document.creatorName,
+                  id: result.document.id,
+                  createdAt: result.document.createdAt
+                }));
+              } catch (e) {
+                console.warn('[DEBUG] Failed to update cache:', e);
+              }
             } catch (err) {
               console.error('[ERROR] Failed to load shared document:', err);
               // Only show error if we don't have cached data
@@ -457,9 +470,52 @@ const FinalizedDocumentPage: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="mb-8"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            Daily Itinerary Planner
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">
+              Daily Itinerary Planner
             </h2>
+            {!isSharedView && (
+              <button
+                onClick={async () => {
+                  if (!document || !shareCode) {
+                    alert('Please create a share code first to save changes');
+                    return;
+                  }
+                  
+                  const currentUser = getCurrentUser();
+                  if (!currentUser || !isAuthenticated()) {
+                    alert('Please log in to save changes');
+                    return;
+                  }
+
+                  try {
+                    const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode}`, {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({
+                        documentData: document
+                      })
+                    });
+
+                    if (response.ok) {
+                      alert('Daily planner changes saved! Invited users will see the updates.');
+                    } else {
+                      alert('Failed to save changes. Please try again.');
+                    }
+                  } catch (error) {
+                    console.error('Error saving daily planner:', error);
+                    alert('Error saving changes. Please try again.');
+                  }
+                }}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              >
+                Save Changes
+              </button>
+            )}
+          </div>
 
           {document.editableFields?.dates?.startDate && document.editableFields?.dates?.endDate ? (
             <DailyPlanner
@@ -518,28 +574,49 @@ const FinalizedDocumentPage: React.FC = () => {
                     console.log('✅ Daily planner changes saved to localStorage');
                   }
 
-                  // If there's an active share code, update the backend document share
-                  if (shareCode) {
-                    try {
-                      const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCode}`, {
-                        method: 'PUT',
+                  // Always check for and update shared document if it exists
+                  try {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                      // Get existing share code for this document
+                      const shareResponse = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
+                        method: 'GET',
                         headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        },
-                        body: JSON.stringify({
-                          documentData: updatedDocument
-                        })
+                          'Authorization': `Bearer ${token}`
+                        }
                       });
 
-                      if (response.ok) {
-                        console.log('✅ Daily planner changes updated in backend for shared viewers');
-                      } else {
-                        console.warn('⚠️ Failed to update backend document share');
+                      if (shareResponse.ok) {
+                        const shareResult = await shareResponse.json();
+                        const existingShare = shareResult.documents?.find((doc: any) => doc.documentId === document.id);
+                        
+                        if (existingShare && existingShare.shareCode) {
+                          // Update the shared document with the latest time slots
+                          const updateResponse = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${existingShare.shareCode}`, {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                              documentData: updatedDocument
+                            })
+                          });
+
+                          if (updateResponse.ok) {
+                            console.log('✅ Daily planner changes updated in backend for shared viewers');
+                            // Update shareCode state if not already set
+                            if (!shareCode) {
+                              setShareCode(existingShare.shareCode);
+                            }
+                          } else {
+                            console.warn('⚠️ Failed to update backend document share');
+                          }
+                        }
                       }
-                    } catch (error) {
-                      console.error('❌ Error updating backend document share:', error);
                     }
+                  } catch (error) {
+                    console.error('❌ Error updating backend document share:', error);
                   }
                 }
               }}
