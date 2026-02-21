@@ -452,14 +452,45 @@ const FinalizedDocumentPage: React.FC = () => {
           </p>
                   {isSharedView && (
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-8">
-                      <p className="text-emerald-800 font-medium">
-                        You're viewing a shared document. This document was created and shared by another user.
-                      </p>
-                      <p className="text-emerald-600 text-sm mt-2">
-                        <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
-                </p>
-              </div>
-            )}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-emerald-800 font-medium">
+                            You're viewing a shared document. This document was created and shared by another user.
+                          </p>
+                          <p className="text-emerald-600 text-sm mt-2">
+                            <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const shareCodeParam = searchParams.get('code');
+                            if (shareCodeParam) {
+                              try {
+                                const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${shareCodeParam.toUpperCase()}`, {
+                                  headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                  }
+                                });
+
+                                const result = await response.json();
+                                if (response.ok && result.document) {
+                                  setDocument(result.document.data);
+                                  setCreatorName(result.document.creatorName || 'Unknown Creator');
+                                  alert('Document refreshed! You now see the latest updates.');
+                                }
+                              } catch (error) {
+                                console.error('Error refreshing document:', error);
+                                alert('Failed to refresh document. Please try again.');
+                              }
+                            }
+                          }}
+                          className="ml-4 px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
         </motion.div>
 
