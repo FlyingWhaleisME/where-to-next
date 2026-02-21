@@ -87,19 +87,24 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   // ADVANCED TECHNIQUE 51: DATA GROUPING AND MERGING WITH FUNCTIONAL PROGRAMMING
   // Complex data transformation using reduce, map, and spread operators for state updates
   useEffect(() => {
-    if (initialTimeSlots.length > 0 && daysData.length > 0) {
+    if (daysData.length > 0) {
       // ADVANCED TECHNIQUE 52: OBJECT GROUPING WITH DYNAMIC KEY CREATION
       // Group time slots by date using dynamic object keys and array accumulation
       const slotsByDate: { [date: string]: TimeSlot[] } = {};
-      initialTimeSlots.forEach(slot => {
-        if (!slotsByDate[slot.date]) {
-          slotsByDate[slot.date] = [];
-        }
-        slotsByDate[slot.date].push(slot);
-      });
+      if (initialTimeSlots && Array.isArray(initialTimeSlots) && initialTimeSlots.length > 0) {
+        initialTimeSlots.forEach(slot => {
+          if (slot && slot.date) {
+            if (!slotsByDate[slot.date]) {
+              slotsByDate[slot.date] = [];
+            }
+            slotsByDate[slot.date].push(slot);
+          }
+        });
+      }
 
       // ADVANCED TECHNIQUE 53: FUNCTIONAL STATE UPDATE WITH SPREAD OPERATORS
       // Complex state update using functional setState with map and spread operators
+      // Always update to sync with initialTimeSlots, even if empty
       setDaysData(prevDays => {
         return prevDays.map(day => ({
           ...day,

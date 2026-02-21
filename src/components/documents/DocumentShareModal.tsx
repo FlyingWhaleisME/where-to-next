@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, Copy, Download } from 'lucide-react';
+import { X, Eye, Copy } from 'lucide-react';
 
 interface DocumentShareModalProps {
   isOpen: boolean;
@@ -90,21 +90,7 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
     }
   };
 
-  const handleDownload = () => {
-    if (sharedDocument) {
-      const blob = new Blob([JSON.stringify(sharedDocument.data, null, 2)], {
-        type: 'application/json'
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `trip-document-${shareCode}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
+  // Download button removed - PDF generation would require complex library integration
 
   const resetModal = () => {
     setShareCode('');
@@ -243,13 +229,6 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                         <Eye className="w-4 h-4" />
                         View Full Document
                       </button>
-                      <button
-                        onClick={handleDownload}
-                        className="flex items-center gap-2 px-3 py-1 bg-rose-50 text-rose-500 rounded-md hover:bg-rose-100 transition-colors text-sm"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </button>
                     </div>
                   </div>
                   
@@ -266,13 +245,36 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
                   </div>
                 </div>
 
-                {/* Document Content */}
+                {/* Document Preview */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Document Content</h4>
-                  <div className="prose max-w-none">
-                    <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto text-sm text-gray-700 whitespace-pre-wrap">
-                      {JSON.stringify(sharedDocument.data, null, 2)}
-                    </pre>
+                  <h4 className="text-md font-semibold text-gray-900 mb-4">Document Preview</h4>
+                  <div className="space-y-4 text-sm text-gray-700">
+                    <div>
+                      <span className="font-medium">Destination:</span>{' '}
+                      {sharedDocument.data?.destinationName || 'Not specified'}
+                    </div>
+                    {sharedDocument.data?.editableFields?.dates?.startDate && (
+                      <div>
+                        <span className="font-medium">Travel Dates:</span>{' '}
+                        {new Date(sharedDocument.data.editableFields.dates.startDate).toLocaleDateString()}
+                        {' - '}
+                        {sharedDocument.data.editableFields.dates.endDate && 
+                          new Date(sharedDocument.data.editableFields.dates.endDate).toLocaleDateString()}
+                      </div>
+                    )}
+                    {sharedDocument.data?.editableFields?.budget?.amount && (
+                      <div>
+                        <span className="font-medium">Budget:</span>{' '}
+                        ${sharedDocument.data.editableFields.budget.amount.toLocaleString()}{' '}
+                        {sharedDocument.data.editableFields.budget.currency}
+                        {sharedDocument.data.editableFields.budget.perDay ? ' per day' : ' total'}
+                      </div>
+                    )}
+                    <div className="pt-2 border-t border-gray-200">
+                      <p className="text-gray-600 text-xs">
+                        Click "View Full Document" to see the complete itinerary planner, travel handbook, and all document details.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
