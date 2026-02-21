@@ -734,7 +734,7 @@ const ProfilePage: React.FC = () => {
                           onClick={() => deleteSavedPreferences(preferenceSet.id)}
                           className="text-red-500 hover:text-red-700 transition-colors text-xl"
                         >
-                          Delete
+                          ❌
                         </button>
                       </Tooltip>
                     </div>
