@@ -50,6 +50,7 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     type: '',
     option: ''
   });
+  const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [customTimes, setCustomTimes] = useState<{startTime: string, endTime: string}>({
     startTime: '09:00',
     endTime: '10:00'
@@ -182,6 +183,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   };
 
   const handleDeleteTimeSlot = (slotId: string) => {
+    if (readOnly) return;
+    
     const updatedDays = daysData.map(day => {
       if (day.date === currentDate) {
         return {
@@ -194,11 +197,35 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
     setDaysData(updatedDays);
     
-    // Get updated days data to pass all time slots
-    const updatedDaysData = updatedDays.map(day => 
-      day.date === currentDate ? { ...day, timeSlots: updatedDays.find(d => d.date === currentDate)?.timeSlots || [] } : day
-    );
-    onTimeSlotUpdate(updatedDaysData.flatMap(day => day.timeSlots));
+    // Get all time slots from all days
+    const allTimeSlots = updatedDays.flatMap(day => day.timeSlots);
+    onTimeSlotUpdate(allTimeSlots);
+  };
+
+  const handleEditTimeSlot = (timeSlot: TimeSlot) => {
+    if (readOnly) return;
+    
+    // Parse start time to get hour and minutes
+    const [startHour, startMinute] = timeSlot.startTime.split(':').map(Number);
+    
+    // Parse duration to calculate end time
+    const durationInMinutes = durationToMinutes(timeSlot.duration);
+    const startTimeInMinutes = startHour * 60 + startMinute;
+    const endTimeInMinutes = startTimeInMinutes + durationInMinutes;
+    const endHour = Math.floor(endTimeInMinutes / 60);
+    const endMinute = endTimeInMinutes % 60;
+    
+    setEditingSlot(timeSlot);
+    setCustomTimes({
+      startTime: timeSlot.startTime,
+      endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`
+    });
+    setTimePickerModal({
+      isOpen: true,
+      hour: startHour,
+      type: (timeSlot as any).type || 'activity',
+      option: timeSlot.activity
+    });
   };
 
   const handleConfirmTimeSlot = () => {
@@ -210,13 +237,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
       return;
     }
 
-    // Check for overlaps with existing time slots
-    const hasOverlap = checkForOverlaps(customTimes.startTime, customTimes.endTime);
-    if (hasOverlap) {
-      alert('This time slot overlaps with an existing activity. Please choose a different time.');
-      return;
-    }
-
     // Calculate duration from start and end time
     const startMinutes = parseInt(customTimes.startTime.split(':')[0]) * 60 + parseInt(customTimes.startTime.split(':')[1]);
     const endMinutes = parseInt(customTimes.endTime.split(':')[0]) * 60 + parseInt(customTimes.endTime.split(':')[1]);
@@ -225,51 +245,79 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     const durationMins = durationMinutes % 60;
     const durationString = durationHours > 0 ? `${durationHours}h ${durationMins}m` : `${durationMins}m`;
 
-    const newTimeSlot: TimeSlot = {
-      id: `${Date.now()}-${Math.random()}`,
-      date: currentDate,
-      startTime: customTimes.startTime,
-      duration: durationString,
-      activity: timePickerModal.option,
-      description: `${timePickerModal.option} from ${customTimes.startTime} to ${customTimes.endTime}`,
-      type: timePickerModal.type as 'accommodation' | 'meal' | 'activity'
-    };
+    // Check for overlaps with existing time slots (excluding the one being edited)
+    const hasOverlap = checkForOverlaps(customTimes.startTime, customTimes.endTime, editingSlot?.id);
+    if (hasOverlap) {
+      alert('This time slot overlaps with an existing activity. Please choose a different time.');
+      return;
+    }
 
     // Update current day's time slots
     const updatedDays = daysData.map(day => {
       if (day.date === currentDate) {
-        return {
-          ...day,
-          timeSlots: [...day.timeSlots, newTimeSlot]
-        };
+        if (editingSlot) {
+          // Editing existing slot
+          return {
+            ...day,
+            timeSlots: day.timeSlots.map(slot => 
+              slot.id === editingSlot.id
+                ? {
+                    ...slot,
+                    startTime: customTimes.startTime,
+                    duration: durationString,
+                    activity: timePickerModal.option,
+                    description: `${timePickerModal.option} from ${customTimes.startTime} to ${customTimes.endTime}`,
+                    type: timePickerModal.type as 'accommodation' | 'meal' | 'activity'
+                  }
+                : slot
+            )
+          };
+        } else {
+          // Adding new slot
+          const newTimeSlot: TimeSlot = {
+            id: `${Date.now()}-${Math.random()}`,
+            date: currentDate,
+            startTime: customTimes.startTime,
+            duration: durationString,
+            activity: timePickerModal.option,
+            description: `${timePickerModal.option} from ${customTimes.startTime} to ${customTimes.endTime}`,
+            type: timePickerModal.type as 'accommodation' | 'meal' | 'activity'
+          };
+          return {
+            ...day,
+            timeSlots: [...day.timeSlots, newTimeSlot]
+          };
+        }
       }
       return day;
     });
 
     setDaysData(updatedDays);
     
-    // Get updated days data to pass all time slots
-    const updatedDaysData = updatedDays.map(day => 
-      day.date === currentDate ? { ...day, timeSlots: updatedDays.find(d => d.date === currentDate)?.timeSlots || [] } : day
-    );
-    onTimeSlotUpdate(updatedDaysData.flatMap(day => day.timeSlots));
+    // Get all time slots from all days
+    const allTimeSlots = updatedDays.flatMap(day => day.timeSlots);
+    onTimeSlotUpdate(allTimeSlots);
     
-    // Close modal
+    // Close modal and reset editing state
     setTimePickerModal({
       isOpen: false,
       hour: 9,
       type: '',
       option: ''
     });
+    setEditingSlot(null);
   };
 
-  const checkForOverlaps = (startTime: string, endTime: string): boolean => {
+  const checkForOverlaps = (startTime: string, endTime: string, excludeSlotId?: string): boolean => {
     if (!currentDayData?.timeSlots) return false;
 
     const newStart = timeToMinutes(startTime);
     const newEnd = timeToMinutes(endTime);
 
     return currentDayData.timeSlots.some(existingSlot => {
+      // Skip the slot being edited
+      if (excludeSlotId && existingSlot.id === excludeSlotId) return false;
+      
       const existingStart = timeToMinutes(existingSlot.startTime);
       // Calculate end time from start time and duration
       const existingEnd = existingStart + durationToMinutes(existingSlot.duration);
@@ -301,6 +349,7 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
       type: '',
       option: ''
     });
+    setEditingSlot(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -315,8 +364,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
   const currentDateFormatted = formatDate(currentDate);
 
-  // Check if user can delete time slots (Very Organized planning style)
-  const canDeleteTimeSlots = planningStyle > 75;
+  // All creators can delete and edit time slots (not just very organized)
+  const canEditTimeSlots = !readOnly;
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6">
@@ -493,13 +542,23 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                         <div className="text-xs opacity-90">
                           {timeSlot.startTime} ({timeSlot.duration})
                         </div>
-                        {canDeleteTimeSlots && !readOnly && (
-                          <button
-                            onClick={() => handleDeleteTimeSlot(timeSlot.id)}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs hover:bg-red-600"
-                          >
-                            ×
-                          </button>
+                        {canEditTimeSlots && (
+                          <div className="absolute -top-1 -right-1 flex gap-1">
+                            <button
+                              onClick={() => handleEditTimeSlot(timeSlot)}
+                              className="w-5 h-5 bg-blue-500 text-white rounded-full text-xs hover:bg-blue-600 flex items-center justify-center"
+                              title="Edit time slot"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTimeSlot(timeSlot.id)}
+                              className="w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 flex items-center justify-center"
+                              title="Delete time slot"
+                            >
+                              ×
+                            </button>
+                          </div>
                         )}
                       </motion.div>
                     );
@@ -532,16 +591,48 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
           >
             <h3 className="text-xl font-bold text-gray-800 mb-4">
-              Set Activity Duration
+              {editingSlot ? 'Edit Activity Time Slot' : 'Set Activity Duration'}
             </h3>
             
             <div className="mb-4">
-              <div className="text-sm text-gray-600 mb-2">
-                <span className="font-medium">Activity:</span> {timePickerModal.option}
-              </div>
-              <div className="text-sm text-gray-600 mb-4">
-                <span className="font-medium">Type:</span> {timePickerModal.type}
-              </div>
+              {!editingSlot ? (
+                <>
+                  <div className="text-sm text-gray-600 mb-2">
+                    <span className="font-medium">Activity:</span> {timePickerModal.option}
+                  </div>
+                  <div className="text-sm text-gray-600 mb-4">
+                    <span className="font-medium">Type:</span> {timePickerModal.type}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Activity
+                    </label>
+                    <input
+                      type="text"
+                      value={timePickerModal.option}
+                      onChange={(e) => setTimePickerModal(prev => ({ ...prev, option: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Type
+                    </label>
+                    <select
+                      value={timePickerModal.type}
+                      onChange={(e) => setTimePickerModal(prev => ({ ...prev, type: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    >
+                      <option value="accommodation">Accommodation</option>
+                      <option value="meal">Meal</option>
+                      <option value="activity">Activity</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -594,7 +685,15 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
             <div className="flex justify-end space-x-3 mt-6">
               <button
-                onClick={handleCancelTimeSlot}
+                onClick={() => {
+                  setTimePickerModal({
+                    isOpen: false,
+                    hour: 9,
+                    type: '',
+                    option: ''
+                  });
+                  setEditingSlot(null);
+                }}
                 disabled={readOnly}
                 className={`px-4 py-2 transition-colors ${
                   readOnly ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-800'
@@ -607,7 +706,7 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                 disabled={readOnly || !customTimes.startTime || !customTimes.endTime || customTimes.startTime >= customTimes.endTime || hasTimeConflict}
                 className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add Activity
+                {editingSlot ? 'Save Changes' : 'Add Activity'}
               </button>
             </div>
           </motion.div>
