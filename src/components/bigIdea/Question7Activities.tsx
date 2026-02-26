@@ -34,7 +34,6 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
     }
 
     const loadVibes = () => {
-      console.log('🔵🔵🔵 Q7 LOAD VIBES START 🔵🔵🔵');
       console.log('Question7 useEffect running. currentQuestion:', currentQuestion);
       console.log('Question7: tripPreferencesProp:', tripPreferencesProp);
       console.log('Question7: tripPreferencesProp?.tripVibe:', tripPreferencesProp?.tripVibe);
@@ -119,20 +118,16 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
         const parsedVibes = vibes.slice(0, 3);
         console.log('Question7: Parsed vibes:', parsedVibes, 'from tripVibe:', tripVibe);
         if (parsedVibes.length > 0) {
-          console.log('🟢🟢🟢 Q7 SUCCESS: selectedVibes.length (parsed) =', parsedVibes.length, 'values =', parsedVibes, '🟢🟢🟢');
           setSelectedVibes(parsedVibes);
-          console.log('🔵🔵🔵 Q7 LOAD VIBES END (SUCCESS) 🔵🔵🔵');
-          return true; // Successfully loaded
+          return true;
         } else {
-          console.error('🔴🔴🔴 Q7 FAILED: Parsed vibes array is empty! 🔴🔴🔴');
+          console.error('Question7: Parsed vibes array is empty');
           console.log('Question7: selectedVibes.length (parsed) = 0');
-          console.log('🔵🔵🔵 Q7 LOAD VIBES END (FAILED - NO VIBES) 🔵🔵🔵');
           setSelectedVibes([]);
           return false;
         }
       } else {
-        console.error('🔴🔴🔴 Q7 FAILED: No tripVibe found in prop or localStorage. 🔴🔴🔴');
-        console.log('🔵🔵🔵 Q7 LOAD VIBES END (FAILED - NO TRIPVIBE) 🔵🔵🔵');
+        console.error('Question7: No tripVibe found in prop or localStorage');
         return false;
       }
     };

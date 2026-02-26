@@ -23,7 +23,7 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error('Failed to copy:', err);
     }
   };
 

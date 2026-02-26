@@ -103,7 +103,7 @@ class CollaborationServer {
       });
 
     } catch (error) {
-      console.error(' Connection authentication failed:', error);
+      console.error('Connection authentication failed:', error);
       ws.close(1008, 'Authentication failed');
     }
   }
@@ -114,8 +114,8 @@ class CollaborationServer {
     try {
       // Parse JSON message from client
       const message = JSON.parse(data);
-      console.log(` Message from ${ws.userName}:`, message.type);
-      console.log(` Full message content:`, JSON.stringify(message, null, 2));
+      console.log(`Message from ${ws.userName}:`, message.type);
+      console.log(`Full message content:`, JSON.stringify(message, null, 2));
 
       // Switch statement: Route message to appropriate event handler
       switch (message.type) {
@@ -157,7 +157,7 @@ class CollaborationServer {
 
         case 'ping':
           // Heartbeat: No database operation, so no promise needed
-          console.log(' [DEBUG] Received ping from', ws.userName);
+          console.log('Received ping from', ws.userName);
           this.sendToClient(ws, {
             type: 'pong'
           });
@@ -172,7 +172,7 @@ class CollaborationServer {
       }
     } catch (error) {
       // Handle JSON parsing errors
-      console.error(' Error handling message:', error);
+      console.error('Error handling message:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Invalid message format'
@@ -185,8 +185,8 @@ class CollaborationServer {
   // Uses promise (async/await) to load chat history from database
   async handleJoinRoom(ws, message) {
     const { roomId, shareCode, isRoomCreator } = message;
-    console.log(` Message from ${ws.userName}: join_room`);
-    console.log(` Room ID: ${roomId}, Is Room Creator: ${isRoomCreator}`);
+    console.log(`Message from ${ws.userName}: join_room`);
+    console.log(`Room ID: ${roomId}, Is Room Creator: ${isRoomCreator}`);
     
     if (!roomId) {
       this.sendToClient(ws, {
@@ -356,7 +356,7 @@ class CollaborationServer {
       }, ws);
 
     } catch (error) {
-      console.error(' Error updating preferences:', error);
+      console.error('Error updating preferences:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Failed to update preferences'
@@ -406,7 +406,7 @@ class CollaborationServer {
       }, ws);
 
     } catch (error) {
-      console.error(' Error updating trip tracing:', error);
+      console.error('Error updating trip tracing:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Failed to update trip tracing'
@@ -596,10 +596,10 @@ class CollaborationServer {
       if (shouldSend) {
         this.sendToClient(ws, message);
         sentCount++;
-        console.log(` Sent ${message.type} to ${ws.userName}`);
+        console.log(`Sent ${message.type} to ${ws.userName}`);
       } else {
         skippedCount++;
-        console.log(`  Skipped ${ws.userName} (reason: ${ws === senderWs ? 'is sender' : 'not open'})`);
+        console.log(`Skipped ${ws.userName} (reason: ${ws === senderWs ? 'is sender' : 'not open'})`);
       }
     });
     
@@ -617,10 +617,10 @@ class CollaborationServer {
       if (ws.readyState === WebSocket.OPEN) {
         this.sendToClient(ws, message);
         sentCount++;
-        console.log(` Sent ${message.type} to ${ws.userName || 'unknown'}`);
+        console.log(`Sent ${message.type} to ${ws.userName || 'unknown'}`);
       } else {
         skippedCount++;
-        console.log(`  Skipped client (not open)`);
+        console.log(`Skipped client (not open)`);
       }
     });
     
