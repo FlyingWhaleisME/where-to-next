@@ -69,16 +69,16 @@ const surveyOriginSchema = new mongoose.Schema({
 const documentSchema = new mongoose.Schema({
   // Reference to User collection - links document to creator
   userId: {
-    type: mongoose.Schema.Types.ObjectId,  // MongoDB ObjectId data type
-    ref: 'User',                            // Reference to User model
-    required: true                          // Field is mandatory
+    type: mongoose.Schema.Types.ObjectId, // MongoDB ObjectId data type
+    ref: 'User', // Reference to User model
+    required: true // Field is mandatory
   },
 
   // Destination name string field with validation
   destinationName: {
     type: String,
-    required: true,                         // Must be provided
-    trim: true                             // Remove leading/trailing whitespace
+    required: true, // Must be provided
+    trim: true// Remove leading/trailing whitespace
   },
 
   // Below are flexible nested data structures for survey responses
@@ -88,15 +88,12 @@ const documentSchema = new mongoose.Schema({
   // Nested key-value structures for big idea survey results stored as flexible JSON object
   bigIdeaSurveyData: { 
     type: mongoose.Schema.Types.Mixed
-    // Key: "bigIdeaSurveyData", Value: Any JSON object
   },
   // Nested key-value structures for trip tracing survey results stored as flexible JSON object
   tripTracingSurveyData: { 
     type: mongoose.Schema.Types.Mixed
-    // Key: "tripTracingSurveyData", Value: Any JSON object
   },
   isAutoCreated: { type: Boolean, default: false }, // Flag for auto-created documents
-  // Key: "isAutoCreated", Value: Boolean
   
   // Below are nested schemas for other data structures
   surveyOrigin: surveyOriginSchema, // Survey origin data
@@ -107,18 +104,18 @@ const documentSchema = new mongoose.Schema({
   // Automatic timestamp management
   createdAt: {
     type: Date,
-    default: Date.now                       // Set to current time on creation
+    default: Date.now // Set to current time on creation
   },
   lastModified: {
     type: Date,
-    default: Date.now                       // Updated on each save operation
+    default: Date.now // Updated on each save operation
   }
 });
 
 // Function of documentSchema for Mongoose middleware to be executed before document save operation
 documentSchema.pre('save', function(next) {
-  this.lastModified = new Date();          // Update timestamp
-  next();                                  // Continue with save operation
+  this.lastModified = new Date(); // Update timestamp
+  next(); // Continue with save operation
 });
 
 // Export Mongoose model for use in other files

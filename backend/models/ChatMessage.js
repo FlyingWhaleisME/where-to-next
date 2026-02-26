@@ -26,7 +26,7 @@ const chatMessageSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for efficient querying
+// Index for querying
 chatMessageSchema.index({ roomId: 1, timestamp: 1 });
 
 module.exports = mongoose.model('ChatMessage', chatMessageSchema);

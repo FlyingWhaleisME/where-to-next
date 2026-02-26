@@ -34,9 +34,6 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
 
     try {
       const upperShareCode = shareCode.toUpperCase();
-      console.log('🔍 [DEBUG] DocumentShareModal: Attempting to retrieve document with code:', upperShareCode);
-      
-      // Retrieve shared document from backend API (no authentication required for viewing)
       const response = await fetch(`https://where-to-next-backend.onrender.com/api/documents/share/${upperShareCode}`);
 
       const result = await response.json();
@@ -44,8 +41,6 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
       if (!response.ok) {
         throw new Error(result.error || 'Document not found');
       }
-
-      console.log('🔍 [DEBUG] DocumentShareModal: Backend API response:', result);
       
       // Convert to the expected format
       const sharedDoc = {
@@ -67,15 +62,12 @@ const DocumentShareModal: React.FC<DocumentShareModalProps> = ({ isOpen, onClose
           id: result.document.id,
           createdAt: result.document.createdAt
         }));
-        console.log('🔍 [DEBUG] DocumentShareModal: Cached shared document for immediate loading');
       } catch (e) {
-        console.warn('🔍 [DEBUG] DocumentShareModal: Failed to cache document:', e);
+        console.warn('Failed to cache document:', e);
       }
-      
-      console.log('🔍 [DEBUG] DocumentShareModal: Successfully set sharedDocument from backend API.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('❌ [ERROR] DocumentShareModal: Error during document retrieval:', err);
+      console.error('Error retrieving document:', err);
     } finally {
       setIsLoading(false);
     }

@@ -130,7 +130,7 @@ const Question6TripVibe: React.FC<Question6TripVibeProps> = ({
       return;
     }
     // Re-send the latest vibes right before navigating to Q7.
-    // This prevents timing issues where Q7 mounts before parent state is updated.
+    // Fix timing issues where Q7 mounts before parent state updates
     console.log('🟢🟢🟢 Q6 NEXT CLICKED: selectedVibes.length =', selectedVibes.length, 'values =', selectedVibes, '🟢🟢🟢');
     onAnswer(6, { tripVibe: selectedVibes.join(', ') });
     onNext();

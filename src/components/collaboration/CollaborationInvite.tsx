@@ -92,7 +92,6 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('📋 [DEBUG] Touch end - Copy button');
                   copyToClipboard();
                 }}
                 className={`px-4 py-2 rounded-lg transition-colors touch-manipulation ${
@@ -116,7 +115,6 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
               onTouchEnd={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('📧 [DEBUG] Touch end - Email button');
                 shareViaEmail();
               }}
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors touch-manipulation"
@@ -131,7 +129,6 @@ const CollaborationInvite: React.FC<CollaborationInviteProps> = ({
               onTouchEnd={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('📋 [DEBUG] Touch end - Copy Code button');
                 copyToClipboard();
               }}
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors touch-manipulation"

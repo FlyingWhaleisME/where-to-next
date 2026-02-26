@@ -1,15 +1,11 @@
-// Import of React library and hooks (useState, useEffect) for component functionality
 import React, { useState, useEffect } from 'react';
-// Import of React Router for navigation between pages
 import { useNavigate } from 'react-router-dom';
-// Import of Framer Motion for animations and transition
 import { motion, AnimatePresence } from 'framer-motion';
 
 import AIPromptDisplay from '../components/AIPromptDisplay';
 import promptService from '../services/promptService';
 import { TripPreferences, GeneratedPrompt } from '../types';
 
-// Import of custom React hook for survey progress checking
 import { useSurveyProgress } from '../hooks/useSurveyProgress';
 
 import { getUserData, setUserData, migrateUserData } from '../utils/userDataStorage';
@@ -24,13 +20,8 @@ import Question7Activities from '../components/bigIdea/Question7Activities';
 import Question8PlanningStyle from '../components/bigIdea/Question8PlanningStyle';
 import Question9Priorities from '../components/bigIdea/Question9Priorities';
 
-// React functional component with hooks
 const BigIdeaPage: React.FC = () => {
-  // React Router hook - useNavigate provides navigation function
   const navigate = useNavigate();
-  
-  // React useState hooks for component state management
-  // Each useState returns [value, setterFunction]
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [tripPreferences, setTripPreferences] = useState<Partial<TripPreferences>>({});
   const [showAIPrompt, setShowAIPrompt] = useState(false);
@@ -42,43 +33,32 @@ const BigIdeaPage: React.FC = () => {
   // (prevents blocking navigation when old completed data exists in localStorage)
   const [surveyCompletedInSession, setSurveyCompletedInSession] = useState(false);
   
-  // Custom React hook for functionality shared across components
   const { updateProgress, markCompleted } = useSurveyProgress();
 
   const totalQuestions = 9;
 
-  // React useEffect hook - runs when component mounts (empty dependency array [])
   useEffect(() => {
-    // JSON key-value structure - Retrieve user-specific data from localStorage
     const { getUserData, migrateUserData } = require('../utils/userDataStorage');
     const { getCurrentUser, isAuthenticated } = require('../services/apiService');
     
-    // Checks if user is authenticated
     if (!isAuthenticated()) {
       return;
     }
     
-    // Retrieves current user
     const currentUser = getCurrentUser();
-    // Checks if current user exists and has an ID
     if (!currentUser || !currentUser.id) {
       return;
     }
     
-    // Migrates old data to new format
     migrateUserData(currentUser.id);
     
-    // Retrieves saved JSON trip preferences from user-specific storage
     const saved = getUserData('tripPreferences');
-    // Checks if saved trip preferences exist
     if (saved) {
-      setTripPreferences(saved);  // Update component state with loaded data
+      setTripPreferences(saved);
     }
   }, []);
 
-  // React useEffect hook - runs when component mounts (dependency array [currentQuestion, totalQuestions, updateProgress])
   useEffect(() => {
-    // Update survey progress
     updateProgress(currentQuestion, totalQuestions);
   }, [currentQuestion, totalQuestions, updateProgress]);
 
@@ -210,7 +190,6 @@ const BigIdeaPage: React.FC = () => {
         const result = await documentsApi.create(doc);
         if (result.data) {
           savedDocumentIds.push(result.data._id || result.data.id);
-          console.log('✅ Document saved to MongoDB:', result.data._id || result.data.id);
         } else {
           console.error('Failed to save document to MongoDB:', result.error);
         }
@@ -228,24 +207,19 @@ const BigIdeaPage: React.FC = () => {
         const parsed = JSON.parse(existingDocs);
         // Merge new documents with existing documents
         allDocs = [...parsed, ...destinationDocs];
-        console.log('Appending to existing documents. Existing count:', parsed.length, 'New count:', destinationDocs.length);
       } catch (error) {
         console.error('Error parsing existing documents:', error);
       }
     }
     
     localStorage.setItem('destinationDocuments', JSON.stringify(allDocs));
-    console.log('Documents saved to localStorage (cache). Total documents:', allDocs.length, 'Saved to MongoDB:', savedDocumentIds.length);
   };
 
 
   const handleNext = async () => {
-    console.log('handleNext called! Current question:', currentQuestion, 'Total questions:', totalQuestions);
-    console.log('Current tripPreferences:', tripPreferences);
-    console.log('isComplete() result:', isComplete());
     
     // Validation: Check if Question 6 (Trip Vibe) has been answered before proceeding to Question 7
-    // IMPORTANT: React state updates are async; if user clicks fast, tripPreferences.tripVibe can lag.
+    // React state updates are async, check localStorage as fallback
     // So we also check persisted user data as a safety net.
     if (currentQuestion === 6) {
       let tripVibe = tripPreferences.tripVibe;
@@ -265,7 +239,6 @@ const BigIdeaPage: React.FC = () => {
       }
 
       if (!tripVibe || (typeof tripVibe === 'string' && tripVibe.trim().length === 0)) {
-        console.log('Cannot proceed: Trip vibes not selected');
         alert('Please select at least one trip vibe before proceeding.');
         return;
       }
@@ -279,28 +252,23 @@ const BigIdeaPage: React.FC = () => {
       // 3. Check if Question 5 (Destination Style) should be skipped
       // Question 5 is only relevant if user selected 'open' or 'in_mind' in Question 4
       if (nextQuestion === 5 && tripPreferences.destinationApproach?.destinationStatus === 'chosen') {
-        console.log('Skipping Question 5 (Destination Style) - destination status is chosen');
         nextQuestion = 6;
       }
       
-      console.log('Moving to next question:', nextQuestion);
       // 4. Navigate to the calculated next question
       setCurrentQuestion(nextQuestion);
       
       // Scroll to top of page for better UX
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      console.log('All questions completed, checking if complete...');
       // All questions completed, check if we can show summary
       if (isComplete()) {
-        console.log('All questions complete, showing summary...');
         
         // For Flow 1 & 2: Create documents immediately if destinations are provided
         if ((tripPreferences.destinationApproach?.destinationStatus === 'chosen' || 
              tripPreferences.destinationApproach?.destinationStatus === 'in_mind') && 
             tripPreferences.destinationApproach?.specificDestinations && 
             tripPreferences.destinationApproach.specificDestinations.length > 0) {
-          console.log(`Flow ${tripPreferences.destinationApproach.destinationStatus === 'chosen' ? '1' : '2'}: Creating documents immediately`);
           createDestinationDocuments(tripPreferences.destinationApproach.specificDestinations, tripPreferences);
         }
         
@@ -313,7 +281,6 @@ const BigIdeaPage: React.FC = () => {
             completedAt: new Date().toISOString()
           });
           if (prefResult.data) {
-            console.log('✅ Survey preferences saved to MongoDB:', prefResult.data._id);
           } else {
             console.error('Failed to save preferences to MongoDB:', prefResult.error);
           }
@@ -322,25 +289,18 @@ const BigIdeaPage: React.FC = () => {
         }
         
         // Show summary instead of AI prompt
-        console.log('Setting showSummary to true...');
         setShowSummary(true);
-        setSurveyCompletedInSession(true); // Disable navigation blocker
-        console.log('Marking survey as completed...');
-        markCompleted(); // Mark survey as completed
-        console.log('✅ Summary should now be visible');
+        setSurveyCompletedInSession(true);
+        markCompleted();
         
-        // Scroll to top to ensure summary modal is visible
+        // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        console.log('Not complete yet. Current state:', tripPreferences);
-        console.log('isComplete() result:', isComplete());
-        
         // Force check localStorage for the latest data
         const saved = localStorage.getItem('tripPreferences');
         if (saved) {
           try {
             const latestPreferences = JSON.parse(saved);
-            console.log('Latest preferences from localStorage:', latestPreferences);
             
             // Check if the latest data makes it complete
             const latestBaseComplete = !!(
@@ -381,7 +341,7 @@ const BigIdeaPage: React.FC = () => {
               setSurveyCompletedInSession(true); // Disable navigation blocker
               markCompleted(); // Mark survey as completed
               
-              // Scroll to top to ensure summary modal is visible
+              // Scroll to top
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           } catch (error) {
@@ -417,7 +377,7 @@ const BigIdeaPage: React.FC = () => {
   const handleAnswer = (questionNumber: number, answer: any) => {
     console.log(`Question ${questionNumber} received answer:`, answer);
 
-    // IMPORTANT: use functional state update so we never merge answers onto stale state.
+    // Use functional state update to avoid stale state
     // This fixes Q6->Q7 timing issues where tripVibe can be dropped during fast navigation.
     setTripPreferences(prev => {
       const newPreferences = {
@@ -507,10 +467,7 @@ const BigIdeaPage: React.FC = () => {
   console.log('Total Questions:', totalQuestions);
   console.log('Can Proceed:', isComplete());
 
-  // Function that conditionally renders question components based on state
-  // Returns different component based on currentQuestion value
   const renderQuestion = () => {
-    // commonProps object shared by all question components
     const commonProps = {
       onAnswer: handleAnswer, // Parent function updates tripPreferences state
       onNext: handleNext,  // Function to navigate to next question
@@ -521,7 +478,6 @@ const BigIdeaPage: React.FC = () => {
       tripPreferences: tripPreferences // Pass current tripPreferences state to child components
     };
 
-    // Component-based architecture: Different components rendered dynamically for each question
     switch (currentQuestion) {
       case 1:
         return <Question1GroupSize {...commonProps} />;
@@ -829,34 +785,23 @@ const BigIdeaPage: React.FC = () => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('🚀 AI Summary button clicked - EVENT FIRED!');
-                      console.log('Button element:', e.currentTarget);
-                      console.log('Current tripPreferences:', tripPreferences);
-                      console.log('isComplete() result:', isComplete());
-                      console.log('showAIPrompt state:', showAIPrompt);
-                      console.log('aiPrompt state:', aiPrompt);
                       
                       // Check if data is complete
                       if (!isComplete()) {
-                        console.error('❌ Cannot generate AI prompt - survey not complete');
                         alert('Please complete all questions before generating AI summary.');
                         return;
                       }
                       
                       try {
-                        console.log('🔄 Generating AI prompt...');
                         const prompt = promptService.generateBigPicturePrompt({
                           type: 'big-picture',
                           tripPreferences: tripPreferences as TripPreferences
                         });
-                        console.log('✅ Generated prompt:', prompt);
                         setAiPrompt(prompt);
                         setShowAIPrompt(true);
                         setShowSummary(false);
-                        console.log('✅ AI Prompt modal should be showing');
-                        console.log('✅ State updated - showAIPrompt:', true, 'aiPrompt set:', !!prompt);
                       } catch (error) {
-                        console.error('❌ Error generating AI prompt:', error);
+                        console.error('Error generating AI prompt:', error);
                         alert('Error generating AI prompt. Please try again.');
                       }
                     }}

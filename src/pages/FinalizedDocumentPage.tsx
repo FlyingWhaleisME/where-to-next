@@ -25,7 +25,6 @@ const FinalizedDocumentPage: React.FC = () => {
     // If no share code, require authentication
     if (!shareCodeParam) {
       if (!isAuthenticated() || !getCurrentUser()) {
-        console.log('🔒 [DEBUG] FinalizedDocumentPage: No share code and user not authenticated, redirecting');
         navigate('/', { replace: true });
         return;
       }
@@ -34,13 +33,11 @@ const FinalizedDocumentPage: React.FC = () => {
     // Listen for logout events (only if not using share code)
     if (!shareCodeParam) {
       const handleLogout = () => {
-        console.log('🔒 [DEBUG] FinalizedDocumentPage: Logout detected, redirecting');
         navigate('/', { replace: true });
       };
 
       const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'token' && !e.newValue) {
-          console.log('🔒 [DEBUG] FinalizedDocumentPage: Token removed, redirecting');
           navigate('/', { replace: true });
         }
       };
@@ -48,7 +45,6 @@ const FinalizedDocumentPage: React.FC = () => {
       // Periodic check
       const authCheckInterval = setInterval(() => {
         if (!isAuthenticated() || !getCurrentUser()) {
-          console.log('🔒 [DEBUG] FinalizedDocumentPage: Periodic check - user logged out');
           navigate('/', { replace: true });
         }
       }, 2000);
@@ -73,16 +69,13 @@ const FinalizedDocumentPage: React.FC = () => {
         // If no share code, require authentication immediately
         if (!shareCode) {
           if (!isAuthenticated() || !currentUser) {
-            console.log('🔒 [DEBUG] FinalizedDocumentPage: No share code and user not authenticated, redirecting');
             navigate('/', { replace: true });
             return;
           }
-          console.log('✅ [DEBUG] FinalizedDocumentPage: User authenticated, user ID:', currentUser.id);
         }
         
-        // Check if this is a shared document view (via share code)
+        // Shared document view via share code
         if (shareCode) {
-          console.log('[DEBUG] Loading shared document with code:', shareCode);
           setIsSharedView(true);
           setShareCode(shareCode);
           
@@ -96,9 +89,8 @@ const FinalizedDocumentPage: React.FC = () => {
               setCreatorName(cached.creatorName || 'Unknown Creator');
               setIsCreator(false);
               setLoading(false);
-              console.log('[DEBUG] Loaded shared document from cache (immediate display)');
             } catch (e) {
-              console.warn('[DEBUG] Failed to parse cached document:', e);
+              console.warn('Failed to parse cached document');
             }
           }
           
@@ -117,7 +109,6 @@ const FinalizedDocumentPage: React.FC = () => {
                 throw new Error(result.error || 'Document not found');
               }
 
-              console.log('[DEBUG] Shared document retrieved from backend:', result);
               
               // Cache the document for next time
               try {
@@ -128,7 +119,7 @@ const FinalizedDocumentPage: React.FC = () => {
                   createdAt: result.document.createdAt
                 }));
               } catch (e) {
-                console.warn('[DEBUG] Failed to cache document:', e);
+                console.warn('Failed to cache document');
               }
               
               // Update state with fresh data from API
@@ -146,31 +137,29 @@ const FinalizedDocumentPage: React.FC = () => {
                   createdAt: result.document.createdAt
                 }));
               } catch (e) {
-                console.warn('[DEBUG] Failed to update cache:', e);
-              }
-            } catch (err) {
-              console.error('[ERROR] Failed to load shared document:', err);
+                console.warn('Failed to update cache');
+      }
+    } catch (err) {
+              console.error('Failed to load shared document:', err);
               // Only show error if we don't have cached data
               if (!cachedDoc) {
                 setError(err instanceof Error ? err.message : 'Shared document not found or invalid share code');
                 setLoading(false);
               }
-            } finally {
+    } finally {
               if (!cachedDoc) {
-                setLoading(false);
+      setLoading(false);
               }
             }
           };
 
           loadSharedDocument();
         } else {
-          // This is a direct access (likely from Finalize button)
-          console.log('📄 [DEBUG] Loading document directly for creator');
+          // Direct access from Finalize button
           setIsSharedView(false);
           
           // Verify authentication before loading
           if (!isAuthenticated() || !currentUser) {
-            console.log('🔒 [DEBUG] FinalizedDocumentPage: User not authenticated for direct access');
             setError('Please log in to view this document');
             setLoading(false);
             navigate('/', { replace: true });
@@ -184,7 +173,6 @@ const FinalizedDocumentPage: React.FC = () => {
             if (foundDoc) {
               // Verify user owns this document
               if (foundDoc.creatorId && foundDoc.creatorId !== currentUser.id) {
-                console.log('🔒 [DEBUG] FinalizedDocumentPage: User does not own this document. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
                 setError('You do not have permission to view this document');
                 setLoading(false);
                 navigate('/', { replace: true });
@@ -192,7 +180,7 @@ const FinalizedDocumentPage: React.FC = () => {
               }
               
               if (!foundDoc.creatorId) {
-                console.warn('⚠️ [DEBUG] FinalizedDocumentPage: Document missing creatorId, cannot verify ownership');
+                console.warn('Document missing creatorId');
                 setError('Document is missing creator information');
                 setLoading(false);
                 navigate('/', { replace: true });
@@ -202,12 +190,10 @@ const FinalizedDocumentPage: React.FC = () => {
               // Re-verify authentication before setting document state (prevents showing data after logout)
               const verifyUser = getCurrentUser();
               if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
-                console.log('🔒 [DEBUG] FinalizedDocumentPage: User logged out during document load, redirecting');
                 window.location.href = '/';
                 return;
               }
               
-              console.log('✅ [DEBUG] FinalizedDocumentPage: Document ownership verified. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
               setDocument(foundDoc);
               // Check if current user is the creator
               setIsCreator(foundDoc.creatorId === currentUser.id);
@@ -230,12 +216,11 @@ const FinalizedDocumentPage: React.FC = () => {
                     const existingShare = getResult.documents?.find((doc: any) => doc.documentId === foundDoc.id);
                     
                     if (existingShare && existingShare.shareCode) {
-                      console.log('[DEBUG] Loaded existing share code:', existingShare.shareCode);
                       setShareCode(existingShare.shareCode);
                     }
                   }
                 } catch (err) {
-                  console.warn('[DEBUG] Failed to load existing share code:', err);
+                  console.warn('Failed to load existing share code');
                 }
               };
               
@@ -261,14 +246,12 @@ const FinalizedDocumentPage: React.FC = () => {
     
     // Listen for logout events to redirect immediately
     const handleUserLogout = () => {
-      console.log('🔒 [DEBUG] FinalizedDocumentPage: User logged out, redirecting');
       window.location.href = '/';
     };
     
     // Listen for storage changes (detects logout from other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if ((e.key === 'token' && !e.newValue) || (e.key === 'user' && !e.newValue)) {
-        console.log('🔒 [DEBUG] FinalizedDocumentPage: Logout detected via storage event, redirecting');
         handleUserLogout();
       }
     };
@@ -277,7 +260,6 @@ const FinalizedDocumentPage: React.FC = () => {
     const authCheckInterval = setInterval(() => {
       const shareCode = searchParams.get('code');
       if (!shareCode && (!isAuthenticated() || !getCurrentUser())) {
-        console.log('🔒 [DEBUG] FinalizedDocumentPage: Periodic check - user logged out, redirecting');
         handleUserLogout();
       }
     }, 1000);
@@ -293,7 +275,6 @@ const FinalizedDocumentPage: React.FC = () => {
   }, [documentId, searchParams]);
 
   const handleInviteClick = async () => {
-    console.log('[DEBUG] BUTTON CLICKED! handleInviteClick function called!');
     try {
       if (!isAuthenticated()) {
         alert('Please log in to share documents');
@@ -319,22 +300,13 @@ const FinalizedDocumentPage: React.FC = () => {
         return;
       }
 
-      console.log('[DEBUG] FinalizedDocumentPage: Checking for existing share code');
-      console.log('[DEBUG] FinalizedDocumentPage: Document ID:', document.id);
-      
-      // Debug: Check the token being used
       const token = localStorage.getItem('token');
-      console.log('[DEBUG] Token being used:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
       
-      // Simple token check
       if (!token) {
-        console.error('[ERROR] No token found');
         alert('Please log in to share documents.');
         window.location.href = '/';
         return;
       }
-      
-      console.log('[DEBUG] Token found, proceeding with API call...');
 
       // First, check if a share code already exists for this document
       try {
@@ -350,18 +322,16 @@ const FinalizedDocumentPage: React.FC = () => {
           const existingShare = getResult.documents?.find((doc: any) => doc.documentId === document.id);
           
           if (existingShare && existingShare.shareCode) {
-            console.log('✅ [SUCCESS] Found existing share code:', existingShare.shareCode);
             setShareCode(existingShare.shareCode);
             setShowInviteModal(true);
             return; // Use existing share code, don't create a new one
           }
         }
       } catch (err) {
-        console.warn('[DEBUG] Failed to check for existing share code, will create new one:', err);
+        console.warn('Failed to check for existing share code');
       }
 
       // No existing share code found, create a new one
-      console.log('[DEBUG] FinalizedDocumentPage: No existing share code found, creating new one');
 
       // Call backend API to create document share
       const response = await fetch('https://where-to-next-backend.onrender.com/api/documents/share', {
@@ -377,12 +347,10 @@ const FinalizedDocumentPage: React.FC = () => {
       });
 
       const result = await response.json();
-      console.log('[DEBUG] Backend response status:', response.status);
-      console.log('[DEBUG] Backend response:', result);
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          console.error('🔑 [ERROR] Authentication failed, clearing session');
+          console.error('Authentication failed');
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           alert('Your session has expired. Please log in again.');
@@ -392,12 +360,11 @@ const FinalizedDocumentPage: React.FC = () => {
         throw new Error(result.error || 'Failed to create document share');
       }
 
-      console.log('✅ [SUCCESS] Share code created:', result.shareCode);
       setShareCode(result.shareCode);
       setShowInviteModal(true);
       
     } catch (error) {
-      console.error('❌ [ERROR] Failed to create share code:', error);
+      console.error('Failed to create share code:', error);
       alert(`Failed to create share code: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -459,8 +426,8 @@ const FinalizedDocumentPage: React.FC = () => {
                           </p>
                           <p className="text-emerald-600 text-sm mt-2">
                             <strong>View Only Mode:</strong> You can see all content and updates, but cannot edit the document.
-                          </p>
-                        </div>
+                </p>
+              </div>
                         <button
                           onClick={async () => {
                             const shareCodeParam = searchParams.get('code');
@@ -488,14 +455,14 @@ const FinalizedDocumentPage: React.FC = () => {
                         >
                           Refresh
                         </button>
-                      </div>
-                    </div>
-                  )}
+              </div>
+              </div>
+            )}
 
-        </motion.div>
+          </motion.div>
 
         {/* Itinerary Plan - Daily Planner */}
-                  <motion.div
+          <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -576,8 +543,8 @@ const FinalizedDocumentPage: React.FC = () => {
               >
                 Save Changes
               </button>
-            )}
-          </div>
+              )}
+            </div>
 
           {document.editableFields?.dates?.startDate && document.editableFields?.dates?.endDate ? (
             <DailyPlanner
@@ -604,7 +571,6 @@ const FinalizedDocumentPage: React.FC = () => {
                 }
 
                 // Update document with new time slots
-                console.log('Time slots updated:', timeSlots);
                 
                 // Save the updated time slots to the document
                 if (!isSharedView && document) {
@@ -633,7 +599,6 @@ const FinalizedDocumentPage: React.FC = () => {
                       doc.id === documentId ? updatedDocument : doc
                     );
                     localStorage.setItem('destinationDocuments', JSON.stringify(updatedDocs));
-                    console.log('✅ Daily planner changes saved to localStorage');
                   }
 
                   // Always check for and update shared document if it exists
@@ -666,19 +631,18 @@ const FinalizedDocumentPage: React.FC = () => {
                           });
 
                           if (updateResponse.ok) {
-                            console.log('✅ Daily planner changes updated in backend for shared viewers');
                             // Update shareCode state if not already set
                             if (!shareCode) {
                               setShareCode(existingShare.shareCode);
                             }
                           } else {
-                            console.warn('⚠️ Failed to update backend document share');
+                            console.warn('Failed to update backend document share');
                           }
                         }
                       }
                     }
                   } catch (error) {
-                    console.error('❌ Error updating backend document share:', error);
+                    console.error('Error updating backend document share:', error);
                   }
                 }
               }}
@@ -1242,7 +1206,6 @@ const FinalizedDocumentPage: React.FC = () => {
                   onTouchEnd={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('📤 [DEBUG] Touch end - Invite Others button');
                     handleInviteClick();
                   }}
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg touch-manipulation"
@@ -1321,7 +1284,6 @@ const FinalizedDocumentPage: React.FC = () => {
                           throw new Error(result.error || 'Failed to stop sharing');
                         }
 
-                        console.log('📝 [DEBUG] FinalizedDocumentPage: Document sharing stopped via backend API');
                         setShowInviteModal(false);
                         setShareCode(null);
                         alert('Document sharing has been disabled.');

@@ -41,14 +41,10 @@ function App() {
 
   // Handle route changes (for future use if needed)
   const handleRouteChange = (pathname: string) => {
-    console.log('🔍 [DEBUG] Route changed to:', pathname);
     // Don't auto-close chatbox - let users control it manually
   };
 
   useEffect(() => {
-    console.log('🔍 [APP] App component mounted/updated');
-    console.log('🔍 [APP] Timestamp:', new Date().toISOString());
-    
     // Check if user is logged in
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
@@ -56,20 +52,9 @@ function App() {
     const { isAuthenticated } = require('./services/apiService');
     const authenticated = isAuthenticated();
     
-    console.log('🔍 [APP] Initial authentication check:', {
-      hasToken: !!token,
-      hasUserStr: !!userStr,
-      authenticated,
-      hasCurrentUser: !!currentUser,
-      userId: currentUser?.id,
-      userEmail: currentUser?.email
-    });
-    
     if (currentUser) {
-      console.log('✅ [APP] User found, setting user state:', currentUser.id);
       setUser(currentUser);
     } else {
-      console.log('❌ [APP] No user found - user is NOT logged in');
       setUser(null);
     }
 
@@ -85,8 +70,6 @@ function App() {
       setShowGlobalChatbox(false); // Always start closed
     }
 
-    // ADVANCED TECHNIQUE 56: CROSS-TAB STORAGE EVENT SYNCHRONIZATION
-    // Complex localStorage event handling for synchronizing state across browser tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'chatbox-stay-open') {
         const newStayOpen = e.newValue === 'true';
@@ -109,36 +92,28 @@ function App() {
 
             // Listen for showChatbox event from header
             const handleShowChatbox = () => {
-              console.log('🔍 [DEBUG] App: showChatbox event received');
               const currentRoomId = localStorage.getItem('current-room-id');
-              console.log('🔍 [DEBUG] App: Current room ID:', currentRoomId);
               if (currentRoomId) {
                 setRoomId(currentRoomId);
                 setShowGlobalChatbox(true);
-              } else {
-                console.warn('❌ [DEBUG] App: No room ID found when trying to show chatbox');
               }
             };
 
 
             // Listen for user logout event
             const handleUserLogout = () => {
-              console.log('🚪 [DEBUG] App: User logged out event received. Current roomId:', roomId);
               setUser(null);
               setRoomId(null); // Clear room ID to unmount chatbox
               setShowGlobalChatbox(false); // Hide chatbox
-              console.log('🚪 [DEBUG] App: After logout, roomId set to:', null, 'showGlobalChatbox set to:', false);
             };
 
             // Listen for room deleted event
             const handleRoomDeleted = (event: CustomEvent) => {
-              console.log('🗑️ [DEBUG] App: Room deleted event received:', event.detail);
               try {
                 const deletedRoomId = event.detail?.roomId;
                 
                 // If the deleted room is the current room, clean up state
                 if (roomId === deletedRoomId || !deletedRoomId) {
-                  console.log('🗑️ [DEBUG] App: Current room was deleted, cleaning up state');
                   setRoomId(null);
                   setShowGlobalChatbox(false);
                 }
@@ -152,8 +127,6 @@ function App() {
 
             // Listen for user login event
             const handleUserLogin = (event: CustomEvent) => {
-              console.log('🔑 [DEBUG] App: User logged in event received:', event.detail);
-              
               // Safety check to ensure event.detail and event.detail.user exist
               if (event.detail && event.detail.user) {
                 setUser(event.detail.user);
@@ -163,8 +136,6 @@ function App() {
                   setRoomId(savedRoomIdOnLogin);
                   setShowGlobalChatbox(false); // Start closed
                 }
-              } else {
-                console.warn('🚨 [DEBUG] App: userLogin event received without proper user data:', event.detail);
               }
             };
 

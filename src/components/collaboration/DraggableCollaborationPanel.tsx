@@ -1,8 +1,6 @@
-// ADVANCED TECHNIQUE 39: COMPREHENSIVE REACT IMPORTS WITH ADVANCED LIBRARIES
-// Multiple React hooks, animation library, DOM manipulation, and custom service imports
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion'; // Advanced animation library
-import { createPortal } from 'react-dom'; // Portal rendering for modal overlays
+import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import collaborationService, { CollaborationUser, CollaborationMessage } from '../../services/collaborationService';
 import { getCurrentUser } from '../../services/apiService';
 import CollaborationInvite from './CollaborationInvite';
@@ -18,16 +16,10 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   isVisible,
   onToggle
 }) => {
-  // ADVANCED TECHNIQUE 40: WEB AUDIO API SYNTHESIS WITH ENVELOPE SHAPING
-  // Complex audio synthesis using Web Audio API with oscillator and gain node manipulation
   const playNotificationSound = () => {
     try {
-      // ADVANCED TECHNIQUE 41: CROSS-BROWSER AUDIO CONTEXT INITIALIZATION
-      // Dynamic audio context creation with fallback for different browser implementations
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      // ADVANCED TECHNIQUE 42: FUNCTIONAL PROGRAMMING WITH AUDIO SYNTHESIS
-      // Higher-order function for creating customizable audio tones with mathematical precision
       const createBellTone = (frequency: number, startTime: number, duration: number) => {
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
@@ -38,8 +30,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(frequency, startTime);
         
-        // ADVANCED TECHNIQUE 43: AUDIO ENVELOPE SHAPING WITH MATHEMATICAL CURVES
-        // Complex gain envelope with linear and exponential ramps for realistic bell sound
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
@@ -48,19 +38,14 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         oscillator.stop(startTime + duration);
       };
       
-      // ADVANCED TECHNIQUE 44: MUSICAL INTERVAL SYNTHESIS
-      // Two-tone harmonic sequence using musical frequencies (perfect fifth interval)
       const now = audioContext.currentTime;
-      createBellTone(523.25, now, 0.3); // C5
-      createBellTone(659.25, now + 0.15, 0.3); // E5
+      createBellTone(523.25, now, 0.3);
+      createBellTone(659.25, now + 0.15, 0.3);
       
-      console.log('🔔 [DEBUG] Notification ding sound played');
     } catch (error) {
-      console.log('🔔 [DEBUG] Could not play notification sound:', error);
+      console.warn('Could not play notification sound');
     }
   };
-  // ADVANCED TECHNIQUE 45: COMPREHENSIVE STATE MANAGEMENT WITH MULTIPLE HOOKS
-  // Complex component state with multiple useState hooks for different aspects of UI and functionality
   const [shouldStayOpen, setShouldStayOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'chat' | 'users'>('chat');
   const [isChatboxVisible, setIsChatboxVisible] = useState(false); // Track actual visibility
@@ -72,16 +57,12 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   const [isTyping, setIsTyping] = useState<{ [userId: string]: boolean }>({});
   const [lastError, setLastError] = useState<string | null>(null);
   
-  // ADVANCED TECHNIQUE 46: INTERACTIVE UI STATE MANAGEMENT
-  // Complex state for drag-and-drop functionality with position, size, and interaction tracking
   const [position, setPosition] = useState({ x: window.innerWidth - 420, y: 50 });
   const [size, setSize] = useState({ width: 400, height: 500 });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  // ADVANCED TECHNIQUE 47: LAZY STATE INITIALIZATION WITH LOCALSTORAGE
-  // State initialization with localStorage integration for persistence across sessions
   const [roomCreator, setRoomCreator] = useState<string | null>(() => {
     return localStorage.getItem('room-creator') || null;
   });
@@ -111,18 +92,15 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   // Clear notifications when chatbox becomes visible and mark all messages as read
   useEffect(() => {
     if (isVisible) {
-      console.log('🔔 [DEBUG] Chatbox opened - clearing notifications and marking messages as read');
       setHasNewMessages(false);
       setUnreadMessageCount(0);
-      setIsChatboxVisible(true); // Chatbox is now visible
-      // Update last read timestamp to now (all current messages are now read)
+      setIsChatboxVisible(true);
       lastReadTimestampRef.current = Date.now();
     } else {
-      setIsChatboxVisible(false); // Chatbox is now hidden
+      setIsChatboxVisible(false);
     }
   }, [isVisible]);
 
-  // Dispatch notification updates to header
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('notificationUpdate', {
       detail: {
@@ -132,43 +110,27 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
     }));
   }, [hasNewMessages, unreadMessageCount]);
 
-  // Track last read message timestamp to calculate unread count
   const lastReadTimestampRef = useRef<number>(Date.now());
   
-  // Update ref immediately when isVisible changes (synchronous)
   useEffect(() => {
     isVisibleRef.current = isVisible;
   }, [isVisible]);
   
-  // Create a callback that checks isVisible prop directly (most reliable)
-  // Include isVisible in deps so callback is recreated when visibility changes
-  // This ensures the callback always has the current visibility state
   const handleMessage = useCallback((message: CollaborationMessage) => {
-    console.log('💬 [DEBUG] Received message in panel:', message);
-    console.log('💬 [DEBUG] Current isVisible prop:', isVisible);
-    
     if (message && message.user && message.text) {
-      // Add message to state
       setMessages(prev => {
-        // Check if this exact message already exists (same ID)
         const messageExists = prev.some(m => m.id === message.id);
         if (messageExists) {
-          console.log('💬 [DEBUG] Duplicate message ID in UI state, skipping:', message.id);
           return prev;
         }
         
         return [...prev, message];
       });
       
-      // Show notification logic:
-      // 1. Only for messages from OTHER users (not your own)
-      // 2. Only when chatbox is closed (not visible)
       const currentUser = getCurrentUser();
       const isFromCurrentUser = currentUser && message.user.id === currentUser.id;
       
-      // Check visibility - use prop directly (most reliable, always current)
-      // Also check DOM as backup for edge cases
-      const chatboxIsClosed = !isVisible; // Use prop directly - always current
+      const chatboxIsClosed = !isVisible;
       const chatboxElement = panelRef.current;
       const computedStyle = chatboxElement ? window.getComputedStyle(chatboxElement) : null;
       const isChatboxVisibleInDOM = chatboxElement && 
@@ -177,61 +139,34 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         computedStyle.display !== 'none' &&
         chatboxElement.offsetParent !== null;
       
-      // Only show notification badge if:
-      // - Message is from another user (not yourself)
-      // - Chatbox is closed (not visible) - check prop and DOM
       const shouldNotify = !isFromCurrentUser && chatboxIsClosed && !isChatboxVisibleInDOM;
       
       if (shouldNotify) {
-        console.log('🔔 [DEBUG] Showing notification for message from:', message.user.name);
-        console.log('🔔 [DEBUG] Notification conditions:', {
-          isFromCurrentUser,
-          chatboxIsClosed,
-          isVisible,
-          isChatboxVisibleInDOM,
-          messageFrom: message.user.name
-        });
-        
         setHasNewMessages(true);
-        // Only increment unread count if message is newer than last read
         const messageTime = new Date(message.timestamp).getTime();
         if (messageTime > lastReadTimestampRef.current) {
           setUnreadMessageCount(prev => prev + 1);
         }
         
-        // Play ding sound for new message - only when chatbox is closed
         playNotificationSound();
-      } else {
-        const reason = isFromCurrentUser 
-          ? 'own message' 
-          : `chatbox is open (isVisible=${isVisible}, DOM=${isChatboxVisibleInDOM})`;
-        console.log('🔔 [DEBUG] Not showing notification. Reason:', reason);
       }
     } else {
-      console.warn('❌ [DEBUG] Invalid message received:', message);
+      console.warn('Invalid message received');
     }
-  }, [isVisible]); // Include isVisible in deps - callback recreated when visibility changes
+  }, [isVisible]);
 
   useEffect(() => {
-    
-    // Set up collaboration callbacks
     collaborationService.setCallbacks({
       onConnectionChange: (connected) => {
-        console.log('🔗 [DEBUG] Panel: Connection status changed to:', connected);
-        console.log('🔗 [DEBUG] Collaboration service state:', collaborationService.getConnectionStatus());
-        console.log('🔗 [DEBUG] WebSocket connection status:', collaborationService.getConnectionStatus());
         setIsConnected(connected);
       },
       onUserJoined: (user) => {
-        console.log('👥 [DEBUG] User joined:', user);
         setOnlineUsers(prev => {
           const existingUser = prev.find(u => u.id === user.id);
           if (!existingUser) {
-            console.log('👥 [DEBUG] Adding user to list:', user.name);
             return [...prev, { ...user, isOnline: true }];
           } else {
             // User already exists, just update their online status
-            console.log('👥 [DEBUG] User already in list, updating online status:', user.name);
             return prev.map(u => 
               u.id === user.id ? { ...u, isOnline: true } : u
             );
@@ -241,16 +176,13 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         setUserStatuses(prev => ({ ...prev, [user.id]: true }));
       },
       onUserLeft: (user) => {
-        console.log('👥 [DEBUG] User left event received:', user);
         // Don't update onlineUsers state here - wait for room_users broadcast
         // The backend will broadcast room_users with all users (including offline ones)
         // Just mark user as offline in statuses for tracking
         setUserStatuses(prev => ({ ...prev, [user.id]: false }));
-        console.log('👥 [DEBUG] Waiting for room_users broadcast to update user list');
       },
       onMessage: handleMessage,
       onChatHistory: (messages) => {
-        console.log('📚 [DEBUG] Received chat history in panel:', messages.length, 'messages');
         setMessages(messages); // Replace messages, don't append
         // Mark all loaded messages as read (they're old messages)
         if (messages.length > 0) {
@@ -261,18 +193,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         setUnreadMessageCount(0);
       },
       onRoomUsers: (users) => {
-        console.log('\n👥 ========== UI RECEIVED ROOM USERS ==========');
-        console.log('👥 Total users received:', users?.length || 0);
-        console.log('👥 Users with status:', users.map(u => ({
-          id: u.id,
-          name: u.name,
-          isCreator: u.isCreator,
-          isOnline: u.isOnline
-        })));
-        console.log('👥 Current onlineUsers state before update:', onlineUsers.length);
-        console.log('👥 ================================================\n');
-        
-        // Ensure all users have isOnline property (default to false if missing)
+        // Default isOnline to false if missing
         const usersWithStatus = (users || []).map(user => ({
           ...user,
           isOnline: user.isOnline !== undefined ? user.isOnline : false
@@ -287,10 +208,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         });
         setUserStatuses(newUserStatuses);
         
-        console.log('👥 setOnlineUsers called with', usersWithStatus.length, 'users');
-        console.log('👥 Online users:', usersWithStatus.filter(u => u.isOnline).length);
-        console.log('👥 Offline users:', usersWithStatus.filter(u => !u.isOnline).length);
-        console.log('👥 Updated userStatuses:', newUserStatuses);
       },
       onTypingChange: (userId, typing) => {
         setIsTyping(prev => ({ ...prev, [userId]: typing }));
@@ -301,43 +218,34 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
       }
     });
 
-    // Load existing messages and connection status
     const currentMessages = collaborationService.getMessages();
     const currentUsers = collaborationService.getOnlineUsers();
     const currentConnection = collaborationService.isConnected();
     
-    console.log('Panel: Initial state - Connected:', currentConnection, 'Messages:', currentMessages.length, 'Users:', currentUsers.length);
     
     setMessages(currentMessages);
     setOnlineUsers(currentUsers);
     setIsConnected(currentConnection);
 
-    // Cleanup function to disconnect when component unmounts
     return () => {
-      console.log('🔗 [DEBUG] DraggableCollaborationPanel unmounting - disconnecting WebSocket');
       collaborationService.disconnect();
     };
   }, []);
 
-  // Clear new message indicator when chatbox becomes visible
   useEffect(() => {
     if (isVisible) {
       setHasNewMessages(false);
     }
   }, [isVisible]);
 
-  // Ensure WebSocket connection is maintained even when chatbox is hidden
   useEffect(() => {
-    // Keep connection alive even when chatbox is not visible
     if (!isVisible && isConnected) {
-      console.log('🔗 [DEBUG] Chatbox hidden but connection maintained');
     }
   }, [isVisible, isConnected]);
 
   // Auto-join room when tripId is provided (only once)
   useEffect(() => {
     if (tripId && tripId !== 'default-trip') {
-      console.log('🔗 [DEBUG] Auto-joining room:', tripId);
       
       // Get current user info
       const currentUser = getCurrentUser();
@@ -345,8 +253,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         const userId = currentUser.id;
         const userName = currentUser.name || currentUser.email;
         
-        console.log('🔗 [DEBUG] Joining room with user:', userName);
-        console.log('🔗 [DEBUG] Current collaboration service state:', collaborationService.getConnectionStatus());
         
         const isRoomCreator = localStorage.getItem('room-creator') === userId;
         
@@ -355,7 +261,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         if (currentTripId !== tripId) {
           collaborationService.joinRoom(tripId, userId, userName, isRoomCreator);
         } else {
-          console.log('🔗 [DEBUG] Already in this room, skipping join');
         }
         
         // Update roomCreator state from localStorage
@@ -366,20 +271,17 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
         
         // Check connection status after a delay
         setTimeout(() => {
-          console.log('🔗 [DEBUG] Connection status after join:', collaborationService.getConnectionStatus());
         }, 2000);
       } else {
-        console.warn('❌ [DEBUG] No user found for auto-join');
+        console.warn('No user found for auto-join');
       }
     }
   }, [tripId]);
 
   // Debug component lifecycle
   useEffect(() => {
-    console.log('🔗 [DEBUG] DraggableCollaborationPanel mounted/updated - tripId:', tripId, 'isVisible:', isVisible);
     
     return () => {
-      console.log('🔗 [DEBUG] DraggableCollaborationPanel unmounting/updating');
     };
   }, [tripId, isVisible]);
 
@@ -387,7 +289,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'room-creator') {
-        console.log('🔍 [DEBUG] Room creator changed in localStorage:', e.newValue);
         setRoomCreator(e.newValue);
       }
     };
@@ -399,12 +300,10 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
   // Listen for showChatbox event from header
   useEffect(() => {
     const handleShowChatbox = () => {
-      console.log('🔍 [DEBUG] Received showChatbox event - opening chatbox');
       // Force the chatbox to be visible
       if (typeof onToggle === 'function') {
         // If onToggle is provided, we need to communicate with parent
         // For now, we'll just log that we received the event
-        console.log('🔍 [DEBUG] showChatbox event received but onToggle is controlled by parent');
       }
     };
 
@@ -466,17 +365,12 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
 
   const sendMessage = () => {
     if (newMessage.trim()) {
-      console.log('💬 [DEBUG] Sending message:', newMessage.trim());
-      console.log('💬 [DEBUG] Connection status:', isConnected);
-      console.log('💬 [DEBUG] Collaboration service state:', collaborationService.getConnectionStatus());
       
       if (isConnected) {
         // Send via WebSocket if connected
-        console.log('💬 [DEBUG] Sending via WebSocket');
         collaborationService.sendChatMessage(newMessage.trim());
       } else {
         // Add message locally for testing (offline mode)
-        console.log('💬 [DEBUG] Adding message locally (offline mode)');
         const localMessage = {
           id: Date.now().toString(),
           text: newMessage.trim(),
@@ -540,10 +434,8 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           {/* Refresh Button */}
           <button
             onClick={() => {
-              console.log('🔄 [DEBUG] Manual refresh requested');
               const currentUser = getCurrentUser();
               if (currentUser && tripId) {
-                console.log('🔄 [DEBUG] Refreshing room data for:', tripId);
                 // Force rejoin to refresh user list and messages
                 collaborationService.disconnect();
                 setTimeout(() => {
@@ -564,7 +456,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
             onTouchEnd={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('📤 [DEBUG] Touch end - Chatroom Invite button');
               setShowInvite(true);
             }}
             className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors touch-manipulation"
@@ -580,13 +471,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
             const storedRoomCreator = localStorage.getItem('room-creator');
             const canDelete = (roomCreator && currentUser?.id === roomCreator) || 
                              (storedRoomCreator && currentUser?.id === storedRoomCreator);
-            console.log('🔍 [DEBUG] Delete Room button check:', {
-              roomCreator,
-              storedRoomCreator,
-              currentUserId: currentUser?.id,
-              currentUserEmail: currentUser?.email,
-              canDelete
-            });
             return canDelete;
           })() && (
             <button
@@ -623,13 +507,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
             const storedRoomCreator = localStorage.getItem('room-creator');
             const isCreator = (roomCreator && currentUser?.id === roomCreator) || 
                              (storedRoomCreator && currentUser?.id === storedRoomCreator);
-            console.log('🔍 [DEBUG] Leave Room button check:', {
-              roomCreator,
-              storedRoomCreator,
-              currentUserId: currentUser?.id,
-              currentUserEmail: currentUser?.email,
-              isCreator
-            });
             return !isCreator; // Show button if NOT the creator
           })() && (
             <button
@@ -659,14 +536,8 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
           {!isConnected && (
             <button
               onClick={() => {
-                console.log('🔄 [DEBUG] Manual reconnect requested');
-                console.log('🔄 [DEBUG] Current connection state:', isConnected);
-                console.log('🔄 [DEBUG] Service connection state:', collaborationService.getConnectionStatus());
-                
                 const currentUser = getCurrentUser();
                 if (currentUser && tripId) {
-                  console.log('🔄 [DEBUG] Reconnecting to room:', tripId);
-                  console.log('🔄 [DEBUG] Current user:', currentUser.name || currentUser.email);
                   
                   // Determine if user is room creator
                   const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
@@ -682,12 +553,8 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                   // Check connection status after delay
                   setTimeout(() => {
                     const status = collaborationService.getConnectionStatus();
-                    console.log('🔄 [DEBUG] Connection status after reconnect:', status);
-                    console.log('🔄 [DEBUG] Panel isConnected state:', isConnected);
-                    
                     // Force update connection state if needed
                     if (status.isConnected && !isConnected) {
-                      console.log('🔄 [DEBUG] Forcing connection state update');
                       setIsConnected(true);
                     }
                     
@@ -695,15 +562,12 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                     setUserStatuses(prev => ({ ...prev, [currentUser.id]: true }));
                   }, 3000);
                 } else {
-                  console.warn('❌ [DEBUG] Cannot reconnect - no user or room ID');
-                  console.log('❌ [DEBUG] Current user:', currentUser);
-                  console.log('❌ [DEBUG] Trip ID:', tripId);
+                  console.warn('Cannot reconnect - no user or room ID');
                 }
               }}
               onTouchEnd={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔄 [DEBUG] Touch end event - Go Online button');
                 // Trigger the same logic as onClick
                 const currentUser = getCurrentUser();
                 if (currentUser && tripId) {
@@ -741,16 +605,13 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
             <div className="flex space-x-2">
               <button
                 onClick={() => {
-                  console.log('🧪 [DEBUG] User clicked test connection');
                   collaborationService.testConnection().then(success => {
-                    console.log('🧪 [DEBUG] Connection test result:', success);
                     alert(success ? 'Connection test passed!' : 'Connection test failed - check console for details');
                   });
                 }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🧪 [DEBUG] Touch end - Test Connection button');
                   collaborationService.testConnection().then(success => {
                     alert(success ? 'Connection test passed!' : 'Connection test failed - check console for details');
                   });
@@ -762,7 +623,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               </button>
               <button
                 onClick={() => {
-                  console.log('🔄 [DEBUG] User clicked force reconnect');
                   const currentUser = getCurrentUser();
                   if (currentUser && tripId) {
                     const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
@@ -779,7 +639,6 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🔄 [DEBUG] Touch end - Force Reconnect button');
                   const currentUser = getCurrentUser();
                   if (currentUser && tripId) {
                     const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
@@ -800,13 +659,11 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               </button>
               <button
                 onClick={() => {
-                  console.log('🔧 [DEBUG] User clicked manual connect');
                   collaborationService.manualConnect();
                 }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🔧 [DEBUG] Touch end - Manual Connect button');
                   collaborationService.manualConnect();
                 }}
                 className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded touch-manipulation"
@@ -817,13 +674,11 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
               <button
                 onClick={() => {
                   const status = collaborationService.getConnectionStatus();
-                  console.log('📊 [DEBUG] Connection status:', status);
                   alert(`Connection Status:\nWebSocket: ${status.wsStateName}\nConnected: ${status.isConnected}\nTrip ID: ${status.currentTripId}\nUsers: ${status.onlineUsers}\nMessages: ${status.messages}\nError: ${status.lastError || 'None'}`);
                 }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('📊 [DEBUG] Touch end - Show Status button');
                   const status = collaborationService.getConnectionStatus();
                   alert(`Connection Status:\nWebSocket: ${status.wsStateName}\nConnected: ${status.isConnected}\nTrip ID: ${status.currentTripId}\nUsers: ${status.onlineUsers}\nMessages: ${status.messages}\nError: ${status.lastError || 'None'}`);
                 }}
@@ -931,7 +786,7 @@ const DraggableCollaborationPanel: React.FC<DraggableCollaborationPanelProps> = 
             <div className="space-y-3">
               {onlineUsers.map((user) => {
                 if (!user || !user.id) {
-                  console.warn('❌ [DEBUG] Invalid user in list:', user);
+                  console.warn('Invalid user in list');
                   return null;
                 }
                 return (

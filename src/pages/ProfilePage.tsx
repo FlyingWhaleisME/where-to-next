@@ -7,7 +7,6 @@ import AIPromptDisplay from '../components/AIPromptDisplay';
 import { getCurrentUser, isAuthenticated, documentsApi, preferencesApi, userApi } from '../services/apiService';
 import { getUserData, setUserData } from '../utils/userDataStorage';
 
-// Tooltip component
 const Tooltip: React.FC<{ children: React.ReactNode; text: string }> = ({ children, text }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -29,12 +28,10 @@ const Tooltip: React.FC<{ children: React.ReactNode; text: string }> = ({ childr
   );
 };
 
-// Functional component receives props via destructuring
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Multiple useState hooks manage different pieces of component state
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [tripPreferences, setTripPreferences] = useState<any>(null);
   const [savedTripPreferences, setSavedTripPreferences] = useState<any[]>([]);
@@ -46,7 +43,6 @@ const ProfilePage: React.FC = () => {
   const [newName, setNewName] = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
 
-  // Helper function to format budget with currency and type
   const formatBudget = (preferences: any): string => {
     if (preferences.isNotSure) {
       return 'User is unsure about budget - needs guidance';
@@ -106,7 +102,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // useEffect hook loads data when component mounts
   useEffect(() => {
     // Check if we should focus on documents section after Trip Tracing
     const urlParams = new URLSearchParams(location.search);
@@ -123,7 +118,6 @@ const ProfilePage: React.FC = () => {
     }
   }, [location]);
 
-  // Helper function to check if preferences are complete
   const isPreferencesComplete = (prefs: any): boolean => {
     return !!(
       prefs.groupSize &&
@@ -150,7 +144,6 @@ const ProfilePage: React.FC = () => {
     // If user is not authenticated or user ID is not found,
     // return null
     if (!isAuthenticated() || !currentUser) {
-      console.log('[DEBUG] ProfilePage: User not authenticated, cannot load data');
       setDocuments([]);
       setTripPreferences(null);
       setSavedTripPreferences([]);
@@ -160,7 +153,6 @@ const ProfilePage: React.FC = () => {
     }
 
     // Log user ID for debugging
-    console.log('[DEBUG] ProfilePage: Loading data for user ID:', currentUser.id);
     
     // Load current user name
     setCurrentUserName(currentUser.name || '');
@@ -169,7 +161,6 @@ const ProfilePage: React.FC = () => {
     const cachedPrefs = getUserData<any>('tripPreferences');
     if (cachedPrefs && isPreferencesComplete(cachedPrefs)) {
       setTripPreferences(cachedPrefs);
-      console.log('[DEBUG] ProfilePage: Loaded preferences from localStorage (immediate display)');
     }
 
     // Load other cached data immediately
@@ -203,9 +194,8 @@ const ProfilePage: React.FC = () => {
           return creatorId && creatorId === currentUser.id;
         });
         setDocuments(userDocs);
-        console.log('[DEBUG] ProfilePage: Loaded documents from localStorage (immediate display)');
       } catch (e) {
-        console.warn('[DEBUG] ProfilePage: Failed to parse cached documents:', e);
+        console.warn('Failed to parse cached documents');
       }
     }
 
@@ -213,7 +203,6 @@ const ProfilePage: React.FC = () => {
     // 1. Re-verify authentication before loading documents (prevents race conditions)
     const currentUserCheck = getCurrentUser();
     if (!isAuthenticated() || !currentUserCheck || currentUserCheck.id !== currentUser.id) {
-      console.log('[DEBUG] ProfilePage: Authentication changed during data load, aborting');
       setDocuments([]);
       return;
     }
@@ -228,14 +217,13 @@ const ProfilePage: React.FC = () => {
       // Re-verify authentication before processing results
       const verifyUser = getCurrentUser();
       if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
-        console.log('[DEBUG] ProfilePage: User logged out during data load, aborting');
         setDocuments([]);
         return;
       }
 
       // Process documents
       if (documentsResult.error) {
-        console.error('[DEBUG] ProfilePage: Error loading documents from MongoDB:', documentsResult.error);
+        console.error('Error loading documents from MongoDB');
         // Fallback to localStorage if MongoDB fails
         const savedDocs = localStorage.getItem('destinationDocuments');
         if (savedDocs) {
@@ -258,7 +246,7 @@ const ProfilePage: React.FC = () => {
         const userDocs = allDocs.filter((doc: DocumentData) => {
           const creatorId = (doc as any).creatorId || (doc as any).userId;
           if (!creatorId) {
-            console.warn('⚠️ [DEBUG] ProfilePage: Document missing creatorId:', doc.id);
+            console.warn('Document missing creatorId');
             return false;
           }
           return creatorId === currentUser.id;
@@ -267,7 +255,6 @@ const ProfilePage: React.FC = () => {
         // Final verification before setting state
         const finalUserCheck = getCurrentUser();
         if (isAuthenticated() && finalUserCheck && finalUserCheck.id === currentUser.id) {
-          console.log('[DEBUG] ProfilePage: User documents loaded from MongoDB. Total docs:', allDocs.length, 'User docs:', userDocs.length);
           setDocuments(userDocs);
           // Also sync to localStorage as cache
           localStorage.setItem('destinationDocuments', JSON.stringify(userDocs));
@@ -284,7 +271,6 @@ const ProfilePage: React.FC = () => {
           if (isPreferencesComplete(mongoPrefs)) {
             // Update preferences from MongoDB (may be newer than localStorage)
             setTripPreferences(mongoPrefs);
-            console.log('[DEBUG] ProfilePage: Updated preferences from MongoDB:', mongoPrefs._id);
             
             // Cache to localStorage for next time
             try {
@@ -300,45 +286,21 @@ const ProfilePage: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log('🔍 [PROFILE PAGE] ==========================================');
-    console.log('🔍 [PROFILE PAGE] Component mounted/updated');
-    console.log('🔍 [PROFILE PAGE] Timestamp:', new Date().toISOString());
-    
-    // CRITICAL: Check authentication FIRST before doing anything
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
     const currentUser = getCurrentUser();
     const authenticated = isAuthenticated();
     
-    console.log('🔍 [PROFILE PAGE] Authentication state:', {
-      hasToken: !!token,
-      hasUserStr: !!userStr,
-      authenticated,
-      hasCurrentUser: !!currentUser,
-      userId: currentUser?.id,
-      userEmail: currentUser?.email
-    });
-    
     if (!authenticated || !currentUser) {
-      console.log('❌ [PROFILE PAGE] User not authenticated on mount, redirecting');
-      console.log('🔍 [PROFILE PAGE] ==========================================');
       navigate('/', { replace: true });
       return;
     }
 
     const initialUserId = currentUser.id;
-    console.log('✅ [PROFILE PAGE] User authenticated:', {
-      userId: initialUserId,
-      userEmail: currentUser.email,
-      userName: currentUser.name
-    });
     
     // Load user data on mount (only if authenticated)
     loadUserData();
 
     // Listen for user login to reload data
     const handleUserLogin = () => {
-      console.log('ProfilePage: User logged in, reloading data');
       const user = getCurrentUser();
       if (user) {
         loadUserData();
@@ -347,7 +309,6 @@ const ProfilePage: React.FC = () => {
 
     // Listen for user logout to clear all data and redirect immediately
     const handleUserLogout = () => {
-      console.log('🔒 [DEBUG] ProfilePage: User logged out, clearing all data and redirecting');
       // Clear all state immediately
       setDocuments([]);
       setTripPreferences(null);
@@ -356,7 +317,7 @@ const ProfilePage: React.FC = () => {
       setExpensePolicySets([]);
       setShowAIPrompt(false);
       setAiPrompt(null);
-      // Force immediate redirect (full page reload ensures clean state)
+      // Force redirect with full page reload
       window.location.href = '/';
     };
 
@@ -364,11 +325,9 @@ const ProfilePage: React.FC = () => {
     const handleStorageChange = (e: StorageEvent) => {
       // If token or user is removed, user logged out
       if (e.key === 'token' && !e.newValue) {
-        console.log('🔒 [PROFILE PAGE] Token removed from localStorage (logout detected), redirecting');
         handleUserLogout();
       }
       if (e.key === 'user' && !e.newValue) {
-        console.log('🔒 [PROFILE PAGE] User removed from localStorage (logout detected), redirecting');
         handleUserLogout();
       }
     };
@@ -380,32 +339,14 @@ const ProfilePage: React.FC = () => {
       const user = getCurrentUser();
       const authenticated = isAuthenticated();
       
-      console.log('🔍 [PROFILE PAGE] Periodic check:', {
-        hasToken: !!token,
-        hasUserStr: !!userStr,
-        authenticated,
-        hasUser: !!user,
-        userId: user?.id,
-        initialUserId,
-        timestamp: new Date().toISOString()
-      });
-      
       if (!authenticated || !user) {
-        console.log('❌ [PROFILE PAGE] Periodic check - user logged out, redirecting');
         handleUserLogout();
         return;
       } else {
         // Verify user ID matches (in case of user switch)
         if (user.id !== initialUserId) {
-          console.log('❌ [PROFILE PAGE] User ID changed:', {
-            initial: initialUserId,
-            current: user.id,
-            redirecting: true
-          });
           handleUserLogout();
           return;
-        } else {
-          console.log('✅ [PROFILE PAGE] Periodic check - user still authenticated:', user.id);
         }
       }
     }, 1000);
@@ -465,7 +406,6 @@ const ProfilePage: React.FC = () => {
             console.error('Failed to delete document from MongoDB:', result.error);
             alert('Failed to delete document from cloud storage. Deleted locally only.');
           } else {
-            console.log('✅ Document deleted from MongoDB:', documentId);
           }
         } catch (error) {
           console.error('Error deleting document from MongoDB:', error);

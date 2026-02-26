@@ -43,15 +43,12 @@ const CollaborationHomeToggle: React.FC = () => {
     collaborationService.setCallbacks({
       onConnectionChange: setIsConnected,
       onUserJoined: (user) => {
-        console.log('👥 [DEBUG] User joined:', user.name);
         // Don't increment here - let the room_users message handle the count
       },
       onUserLeft: (user) => {
-        console.log('👥 [DEBUG] User left:', user.name);
         setOnlineUsers(prev => Math.max(0, prev - 1));
       },
       onRoomUsers: (users) => {
-        console.log('👥 [DEBUG] Received room users:', users);
         setOnlineUsers(users.length);
       },
       onMessage: (message) => {
@@ -101,7 +98,7 @@ const CollaborationHomeToggle: React.FC = () => {
       setIsConnected(false);
     }
 
-    // Periodic check to ensure authentication state is in sync
+    // Periodic auth check
     const checkAuthStatus = () => {
       const currentToken = localStorage.getItem('token');
       if (!currentToken && isEnabled) {
@@ -121,7 +118,6 @@ const CollaborationHomeToggle: React.FC = () => {
       // 2. User is authenticated
       // 3. NOT already connected or connecting
       if (savedRoomId && token && !connectionStatus.isConnected && connectionStatus.wsState !== 0 /* CONNECTING */) {
-        console.log('🔄 [DEBUG] Auto-reconnecting to room on mount:', savedRoomId);
         const currentUser = getCurrentUser();
         if (currentUser) {
           const isRoomCreator = localStorage.getItem('room-creator') === currentUser.id;
@@ -138,22 +134,17 @@ const CollaborationHomeToggle: React.FC = () => {
 
     // Listen for showChatbox event from header
     const handleShowChatbox = () => {
-      console.log('🔍 [DEBUG] CollaborationHomeToggle: Received showChatbox event');
-      console.log('🔍 [DEBUG] CollaborationHomeToggle: Current isEnabled state:', isEnabled);
       
       // Only show panel if collaboration is enabled
       if (isEnabled) {
-        console.log('🔍 [DEBUG] CollaborationHomeToggle: Dispatching showChatbox event for global handler');
         // Dispatch the event again so App.tsx can handle it
         window.dispatchEvent(new CustomEvent('showChatbox'));
       } else {
-        console.log('🔍 [DEBUG] CollaborationHomeToggle: Collaboration not enabled, cannot show panel');
       }
     };
 
     // Listen for showCollaborationSettings event from header
     const handleShowCollaborationSettings = () => {
-      console.log('🔍 [DEBUG] CollaborationHomeToggle: Received showCollaborationSettings event');
       // Show the settings modal to start communication
       setShowSettings(true);
     };
@@ -234,26 +225,20 @@ const CollaborationHomeToggle: React.FC = () => {
   const handleSettingsClose = () => {
     setShowSettings(false);
     // Don't disconnect if user just closes settings - they might want to keep collaboration active
-    console.log('🔧 [DEBUG] Settings closed without saving - keeping collaboration state intact');
   };
 
   const handleSettingsSave = (newSettings: CollaborationRoomSettings) => {
-    console.log('💾 [DEBUG] handleSettingsSave called with:', newSettings);
-    
     setCollaborationSettings(newSettings);
     setShowSettings(false);
     
     // Create and join the room when settings are saved
     if (newSettings.shareCode) {
       const roomId = `room-${newSettings.shareCode}`;
-      console.log('💾 [DEBUG] Creating room:', roomId, 'with settings:', newSettings);
       
       // Get current user info
       const currentUser = getCurrentUser();
       const userId = currentUser?.id || 'anonymous';
       const userName = currentUser?.name || currentUser?.email || 'Anonymous User';
-      
-      console.log('💾 [DEBUG] User info:', { userId, userName });
       
       // Enable collaboration first (this shows the green button)
       setIsEnabled(true);
@@ -265,22 +250,16 @@ const CollaborationHomeToggle: React.FC = () => {
       // Dispatch event to notify header
       window.dispatchEvent(new CustomEvent('roomCreated', { detail: { roomId, userId } }));
       
-      console.log('💾 [DEBUG] Saved to localStorage:', {
-        'room-creator': userId,
-        'current-room-id': roomId
-      });
-      
       // Try to join the room (service auto-connects)
       try {
         collaborationService.joinRoom(roomId, userId, userName, true);
-        console.log('💾 [DEBUG] Successfully initiated room join');
         // Don't set isConnected to true here - let the service handle it
       } catch (error) {
-        console.error('❌ [DEBUG] Failed to join room:', error);
+        console.error('Failed to join room:', error);
         // Keep isEnabled true so user can see the green button and try again
       }
     } else {
-      console.warn('❌ [DEBUG] No share code in settings:', newSettings);
+      console.warn('No share code in settings');
     }
   };
 

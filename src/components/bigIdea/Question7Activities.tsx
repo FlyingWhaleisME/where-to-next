@@ -23,11 +23,9 @@ const Question7Activities: React.FC<Question7ActivitiesProps> = ({
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [vibeActivities, setVibeActivities] = useState<{[key: string]: string[]}>({});
 
-  // DEBUG: Log on every render to confirm component is mounting
-  console.log('🎯🎯🎯 Q7 RENDER: selectedVibes.length =', selectedVibes.length, 'currentQuestion =', currentQuestion, '🎯🎯🎯');
 
   // Load vibes when this question becomes active AND whenever tripVibe changes.
-  // Critical: React state updates are async, so we need to check both prop AND localStorage
+  // React state updates are async, check both prop and localStorage
   // to handle the race condition where Q7 mounts before parent state updates.
   useEffect(() => {
     // Only run when we're actually on question 7

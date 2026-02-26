@@ -274,7 +274,6 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('🚀 Question 9 - Get AI Summary button clicked!');
               
               // Save to localStorage first
               const currentData = {
@@ -291,19 +290,14 @@ const Question9Priorities: React.FC<Question9PrioritiesProps> = ({
                   preferences.priorities = selectedPriorities;
                   preferences.priorityOrder = priorityOrder;
                   localStorage.setItem('tripPreferences', JSON.stringify(preferences));
-                  console.log('✅ Updated tripPreferences with priorities');
                 } catch (error) {
                   console.error('Error updating tripPreferences:', error);
                 }
               }
               
               // Force trigger the summary by calling onNext
-              console.log('About to call onNext()...');
               if (typeof onNext === 'function') {
                 onNext();
-                console.log('✅ onNext() called successfully');
-              } else {
-                console.error('❌ onNext is not a function:', typeof onNext);
               }
             }}
             className="px-6 py-3 rounded-xl font-semibold bg-rose-500 text-white hover:bg-rose-500 transition-all ml-2"

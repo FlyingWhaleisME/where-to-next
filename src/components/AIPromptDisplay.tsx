@@ -10,11 +10,6 @@ interface AIPromptDisplayProps {
 }
 
 const AIPromptDisplay: React.FC<AIPromptDisplayProps> = ({ prompt, onClose, onBackToSurvey, showBackToSurvey }) => {
-  console.log('🎯 AIPromptDisplay rendered with prompt:', prompt);
-  console.log('🎯 AIPromptDisplay props:', { prompt, onClose });
-  console.log('🎯 AIPromptDisplay prompt type:', typeof prompt);
-  console.log('🎯 AIPromptDisplay prompt keys:', prompt ? Object.keys(prompt) : 'null');
-  
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
   const [isEditingDestination, setIsEditingDestination] = useState(false);
   const [isEditingLegacyPrompt, setIsEditingLegacyPrompt] = useState(false);

@@ -1,19 +1,14 @@
-// Import Express framework for creating HTTP server and API routes
 const express = require('express');
-// Import CORS middleware to allow frontend-backend communication
 const cors = require('cors');
-// Import Mongoose library for MongoDB database operations
 const mongoose = require('mongoose');
-// Import JWT library for user authentication token generation and verification
 const jwt = require('jsonwebtoken');
-// Import express-validator for input validation middleware
-// Validates and sanitizes user input before processing
 const { body, validationResult } = require('express-validator');
-// Import dotenv for loading environment variables
-// Stores sensitive configuration (database URI, API keys)
 require('dotenv').config();
 
-// Create Express application instance
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
 const app = express();
 
 
@@ -26,48 +21,31 @@ const TripTracingState = require('./models/TripTracingState');
 const Document = require('./models/Document');
 const DocumentShare = require('./models/DocumentShare');
 
-// ADVANCED TECHNIQUE 2: CONDITIONAL SERVICE INITIALIZATION
-// Lazy initialization pattern - only create OpenAI instance if API key exists
-// This prevents application crashes when external services are unavailable
-let openai = null;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  });
-}
 
 // Asynchronous function to establish MongoDB database connection
-// Uses environment variable for cloud database or local fallback
 const connectDB = async () => {
   try {
-    // Retrieve MongoDB connection URI (string) from environment variables
-    // Falls back to local MongoDB if environment variable not set
     const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/where-to-next';
     console.log('Attempting to connect to MongoDB...');
     console.log('URI:', mongoURI);
     
-    // Establish connection to MongoDB using Mongoose
-    // await pauses execution until connection is established
     await mongoose.connect(mongoURI);
     
     console.log('Connected to MongoDB successfully!');
     return true;
   } catch (error) {
-    // Handle connection errors without crashing server
     console.error('MongoDB connection failed:', error.message);
     console.log('Make sure MongoDB is running: brew services start mongodb-community');
     return false;
   }
 };
 
-// Initialize database connection when server starts
 connectDB();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Middleware to verify JWT authentication token (Tool 2: JWT library)
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -95,7 +73,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Test endpoint to verify frontend-backend communication
 app.get('/api/test', (req, res) => {
   const dbStatus = mongoose.connection.readyState;
   const dbStatusText = dbStatus === 1 ? 'Connected' : 
@@ -115,7 +92,6 @@ app.get('/api/test', (req, res) => {
 });
 
 // ===== AUTHENTICATION ENDPOINTS =====
-
 // POST endpoint for user registration by using Express.js middleware functions
 // Array contains validation middleware functions for email and password
 app.post('/api/auth/register', [
@@ -155,7 +131,7 @@ app.post('/api/auth/register', [
     // Token contains user ID and email, expires in 24 hours
     const token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
     
@@ -199,7 +175,7 @@ app.post('/api/auth/login', [
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
     
@@ -214,7 +190,6 @@ app.post('/api/auth/login', [
 });
 
 // ===== API ENDPOINTS =====
-
 // Trip Preferences CRUD
 app.get('/api/preferences', authenticateToken, async (req, res) => {
   try {
@@ -466,73 +441,6 @@ app.delete('/api/trip-tracing/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// ===== AI INTEGRATION ENDPOINT =====
-
-// ADVANCED TECHNIQUE 8: EXTERNAL API INTEGRATION WITH FALLBACK HANDLING
-// AI service integration with comprehensive error handling and service availability checks
-app.post('/api/ai/generate-summary', authenticateToken, async (req, res) => {
-  try {
-    const { tripPreferences, tripTracingState } = req.body;
-    
-    if (!openai) {
-      return res.status(503).json({ 
-        error: 'AI service not configured',
-        fallback: 'Please add OPENAI_API_KEY to environment variables'
-      });
-    }
-    
-    // ADVANCED TECHNIQUE 9: DYNAMIC STRING TEMPLATING WITH CONDITIONAL LOGIC
-    // Complex string interpolation with type checking and fallback values
-    const prompt = `
-Based on these travel preferences:
-- Group Size: ${tripPreferences.groupSize || 'Not specified'}
-- Duration: ${typeof tripPreferences.duration === 'object' ? 
-  `Status: ${tripPreferences.duration.duration?.status || 'Not specified'}` : 
-  tripPreferences.duration || 'Not specified'}
-- Budget: ${tripPreferences.budget || 'Not specified'} ${tripPreferences.currency || 'USD'}
-- Destination Style: ${tripPreferences.destinationStyle || 'Not specified'}
-- Trip Vibe: ${tripPreferences.tripVibe || 'Not specified'}
-- Planning Style: ${tripPreferences.planningStyle || 'Not specified'}
-
-${tripTracingState ? `
-And these detailed preferences:
-- Accommodation: ${tripTracingState.accommodation?.selectedTypes?.join(', ') || 'Not specified'}
-- Transportation: ${tripTracingState.transportation?.selectedMethods?.join(', ') || 'Not specified'}
-- Food Preferences: ${tripTracingState.foodPreferences?.styles?.join(', ') || 'Not specified'}
-` : ''}
-
-Please provide:
-1. A personalized travel summary
-2. Destination recommendations with reasoning
-3. Budget breakdown and tips
-4. Cultural considerations and travel tips
-
-Keep the response concise but informative, focusing on actionable advice.
-    `;
-    
-    // ADVANCED TECHNIQUE 10: ASYNC API CALL WITH CONFIGURATION OBJECT
-    // External API call with structured configuration and response handling
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1500,
-      temperature: 0.7
-    });
-    
-    res.json({
-      summary: response.choices[0].message.content,
-      tokensUsed: response.usage.total_tokens,
-      model: "gpt-3.5-turbo"
-    });
-  } catch (error) {
-    console.error('AI Error:', error);
-    res.status(500).json({ 
-      error: 'AI service temporarily unavailable',
-      details: error.message
-    });
-  }
-});
-
 // ===== DEBUG ENDPOINT =====
 // Debug endpoint to view all accounts and their data (for development/testing only)
 app.get('/api/debug/all-data', async (req, res) => {
@@ -713,9 +621,6 @@ app.get('/api/user/export', authenticateToken, async (req, res) => {
 
 // ===== DOCUMENT SHARING ENDPOINTS =====
 
-// ADVANCED TECHNIQUE 11: CRYPTOGRAPHIC RANDOM STRING GENERATION
-// Custom algorithm for generating secure, unique share codes
-// Uses mathematical randomization with character set filtering
 const generateShareCode = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
@@ -744,7 +649,6 @@ app.post('/api/documents/share', authenticateToken, async (req, res) => {
 
     if (existingShare) {
       // Return existing share code instead of creating a new one
-      console.log('[DEBUG] Found existing share code for document:', documentId, 'Share code:', existingShare.shareCode);
       return res.json({
         success: true,
         shareCode: existingShare.shareCode,
@@ -752,9 +656,6 @@ app.post('/api/documents/share', authenticateToken, async (req, res) => {
       });
     }
 
-    // ADVANCED TECHNIQUE 12: COLLISION AVOIDANCE WITH RETRY MECHANISM
-    // Implements a retry loop to ensure unique share codes
-    // Prevents race conditions in concurrent share code generation
     let shareCode;
     let isUnique = false;
     let attempts = 0;
@@ -938,52 +839,35 @@ app.get('/api/documents/share', authenticateToken, async (req, res) => {
   }
 });
 
-// ADVANCED TECHNIQUE 13: MODULAR SERVER ARCHITECTURE WITH DEPENDENCY INJECTION
-// Separate collaboration server module with dynamic initialization
 const CollaborationServer = require('./collaborationServer');
 let collaborationServer = null;
 
-// ADVANCED TECHNIQUE 14: MULTI-SERVICE APPLICATION BOOTSTRAPPING
-// Main server startup with secondary service initialization
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`� Backend server running on port ${PORT}`);
-  console.log(`� Health check: http://localhost:${PORT}/api/health`);
-  console.log(`� Test endpoint: http://localhost:${PORT}/api/test`);
-  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`� Network access: http://where-to-next.local:${PORT}`);
+  console.log(`Backend server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Test endpoint: http://localhost:${PORT}/api/test`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Network access: http://where-to-next.local:${PORT}`);
   
-  // Start collaboration server
-  // On Render (or any cloud platform), attach WebSocket to HTTP server (same port)
-  // In local development, use separate port 8080
   try {
-    // Check if we're on a cloud platform:
-    // - NODE_ENV is 'production' (Render sets this)
-    // - OR PORT is set and not the default 3001 (cloud platforms always set PORT)
     const isProduction = process.env.NODE_ENV === 'production';
     const hasCustomPort = process.env.PORT && process.env.PORT !== '3001';
     const isCloudPlatform = isProduction || hasCustomPort;
     
-    console.log(` [DEBUG] Environment check: NODE_ENV=${process.env.NODE_ENV}, PORT=${process.env.PORT}, isCloudPlatform=${isCloudPlatform}`);
-    
     if (isCloudPlatform) {
-      // Cloud platform (Render): attach WebSocket to HTTP server
       collaborationServer = new CollaborationServer(server);
-      console.log(` Collaboration server attached to HTTP server (WebSocket available on same port ${PORT})`);
+      console.log(`Collaboration server attached to HTTP server (WebSocket available on same port ${PORT})`);
     } else {
-      // Local development: use separate port
       collaborationServer = new CollaborationServer(8080);
-      console.log(` Collaboration server started on port 8080`);
+      console.log(`Collaboration server started on port 8080`);
     }
   } catch (error) {
-    console.error(' Failed to start collaboration server:', error);
+    console.error('Failed to start collaboration server:', error);
   }
 });
 
-// ADVANCED TECHNIQUE 15: GRACEFUL SHUTDOWN WITH SIGNAL HANDLING
-// Process signal handlers for clean application termination
-// Ensures proper resource cleanup and prevents data corruption
 process.on('SIGINT', () => {
-  console.log('� Shutting down servers...');
+  console.log('Shutting down servers...');
   if (collaborationServer) {
     collaborationServer.shutdown();
   }
@@ -991,27 +875,7 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-  console.log('� Shutting down servers...');
-  if (collaborationServer) {
-    collaborationServer.shutdown();
-  }
-  process.exit(0);
-});
-
-
-// ADVANCED TECHNIQUE 15: GRACEFUL SHUTDOWN WITH SIGNAL HANDLING
-// Process signal handlers for clean application termination
-// Ensures proper resource cleanup and prevents data corruption
-process.on('SIGINT', () => {
-  console.log('� Shutting down servers...');
-  if (collaborationServer) {
-    collaborationServer.shutdown();
-  }
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('� Shutting down servers...');
+  console.log('Shutting down servers...');
   if (collaborationServer) {
     collaborationServer.shutdown();
   }

@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
     if (currentUser) {
       setUser(currentUser);
     }
-
+    
     // Listen for login/logout events
     const handleUserLogin = () => {
       const currentUser = getCurrentUser();

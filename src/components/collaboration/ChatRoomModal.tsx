@@ -62,7 +62,6 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
       }
       await collaborationService.joinRoom(roomId, currentUser.id, currentUser.name, true);
       
-      console.log('✅ [DEBUG] ChatRoomModal: Room created successfully:', roomId);
       
       // Dispatch room created event for Header to update chat button
       window.dispatchEvent(new CustomEvent('roomCreated', {
@@ -74,7 +73,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
       window.dispatchEvent(new CustomEvent('showChatbox'));
       
     } catch (error) {
-      console.error('❌ [DEBUG] ChatRoomModal: Error creating room:', error);
+      console.error('Error creating room:', error);
       setError('Failed to create room. Please try again.');
     } finally {
       setIsCreating(false);
@@ -104,7 +103,6 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
       }
       await collaborationService.joinRoom(roomId, currentUser.id, currentUser.name, false);
       
-      console.log('✅ [DEBUG] ChatRoomModal: Room joined successfully:', roomId);
       
       // Dispatch room joined event for Header to update chat button
       window.dispatchEvent(new CustomEvent('roomJoined', {
@@ -116,7 +114,7 @@ const ChatRoomModal: React.FC<ChatRoomModalProps> = ({ isOpen, onClose }) => {
       window.dispatchEvent(new CustomEvent('showChatbox'));
       
     } catch (error) {
-      console.error('❌ [DEBUG] ChatRoomModal: Error joining room:', error);
+      console.error('Error joining room:', error);
       setError('Failed to join room. Please check the share code and try again.');
     } finally {
       setIsJoining(false);

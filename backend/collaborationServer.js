@@ -1,4 +1,4 @@
-// WebSocket server for real-time collaboration (Tool 3: Event Handlers)
+// WebSocket server for real-time collaboration
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -13,19 +13,14 @@ const ChatMessage = require('./models/ChatMessage');
 // WebSocket server class for managing real-time connections
 class CollaborationServer {
   constructor(portOrServer = 8080) {
-    // Support both port number (for local dev) and HTTP server (for production)
     if (typeof portOrServer === 'number') {
-      // Local development: create WebSocket server on separate port
       this.port = portOrServer;
       this.wss = new WebSocket.Server({ port: portOrServer });
       console.log('Collaboration server running on port', portOrServer);
     } else {
-      // Production (Render): attach WebSocket server to existing HTTP server
       this.wss = new WebSocket.Server({ server: portOrServer });
-      console.log(` Collaboration server attached to HTTP server`);
+      console.log('Collaboration server attached to HTTP server');
     }
-    
-    // Map data structures for managing room and user state
     this.tripRooms = new Map();
     this.userSessions = new Map();
     this.roomMembers = new Map();
@@ -33,19 +28,17 @@ class CollaborationServer {
     this.setupEventHandlers();
   }
 
-  // Setup WebSocket event handlers (Tool 3: Event Handlers)
   setupEventHandlers() {
     this.wss.on('connection', (ws, req) => {
-      console.log(' New WebSocket connection attempt');
+      console.log('New WebSocket connection attempt');
       this.handleConnection(ws, req);
     });
 
     this.wss.on('error', (error) => {
-      console.error(' WebSocket server error:', error);
+      console.error('WebSocket server error:', error);
     });
   }
 
-  // Handle new WebSocket connection with authentication (Tool 3: async/await)
   async handleConnection(ws, req) {
     try {
       // Extract JWT token from URL query parameters
@@ -57,7 +50,6 @@ class CollaborationServer {
         return;
       }
 
-      // Verify JWT token and get user from database (Tool 1: Database query)
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
       const user = await User.findById(decoded.userId).select('-password');
       
@@ -66,7 +58,6 @@ class CollaborationServer {
         return;
       }
 
-      // Store user info on WebSocket object for later use
       ws.userId = user._id.toString();
       ws.userName = user.name || user.email;
       ws.userEmail = user.email;
@@ -104,7 +95,7 @@ class CollaborationServer {
       });
 
       // on('error') event listener
-      // Manages connection errors and ensures proper cleanup
+      // Handle connection errors and cleanup
       ws.on('error', (error) => {
         console.error('WebSocket error for user', ws.userName, error);
         // Clean up on error to prevent memory leaks
@@ -191,7 +182,7 @@ class CollaborationServer {
 
   // Asynchronous event handler to handle user joining a chatroom
   // Called automatically when user joins a chatroom
-  // Uses PROMISE (async/await) to load chat history from database
+  // Uses promise (async/await) to load chat history from database
   async handleJoinRoom(ws, message) {
     const { roomId, shareCode, isRoomCreator } = message;
     console.log(` Message from ${ws.userName}: join_room`);
@@ -209,9 +200,6 @@ class CollaborationServer {
     const existingCreator = this.roomCreators.get(roomId);
     if (isRoomCreator || existingCreator === ws.userId) {
       this.roomCreators.set(roomId, ws.userId);
-      console.log(` User ${ws.userName} is the creator of room ${roomId}`);
-    } else if (existingCreator) {
-      console.log(` Room ${roomId} already has a creator: ${existingCreator}`);
     }
 
     // Leave current room if any
@@ -222,18 +210,10 @@ class CollaborationServer {
     // Join new room
     this.joinRoom(ws, roomId);
 
-    // Load chat history from database
-    // Uses PROMISE (async/await) to load chat history from database
     try {
-      // ChatMessage.find() returns a Promise that resolves with query results
-      // await pauses execution until Promise resolves (database query completes)
-      // While waiting, server can handle other users' requests (non-blocking)
       const chatHistory = await ChatMessage.find({ roomId })
         .sort({ timestamp: 1 })
         .limit(50);
-
-      // This code only runs AFTER database query completes (Promise resolved)
-      // Send history to client via WebSocket
       this.sendToClient(ws, {
         type: 'chat_history',
         messages: chatHistory.map(msg => ({
@@ -244,39 +224,34 @@ class CollaborationServer {
         }))
       });
     } catch (error) {
-      // Handle database errors if Promise rejects
-      console.error(' Error loading chat history:', error);
+      console.error('Error loading chat history:', error);
     }
 
-    // Send all room members (both online and offline) - this is the source of truth
+    // Send all room members (online and offline)
     const allRoomMembers = Array.from(this.roomMembers.get(roomId)?.values() || [])
       .map(member => ({
         id: member.id,
         name: member.name,
         email: member.email,
-        isOnline: member.isOnline !== undefined ? member.isOnline : false, // Ensure isOnline is always set
+        isOnline: member.isOnline !== undefined ? member.isOnline : false,
         joinedAt: member.joinedAt,
         lastSeen: member.lastSeen,
         isCreator: this.roomCreators.get(roomId) === member.id
       }));
     
-    console.log(`\n� ========== USER LIST BROADCAST (JOIN) ==========`);
-    console.log(`� Room ID: ${roomId}`);
-    console.log(`� Total members in room: ${allRoomMembers.length}`);
-    console.log(`� Online members: ${allRoomMembers.filter(m => m.isOnline).length}`);
-    console.log(`� Offline members: ${allRoomMembers.filter(m => !m.isOnline).length}`);
-    console.log(`� Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
-    console.log(`� Currently connected clients in this room: ${this.tripRooms.get(roomId)?.size || 0}`);
-    console.log(`� ================================================\n`);
+    console.log(`\nUSER LIST BROADCAST (JOIN)\n`);
+    console.log(`Room ID: ${roomId}`);
+    console.log(`Total members in room: ${allRoomMembers.length}`);
+    console.log(`Online members: ${allRoomMembers.filter(m => m.isOnline).length}`);
+    console.log(`Offline members: ${allRoomMembers.filter(m => !m.isOnline).length}`);
+    console.log(`Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
+    console.log(`Currently connected clients in this room: ${this.tripRooms.get(roomId)?.size || 0}`);
+    console.log(`\n`);
     
-    // Broadcast updated user list to ALL users in the room (including the joining user)
-    // This is the authoritative source - includes ALL users who have ever joined (online and offline)
     this.broadcastToRoom(roomId, {
       type: 'room_users',
       users: allRoomMembers
-    }, null); // null means send to everyone, including the sender
-    
-    console.log(` Broadcasted room_users to all clients in room ${roomId} with ${allRoomMembers.length} total users`);
+    }, null);
 
     // Send room info to the joining user
     this.sendToClient(ws, {
@@ -293,18 +268,18 @@ class CollaborationServer {
   }
 
   async handleChatMessage(ws, message) {
-    console.log('[DEBUG] handleChatMessage called with message:', message);
+    console.log('handleChatMessage called with message:', message);
     const { roomId, tripId, text } = message;
     
     // Accept both roomId and tripId for backward compatibility
     const actualRoomId = roomId || tripId;
     
-    console.log('[DEBUG] Handling chat message:', { roomId, tripId, text, actualRoomId });
-    console.log('[DEBUG] User current room:', ws.currentTripId);
-    console.log('[DEBUG] User info:', { userId: ws.userId, userName: ws.userName });
+    console.log('Handling chat message:', { roomId, tripId, text, actualRoomId });
+    console.log('User current room:', ws.currentTripId);
+    console.log('User info:', { userId: ws.userId, userName: ws.userName });
     
     if (!actualRoomId || !text) {
-      console.log('❌ [DEBUG] Missing room ID or text:', { actualRoomId, text });
+      console.log('Missing room ID or text:', { actualRoomId, text });
       this.sendToClient(ws, {
         type: 'error',
         message: 'Room ID and message text required'
@@ -317,28 +292,21 @@ class CollaborationServer {
       const chatMessage = new ChatMessage({
         roomId: actualRoomId,               // Room ID for message
         userId: ws.userId,                  // User ID of the user who sent the message
-        userName: ws.userName,              // Display name of the user who sent the message
-        message: text                       // Message text
+        userName: ws.userName,
+        message: text
       });
 
-      // chatMessage.save() returns a Promise that resolves when save operation completes
-      // await pauses execution until Promise resolves (save operation completes)
-      await chatMessage.save();   // While waiting, server can handle other users' requests (non-blocking)
+      await chatMessage.save();
 
-      // Broadcast chat message to all users in the room
-      console.log(`Broadcasting chat message to room ${actualRoomId}`);
-
-      // Now all users receive the message, and it's safely stored in database
       this.broadcastToRoom(actualRoomId, {
         type: 'chat_message',
-        id: chatMessage._id,                // Message ID for message
-        text: text,                         // Message text
-        user: { id: ws.userId, name: ws.userName }, // User who sent the message
-        timestamp: chatMessage.timestamp    // Timestamp of the message
-      }, null);                             // null means send to everyone, including the sender
+        id: chatMessage._id,
+        text: text,
+        user: { id: ws.userId, name: ws.userName },
+        timestamp: chatMessage.timestamp
+      }, null);
     } catch (error) {
-      // Handle database errors if Promise rejects
-      console.error('❌ Error saving chat message:', error);
+      console.error('Error saving chat message:', error);
       this.sendToClient(ws, {
         type: 'error',
         message: 'Failed to send message'
@@ -466,7 +434,7 @@ class CollaborationServer {
   // users are tracked persistently (even when offline) and their online status is accurately reflected.
   // It also handles the dynamic creation and deletion of rooms based on active participation.
   joinRoom(ws, roomId) {
-    // 1. Ensure the room exists in active WebSocket connections
+    // Check if room exists in active connections
     if (!this.tripRooms.has(roomId)) {
       this.tripRooms.set(roomId, new Set());
     }
@@ -495,17 +463,17 @@ class CollaborationServer {
         isOnline: true,
         lastSeen: new Date()
       });
-      console.log(`� User ${ws.userName} added to room members for ${roomId}`);
+      console.log(`User ${ws.userName} added to room members for ${roomId}`);
     } else {
       // If user already exists, update their online status and last seen timestamp
       const member = this.roomMembers.get(roomId).get(ws.userId);
       member.isOnline = true;
       member.lastSeen = new Date();
       member.name = ws.userName; // Update name in case it changed
-      console.log(`� User ${ws.userName} marked as online in room ${roomId}`);
+      console.log(`User ${ws.userName} marked as online in room ${roomId}`);
     }
 
-    console.log(`� User ${ws.userName} joined room ${roomId}`);
+    console.log(`User ${ws.userName} joined room ${roomId}`);
     
     // 5. Notify clients about the user joining
     this.sendToClient(ws, {
@@ -536,14 +504,14 @@ class CollaborationServer {
       const member = this.roomMembers.get(roomId).get(ws.userId);
       member.isOnline = false;
       member.lastSeen = new Date(); // Record last seen timestamp
-      console.log(`� User ${ws.userName} marked as offline in room ${roomId} (kept in members list)`);
+      console.log(`User ${ws.userName} marked as offline in room ${roomId} (kept in members list)`);
       
       // 3. Check if the room is now completely empty of *online* members
       const allMembers = Array.from(this.roomMembers.get(roomId)?.values() || []);
       const onlineMembers = allMembers.filter(m => m.isOnline);
 
       if (onlineMembers.length === 0) {
-        console.log(` Room ${roomId} has no online members - cleaning up all room data`);
+        console.log(`Room ${roomId} has no online members - cleaning up all room data`);
         // If no online members, clean up all persistent room data
         this.roomMembers.delete(roomId);
         this.roomCreators.delete(roomId);
@@ -554,38 +522,37 @@ class CollaborationServer {
           roomId,
           message: `Room ${roomId} has been deleted because it's empty`
         });
-        console.log(` Room ${roomId} completely cleaned up and deletion broadcasted`);
+        console.log(`Room ${roomId} completely cleaned up and deletion broadcasted`);
         ws.currentTripId = null; // Clear current trip ID for the leaving user
         return; // Early return as room is fully deleted
       }
 
       // 4. If room still has members (even if offline), broadcast updated user list
-      // This ensures all clients have the most current list of users and their online/offline status.
+      // Broadcast current user list and status
       const allRoomMembers = allMembers.map(member => ({
         id: member.id,
         name: member.name,
         email: member.email,
-        isOnline: member.isOnline !== undefined ? member.isOnline : false, // Ensure isOnline is always set
+        isOnline: member.isOnline !== undefined ? member.isOnline : false,
         joinedAt: member.joinedAt,
         lastSeen: member.lastSeen,
         isCreator: this.roomCreators.get(roomId) === member.id
       }));
       
-      console.log(`\n� ========== USER LIST BROADCAST (DISCONNECT) ==========`);
-      console.log(`� Room ID: ${roomId}`);
-      console.log(`� User ${ws.userName} went offline`);
-      console.log(`� Online members: ${onlineMembers.length}`);
-      console.log(`� Total members (including offline): ${allMembers.length}`);
-      console.log(`� Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
-      console.log(`� ================================================\n`);
+      console.log(`\nUSER LIST BROADCAST (DISCONNECT)\n`);
+      console.log(`Room ID: ${roomId}`);
+      console.log(`User ${ws.userName} went offline`);
+      console.log(`Online members: ${onlineMembers.length}`);
+      console.log(`Total members (including offline): ${allMembers.length}`);
+      console.log(`Members:`, JSON.stringify(allRoomMembers.map(m => ({ id: m.id, name: m.name, isOnline: m.isOnline, isCreator: m.isCreator })), null, 2));
+      console.log(`\n`);
       
-      // Broadcast to ALL users in the room - this is the source of truth
+      // Broadcast to all users in room
       this.broadcastToRoom(roomId, {
         type: 'room_users',
         users: allRoomMembers
       }, null); // Send to everyone
       
-      console.log(` Broadcasted room_users after disconnect with ${allRoomMembers.length} total users (${onlineMembers.length} online, ${allMembers.length - onlineMembers.length} offline)`);
     }
 
     // 5. Notify other users in the room about the user leaving
@@ -593,7 +560,7 @@ class CollaborationServer {
       type: 'user_left',
       user: { id: ws.userId, name: ws.userName },
       timestamp: new Date().toISOString()
-    }, ws); // Exclude the leaving user from this broadcast
+    }, ws);
 
     ws.currentTripId = null;
     
@@ -605,26 +572,26 @@ class CollaborationServer {
   }
 
   broadcastToRoom(roomId, message, senderWs = null) {
-    console.log(`\n� ========== BROADCAST TO ROOM ==========`);
-    console.log(`� Room ID: ${roomId}`);
-    console.log(`� Message Type: ${message.type}`);
-    console.log(`� Sender WebSocket: ${senderWs ? senderWs.userName : 'null (send to all)'}`);
+    console.log(`\nBROADCAST TO ROOM\n`);
+    console.log(`Room ID: ${roomId}`);
+    console.log(`Message Type: ${message.type}`);
+    console.log(`Sender WebSocket: ${senderWs ? senderWs.userName : 'null (send to all)'}`);
     
     if (!this.tripRooms.has(roomId)) {
-      console.log(` Room ${roomId} not found in tripRooms`);
-      console.log(`� ========================================\n`);
+      console.log(`Room ${roomId} not found in tripRooms`);
+      console.log(`\n`);
       return;
     }
 
     const room = this.tripRooms.get(roomId);
-    console.log(`� Total clients in room: ${room.size}`);
+    console.log(`Total clients in room: ${room.size}`);
     
     let sentCount = 0;
     let skippedCount = 0;
     
     room.forEach(ws => {
       const shouldSend = (senderWs === null || ws !== senderWs) && ws.readyState === WebSocket.OPEN;
-      console.log(`� Client ${ws.userName}: shouldSend=${shouldSend}, isOpen=${ws.readyState === WebSocket.OPEN}, isSender=${ws === senderWs}`);
+      console.log(`Client ${ws.userName}: shouldSend=${shouldSend}, isOpen=${ws.readyState === WebSocket.OPEN}, isSender=${ws === senderWs}`);
       
       if (shouldSend) {
         this.sendToClient(ws, message);
@@ -636,13 +603,12 @@ class CollaborationServer {
       }
     });
     
-    console.log(`� Broadcast complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
-    console.log(`� ========================================\n`);
+    console.log(`Broadcast complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
   }
 
   broadcastToAllClients(message) {
-    console.log(`\n� ========== BROADCAST TO ALL CLIENTS ==========`);
-    console.log(`� Message Type: ${message.type}`);
+    console.log(`\nBROADCAST TO ALL CLIENTS\n`);
+    console.log(`Message Type: ${message.type}`);
     
     let sentCount = 0;
     let skippedCount = 0;
@@ -658,18 +624,17 @@ class CollaborationServer {
       }
     });
     
-    console.log(`� Broadcast to all complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
-    console.log(`� ================================================\n`);
+    console.log(`Broadcast to all complete: sent to ${sentCount} clients, skipped ${skippedCount}`);
   }
 
   handleDisconnection(ws) {
-    console.log(`� [DEBUG] User ${ws.userName} disconnected`);
-    console.log(`� [DEBUG] User ID: ${ws.userId}`);
-    console.log(`� [DEBUG] Current trip ID: ${ws.currentTripId}`);
+    console.log(`User ${ws.userName} disconnected`);
+    console.log(`User ID: ${ws.userId}`);
+    console.log(`Current trip ID: ${ws.currentTripId}`);
     
     // Leave current room if any
     if (ws.currentTripId) {
-      console.log(`� [DEBUG] Leaving room: ${ws.currentTripId}`);
+      console.log(`Leaving room: ${ws.currentTripId}`);
       this.leaveRoom(ws, ws.currentTripId);
     }
     
@@ -684,7 +649,7 @@ class CollaborationServer {
   }
 
   shutdown() {
-    console.log('� Shutting down collaboration server...');
+    console.log('Shutting down collaboration server...');
     
     // Close all WebSocket connections
     this.wss.clients.forEach(ws => {
@@ -694,7 +659,7 @@ class CollaborationServer {
     // Close the WebSocket server
     this.wss.close();
     
-    console.log(' Collaboration server shut down');
+    console.log('Collaboration server shut down');
   }
 }
 

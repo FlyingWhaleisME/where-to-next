@@ -23,14 +23,12 @@ const SummaryPage: React.FC = () => {
     
     // Check authentication first
     if (!isAuthenticated()) {
-      console.log('🔒 [DEBUG] SummaryPage: Not authenticated, redirecting');
       navigate('/');
       return;
     }
     
     const currentUser = getCurrentUser();
     if (!currentUser || !currentUser.id) {
-      console.log('🔒 [DEBUG] SummaryPage: No user ID, redirecting');
       navigate('/');
       return;
     }
@@ -148,7 +146,6 @@ const SummaryPage: React.FC = () => {
           const result = await documentsApi.create(doc);
           if (result.data) {
             savedDocumentIds.push(result.data._id || result.data.id);
-            console.log('✅ Document saved to MongoDB:', result.data._id || result.data.id);
       } else {
             console.error('Failed to save document to MongoDB:', result.error);
           }
@@ -175,41 +172,26 @@ const SummaryPage: React.FC = () => {
       console.log('Documents saved to localStorage (cache). Saved to MongoDB:', savedDocumentIds.length);
       
       // Navigate to trip tracing
-      console.log('🚀 NAVIGATING TO TRIP TRACING from handleDestinationsSubmit');
       navigate('/trip-tracing');
     }
   };
 
   const handleChosenDestinationsSubmit = async () => {
-    console.log('=== handleChosenDestinationsSubmit called ===');
-    console.log('tripPreferences:', tripPreferences);
-    console.log('destinationApproach:', tripPreferences?.destinationApproach);
-    console.log('specificDestinations:', tripPreferences?.destinationApproach?.specificDestinations);
-    
-    // Check if tripPreferences exists at all
     if (!tripPreferences) {
-      console.error('ERROR: tripPreferences is null or undefined');
       return;
     }
     
-    // Check if destinationApproach exists
     if (!tripPreferences.destinationApproach) {
-      console.error('ERROR: destinationApproach is missing from tripPreferences');
-      console.log('Available tripPreferences keys:', Object.keys(tripPreferences));
       return;
     }
     
-    // Check if specificDestinations exists
     if (!tripPreferences.destinationApproach.specificDestinations) {
-      console.error('ERROR: specificDestinations is missing from destinationApproach');
-      console.log('Available destinationApproach keys:', Object.keys(tripPreferences.destinationApproach));
       return;
     }
     
     // For Flow A: Create destination documents quietly for chosen destinations
     if (tripPreferences?.destinationApproach?.specificDestinations) {
       const chosenDestinations = tripPreferences.destinationApproach.specificDestinations;
-      console.log('Creating documents for chosen destinations:', chosenDestinations);
       
       // Create destination documents with auto-created flag
       const surveyId = `big_idea_${Date.now()}`;
@@ -274,7 +256,6 @@ const SummaryPage: React.FC = () => {
           const result = await documentsApi.create(doc);
           if (result.data) {
             savedDocumentIds.push(result.data._id || result.data.id);
-            console.log('✅ Document saved to MongoDB:', result.data._id || result.data.id);
           } else {
             console.error('Failed to save document to MongoDB:', result.error);
           }
@@ -305,11 +286,8 @@ const SummaryPage: React.FC = () => {
       console.log('Documents state updated');
       
       // Navigate to trip tracing
-      console.log('🚀 NAVIGATING TO TRIP TRACING from handleDestinationsSubmit');
       navigate('/trip-tracing');
     } else {
-      console.log('No specific destinations found, cannot create documents');
-      console.log('tripPreferences structure:', JSON.stringify(tripPreferences, null, 2));
     }
   };
 

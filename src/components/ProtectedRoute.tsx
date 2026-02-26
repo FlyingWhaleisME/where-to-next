@@ -11,36 +11,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // CRITICAL: Check authentication synchronously on render
-  // This prevents any rendering if user is not authenticated
-  console.log('🔒 [PROTECTED ROUTE] Component rendering');
   const authenticated = isAuthenticated();
   const user = getCurrentUser();
   
-  console.log('🔒 [PROTECTED ROUTE] Initial auth check:', {
-    authenticated,
-    hasUser: !!user,
-    userId: user?.id,
-    userEmail: user?.email,
-    timestamp: new Date().toISOString()
-  });
-  
   useEffect(() => {
-    console.log('🔒 [PROTECTED ROUTE] useEffect running');
-    
     const checkAuth = () => {
       const currentAuth = isAuthenticated();
       const currentUser = getCurrentUser();
       
-      console.log('🔒 [PROTECTED ROUTE] Auth check result:', {
-        authenticated: currentAuth,
-        hasUser: !!currentUser,
-        userId: currentUser?.id,
-        timestamp: new Date().toISOString()
-      });
-      
       if (!currentAuth || !currentUser) {
-        console.log('❌ [PROTECTED ROUTE] User not authenticated, redirecting to home');
         setIsAuthorized(false);
         setIsChecking(false);
         // Show login required popup
@@ -49,11 +28,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         return;
       }
       
-      console.log('✅ [PROTECTED ROUTE] User authenticated:', {
-        userId: currentUser.id,
-        userEmail: currentUser.email,
-        userName: currentUser.name
-      });
       setIsAuthorized(true);
       setIsChecking(false);
     };
@@ -63,11 +37,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     // Listen for logout events
     const handleLogout = () => {
-      const currentUser = getCurrentUser();
-      console.log('🔒 [PROTECTED ROUTE] Logout event received:', {
-        userId: currentUser?.id,
-        timestamp: new Date().toISOString()
-      });
       setIsAuthorized(false);
       // Use window.location for immediate redirect
       window.location.href = '/';
@@ -75,26 +44,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     // Listen for storage changes (token removal from other tabs)
     const handleStorageChange = (e: StorageEvent) => {
-      console.log('🔒 [PROTECTED ROUTE] Storage event:', {
-        key: e.key,
-        oldValue: e.oldValue ? 'exists' : 'null',
-        newValue: e.newValue ? 'exists' : 'null',
-        timestamp: new Date().toISOString()
-      });
-      
       if (e.key === 'token' && !e.newValue) {
-        const currentUser = getCurrentUser();
-        console.log('🔒 [PROTECTED ROUTE] Token removed (other tab logout):', {
-          userId: currentUser?.id,
-          redirecting: true
-        });
         setIsAuthorized(false);
         // Use window.location for immediate redirect
         window.location.href = '/';
       }
       
       if (e.key === 'user' && !e.newValue) {
-        console.log('🔒 [PROTECTED ROUTE] User removed (other tab logout), redirecting');
         setIsAuthorized(false);
         window.location.href = '/';
       }
@@ -106,11 +62,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       const currentUser = getCurrentUser();
       
       if (!currentAuth || !currentUser) {
-        console.log('🔒 [PROTECTED ROUTE] Periodic check - user logged out:', {
-          authenticated: currentAuth,
-          hasUser: !!currentUser,
-          timestamp: new Date().toISOString()
-        });
         setIsAuthorized(false);
         // Use window.location for immediate redirect
         window.location.href = '/';
@@ -127,9 +78,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     };
   }, [navigate]);
 
-  // CRITICAL: Don't render anything if not authenticated (even during check)
+  // Don't render if not authenticated
   if (!authenticated || !user) {
-    console.log('❌ [PROTECTED ROUTE] Blocking render - not authenticated');
     // Show login required popup and redirect
     if (typeof window !== 'undefined') {
       // Use setTimeout to avoid blocking render cycle

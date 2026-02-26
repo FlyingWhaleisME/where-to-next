@@ -47,15 +47,13 @@ const DocumentEditingPage: React.FC = () => {
   const [selectedPreference, setSelectedPreference] = useState<any>(null);
 
   useEffect(() => {
-    // CRITICAL: Check authentication FIRST before doing anything
+    // Check authentication first
     const currentUser = getCurrentUser();
     if (!isAuthenticated() || !currentUser) {
-      console.log('🔒 [DEBUG] DocumentEditingPage: User not authenticated, redirecting');
       navigate('/', { replace: true });
       return;
     }
 
-    console.log('✅ [DEBUG] DocumentEditingPage: User authenticated, user ID:', currentUser.id);
 
     if (!id) {
       navigate('/profile');
@@ -107,14 +105,12 @@ const DocumentEditingPage: React.FC = () => {
           // Re-verify authentication before setting document state (prevents showing data after logout)
           const verifyUser = getCurrentUser();
           if (!isAuthenticated() || !verifyUser || verifyUser.id !== currentUser.id) {
-            console.log('🔒 [DEBUG] DocumentEditingPage: User logged out during document load, redirecting');
             window.location.href = '/';
             return;
           }
           
           // Verify user owns this document
           if (foundDoc.creatorId && foundDoc.creatorId !== currentUser.id) {
-            console.log('🔒 [DEBUG] DocumentEditingPage: User does not own this document. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
             alert('You do not have permission to edit this document');
             navigate('/profile', { replace: true });
             return;
@@ -123,12 +119,10 @@ const DocumentEditingPage: React.FC = () => {
           // Final check before setting state
           const finalCheck = getCurrentUser();
           if (!isAuthenticated() || !finalCheck || finalCheck.id !== currentUser.id) {
-            console.log('🔒 [DEBUG] DocumentEditingPage: User logged out before setting document, redirecting');
             window.location.href = '/';
             return;
           }
           
-          console.log('✅ [DEBUG] DocumentEditingPage: Document ownership verified. User ID:', currentUser.id, 'Document creatorId:', foundDoc.creatorId);
           setDocument(foundDoc);
           
           setDocumentName(foundDoc.destinationName || '');
@@ -214,7 +208,6 @@ const DocumentEditingPage: React.FC = () => {
           
           
           // Options Organizer
-          console.log('Loading options organizer:', foundDoc.optionsOrganizer);
           const accommodation = foundDoc.optionsOrganizer?.accommodation || [];
           const meals = foundDoc.optionsOrganizer?.meals || [];
           const activities = foundDoc.optionsOrganizer?.activities || [];
@@ -262,21 +255,18 @@ const DocumentEditingPage: React.FC = () => {
     }
     
     setSavedPreferences(allPreferences);
-    console.log('Loaded preferences:', allPreferences);
 
     
     setLoading(false);
     
     // Listen for logout events to redirect immediately
     const handleUserLogout = () => {
-      console.log('🔒 [DEBUG] DocumentEditingPage: User logged out, redirecting');
       window.location.href = '/';
     };
     
     // Listen for storage changes (detects logout from other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if ((e.key === 'token' && !e.newValue) || (e.key === 'user' && !e.newValue)) {
-        console.log('🔒 [DEBUG] DocumentEditingPage: Logout detected via storage event, redirecting');
         handleUserLogout();
       }
     };
@@ -284,7 +274,6 @@ const DocumentEditingPage: React.FC = () => {
     // Periodic auth check every 1 second
     const authCheckInterval = setInterval(() => {
       if (!isAuthenticated() || !getCurrentUser()) {
-        console.log('🔒 [DEBUG] DocumentEditingPage: Periodic check - user logged out, redirecting');
         handleUserLogout();
       }
     }, 1000);
@@ -420,7 +409,6 @@ const DocumentEditingPage: React.FC = () => {
         const result = await documentsApi.create(documentToSave);
         if (result.data) {
           savedDocId = result.data._id || result.data.id;
-          console.log('✅ Document saved to MongoDB:', savedDocId);
         } else {
           console.error('Failed to save document to MongoDB:', result.error);
           alert('Failed to save document to cloud storage. Saving locally only.');
@@ -432,7 +420,6 @@ const DocumentEditingPage: React.FC = () => {
           console.error('Failed to update document in MongoDB:', result.error);
           alert('Failed to update document in cloud storage. Saving locally only.');
         } else {
-          console.log('✅ Document updated in MongoDB:', document.id);
         }
       }
       
@@ -484,7 +471,6 @@ const DocumentEditingPage: React.FC = () => {
           },
           lastModified: new Date().toISOString()
         };
-        console.log('Document updated successfully');
       } else {
         // Create new document
         const currentUser = getCurrentUser();
@@ -534,16 +520,14 @@ const DocumentEditingPage: React.FC = () => {
         };
         
         docs.push(newDocument);
-        console.log('Document created successfully');
       }
       
-      // Ensure existing documents have creatorId if missing
+      // Add creatorId to existing documents if missing
       const currentUserCheck = getCurrentUser();
       if (currentUserCheck && existingDocIndex >= 0) {
         const existingDoc = docs[existingDocIndex];
         if (!existingDoc.creatorId) {
           docs[existingDocIndex] = { ...existingDoc, creatorId: currentUserCheck.id };
-          console.log('Added creatorId to existing document');
         }
       }
       
@@ -580,15 +564,14 @@ const DocumentEditingPage: React.FC = () => {
               });
 
               if (updateResponse.ok) {
-                console.log('✅ Shared document updated for invited users');
               } else {
-                console.warn('⚠️ Failed to update shared document');
+                console.warn('Failed to update shared document');
               }
             }
           }
         }
       } catch (error) {
-        console.warn('⚠️ Error updating shared document:', error);
+        console.warn('Error updating shared document:', error);
         // Don't block save if share update fails
       }
       
@@ -652,7 +635,6 @@ const DocumentEditingPage: React.FC = () => {
     return currencyMap[currencyCode] || currencyCode;
   };
 
-  // Helper function to format numbers with thousand separators
   const formatNumberWithSeparators = (value: number | string) => {
     if (!value) return '';
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -660,7 +642,6 @@ const DocumentEditingPage: React.FC = () => {
     return num.toLocaleString();
   };
 
-  // Helper function to parse number from formatted string
   const parseFormattedNumber = (value: string) => {
     if (!value) return '';
     const cleaned = value.replace(/,/g, '');
@@ -668,7 +649,6 @@ const DocumentEditingPage: React.FC = () => {
     return isNaN(num) ? '' : num;
   };
 
-  // Helper functions for managing arrays
   const addArrayItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     setter(prev => [...prev, '']);
   };
@@ -685,7 +665,6 @@ const DocumentEditingPage: React.FC = () => {
     });
   };
 
-  // Helper function to check if this is group travel
   const isGroupTravel = () => {
     const bigIdeaData = document?.bigIdeaSurveyData;
     const tripTracingData = document?.tripTracingSurveyData;
@@ -708,7 +687,6 @@ const DocumentEditingPage: React.FC = () => {
     return false;
   };
 
-  // Helper function to humanize transportation data
   const humanizeTransportation = (transportation: string) => {
     if (!transportation) return '';
     
@@ -881,7 +859,6 @@ const DocumentEditingPage: React.FC = () => {
               {savedPreferences.length > 0 && (
                 <button
                   onClick={() => {
-                    console.log('Switch Preferences clicked, savedPreferences:', savedPreferences);
                     setShowPreferenceModal(true);
                   }}
                   className="text-sm bg-emerald-500 text-white px-3 py-1 rounded-lg hover:bg-emerald-600 transition-colors"
@@ -1549,7 +1526,6 @@ const DocumentEditingPage: React.FC = () => {
                 <h3 className="text-xl font-bold text-gray-800">Switch Trip Preferences</h3>
                 <button
                   onClick={() => {
-                    console.log('Closing preference modal');
                     setShowPreferenceModal(false);
                   }}
                   className="text-gray-500 hover:text-gray-700"

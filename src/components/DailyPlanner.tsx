@@ -1,5 +1,3 @@
-// ADVANCED TECHNIQUE 48: COMPLEX COMPONENT INTERFACE WITH OPTIONAL PROPERTIES
-// TypeScript interface with optional properties and callback functions for data flow
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TimeSlot } from '../types';
@@ -11,12 +9,10 @@ interface DailyPlannerProps {
   mealOptions: string[];
   activityOptions: string[];
   planningStyle: number;
-  onTimeSlotUpdate: (timeSlots: TimeSlot[]) => void; // Callback function for parent communication
-  readOnly?: boolean; // Optional property for shared document mode
-  initialTimeSlots?: TimeSlot[]; // Optional property for data persistence
+  onTimeSlotUpdate: (timeSlots: TimeSlot[]) => void;
+  readOnly?: boolean;
+  initialTimeSlots?: TimeSlot[];
 }
-
-// TimeSlot interface is imported from '../types'
 
 interface DayData {
   date: string;
@@ -57,8 +53,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   });
   const [hasTimeConflict, setHasTimeConflict] = useState<boolean>(false);
 
-  // ADVANCED TECHNIQUE 49: DATE RANGE GENERATION WITH ITERATIVE ALGORITHM
-  // Complex date manipulation and iteration to generate day-by-day data structures
   useEffect(() => {
     if (!startDate || !endDate) return;
     
@@ -66,13 +60,9 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     const end = new Date(endDate);
     const days: DayData[] = [];
     
-    // ADVANCED TECHNIQUE 50: DATE ITERATION WITH MUTATION AND ISO STRING PARSING
-    // Loop through date range with date mutation and ISO string extraction
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dayDate = d.toISOString().split('T')[0];
       
-      // For now, we'll initialize with empty time slots
-      // The initialTimeSlots will be handled separately
       const dayTimeSlots: TimeSlot[] = [];
       
       days.push({
@@ -85,12 +75,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     setCurrentDate(startDate);
   }, [startDate, endDate]);
 
-  // ADVANCED TECHNIQUE 51: DATA GROUPING AND MERGING WITH FUNCTIONAL PROGRAMMING
-  // Complex data transformation using reduce, map, and spread operators for state updates
   useEffect(() => {
     if (daysData.length > 0) {
-      // ADVANCED TECHNIQUE 52: OBJECT GROUPING WITH DYNAMIC KEY CREATION
-      // Group time slots by date using dynamic object keys and array accumulation
       const slotsByDate: { [date: string]: TimeSlot[] } = {};
       if (initialTimeSlots && Array.isArray(initialTimeSlots) && initialTimeSlots.length > 0) {
         initialTimeSlots.forEach(slot => {
@@ -103,9 +89,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
         });
       }
 
-      // ADVANCED TECHNIQUE 53: FUNCTIONAL STATE UPDATE WITH SPREAD OPERATORS
-      // Complex state update using functional setState with map and spread operators
-      // Always update to sync with initialTimeSlots, even if empty
       setDaysData(prevDays => {
         return prevDays.map(day => ({
           ...day,
@@ -115,15 +98,12 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     }
   }, [initialTimeSlots, daysData.length]);
 
-  // Get current day data
   const currentDayData = daysData.find(day => day.date === currentDate);
 
-  // Helper function to collect all time slots from all days
   const getAllTimeSlots = () => {
     return daysData.flatMap(day => day.timeSlots);
   };
 
-  // Check for time conflicts when times change
   useEffect(() => {
     if (timePickerModal.isOpen && customTimes.startTime && customTimes.endTime) {
       const hasConflict = checkForOverlaps(customTimes.startTime, customTimes.endTime);
@@ -131,7 +111,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     }
   }, [customTimes, timePickerModal.isOpen, currentDayData]);
 
-  // Generate hourly slots (6 AM to 11 PM)
   const hourlySlots = Array.from({ length: 18 }, (_, i) => {
     const hour = i + 6;
     return {
@@ -163,7 +142,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     
     if (!draggedItem) return;
 
-    // Set default times based on the hour
     const defaultStartTime = `${hour.toString().padStart(2, '0')}:00`;
     const defaultEndTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
 
@@ -197,7 +175,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
     setDaysData(updatedDays);
     
-    // Get all time slots from all days
     const allTimeSlots = updatedDays.flatMap(day => day.timeSlots);
     onTimeSlotUpdate(allTimeSlots);
   };
@@ -205,10 +182,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   const handleEditTimeSlot = (timeSlot: TimeSlot) => {
     if (readOnly) return;
     
-    // Parse start time to get hour and minutes
     const [startHour, startMinute] = timeSlot.startTime.split(':').map(Number);
     
-    // Parse duration to calculate end time
     const durationInMinutes = durationToMinutes(timeSlot.duration);
     const startTimeInMinutes = startHour * 60 + startMinute;
     const endTimeInMinutes = startTimeInMinutes + durationInMinutes;
@@ -231,13 +206,11 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   const handleConfirmTimeSlot = () => {
     if (!timePickerModal.isOpen || !customTimes.startTime || !customTimes.endTime) return;
 
-    // Validate that end time is after start time
     if (customTimes.startTime >= customTimes.endTime) {
       alert('End time must be after start time');
       return;
     }
 
-    // Calculate duration from start and end time
     const startMinutes = parseInt(customTimes.startTime.split(':')[0]) * 60 + parseInt(customTimes.startTime.split(':')[1]);
     const endMinutes = parseInt(customTimes.endTime.split(':')[0]) * 60 + parseInt(customTimes.endTime.split(':')[1]);
     const durationMinutes = endMinutes - startMinutes;
@@ -245,18 +218,15 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     const durationMins = durationMinutes % 60;
     const durationString = durationHours > 0 ? `${durationHours}h ${durationMins}m` : `${durationMins}m`;
 
-    // Check for overlaps with existing time slots (excluding the one being edited)
     const hasOverlap = checkForOverlaps(customTimes.startTime, customTimes.endTime, editingSlot?.id);
     if (hasOverlap) {
       alert('This time slot overlaps with an existing activity. Please choose a different time.');
       return;
     }
 
-    // Update current day's time slots
     const updatedDays = daysData.map(day => {
       if (day.date === currentDate) {
         if (editingSlot) {
-          // Editing existing slot
           return {
             ...day,
             timeSlots: day.timeSlots.map(slot => 
@@ -273,7 +243,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             )
           };
         } else {
-          // Adding new slot
           const newTimeSlot: TimeSlot = {
             id: `${Date.now()}-${Math.random()}`,
             date: currentDate,
@@ -294,11 +263,9 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
     setDaysData(updatedDays);
     
-    // Get all time slots from all days
     const allTimeSlots = updatedDays.flatMap(day => day.timeSlots);
     onTimeSlotUpdate(allTimeSlots);
     
-    // Close modal and reset editing state
     setTimePickerModal({
       isOpen: false,
       hour: 9,
@@ -315,14 +282,11 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
     const newEnd = timeToMinutes(endTime);
 
     return currentDayData.timeSlots.some(existingSlot => {
-      // Skip the slot being edited
       if (excludeSlotId && existingSlot.id === excludeSlotId) return false;
       
       const existingStart = timeToMinutes(existingSlot.startTime);
-      // Calculate end time from start time and duration
       const existingEnd = existingStart + durationToMinutes(existingSlot.duration);
 
-      // Check if the new time slot overlaps with any existing slot
       return (newStart < existingEnd && newEnd > existingStart);
     });
   };
@@ -333,7 +297,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
   };
 
   const durationToMinutes = (durationString: string): number => {
-    // Parse duration string like "2h 30m" or "45m"
     const match = durationString.match(/(?:(\d+)h\s*)?(?:(\d+)m)?/);
     if (!match) return 0;
     
@@ -369,7 +332,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6">
-      {/* Header with date navigation */}
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => handleDateNavigation('prev')}
@@ -401,7 +363,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
         </button>
       </div>
 
-      {/* Draggable Options */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-gray-800">
@@ -414,7 +375,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
           )}
         </div>
         <div className="grid grid-cols-3 gap-4">
-          {/* Accommodation Options */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-gray-600">Accommodation</h4>
             {accommodationOptions.map((option, index) => (
@@ -431,7 +391,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             ))}
           </div>
 
-          {/* Meal Options */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-gray-600">Meals</h4>
             {mealOptions.map((option, index) => (
@@ -448,7 +407,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             ))}
           </div>
 
-          {/* Activity Options */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-gray-600">Activities</h4>
             {activityOptions.map((option, index) => (
@@ -467,10 +425,8 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
         </div>
       </div>
 
-      {/* Daily Schedule Grid */}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="grid grid-cols-2" style={{ gridTemplateColumns: '80px 1fr' }}>
-          {/* Time Labels */}
           <div className="bg-gray-50">
             {hourlySlots.map((slot) => (
               <div
@@ -482,7 +438,6 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
             ))}
           </div>
 
-          {/* Schedule Area */}
           <div className="relative">
             {hourlySlots.map((slot) => (
               <div
@@ -493,14 +448,12 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                 onDragOver={readOnly ? undefined : handleDragOver}
                 onDrop={readOnly ? undefined : (e) => handleDrop(e, slot.hour)}
               >
-                {/* Existing time slots */}
                 {currentDayData?.timeSlots
                   .filter(timeSlot => {
                     const slotHour = parseInt(timeSlot.startTime.split(':')[0]);
                     return slotHour === slot.hour;
                   })
                   .map((timeSlot) => {
-                    // Calculate position and height based on start time and duration
                     const startMinutes = parseInt(timeSlot.startTime.split(':')[1]);
                     const startHour = parseInt(timeSlot.startTime.split(':')[0]);
                     const durationInMinutes = durationToMinutes(timeSlot.duration);
@@ -508,11 +461,9 @@ const DailyPlanner: React.FC<DailyPlannerProps> = ({
                     const endTimeInMinutes = startTimeInMinutes + durationInMinutes;
                     const endHour = Math.floor(endTimeInMinutes / 60);
                     const endMinutes = endTimeInMinutes % 60;
-                    
-                    // Calculate position within the hour slot
                     const topPosition = (startMinutes / 60) * 100;
                     const durationInHours = (endHour - startHour) + (endMinutes - startMinutes) / 60;
-                    const height = Math.max((durationInHours / 1) * 100, 20); // Minimum 20% height
+                    const height = Math.max((durationInHours / 1) * 100, 20);
                     
                     return (
                       <motion.div

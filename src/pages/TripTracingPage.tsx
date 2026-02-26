@@ -24,21 +24,17 @@ const TripTracingPage: React.FC = () => {
   const totalSections = 7;
 
   useEffect(() => {
-    console.log('🎯 TRIP TRACING PAGE LOADED');
-    
     // Check authentication first
     const { getCurrentUser, isAuthenticated } = require('../services/apiService');
     const { getUserData, migrateUserData } = require('../utils/userDataStorage');
     
     if (!isAuthenticated()) {
-      console.log('🔒 [DEBUG] TripTracingPage: Not authenticated, redirecting');
       navigate('/');
       return;
     }
     
     const currentUser = getCurrentUser();
     if (!currentUser || !currentUser.id) {
-      console.log('🔒 [DEBUG] TripTracingPage: No user ID, redirecting');
       navigate('/');
       return;
     }
@@ -51,13 +47,10 @@ const TripTracingPage: React.FC = () => {
     const savedPrefs = getUserData('savedTripPreferences');
     
     if (saved) {
-      console.log('✅ Trip preferences loaded for user:', currentUser.id);
       setTripPreferences(saved);
     } else if (savedPrefs && Array.isArray(savedPrefs) && savedPrefs.length > 0) {
-      console.log('✅ Using saved trip preferences for user:', currentUser.id);
       setTripPreferences(savedPrefs[0].preferences);
     } else {
-      console.log('❌ No trip preferences found for user:', currentUser.id, 'redirecting to Big Picture');
       navigate('/big-picture');
     }
 
@@ -266,7 +259,7 @@ const TripTracingPage: React.FC = () => {
       lastModified: surveyDate
     };
 
-    // Check if this is an update to existing survey or new one
+    // Update existing survey or create new one
     const existingIndex = savedSurveys.findIndex((s: any) => 
       s.surveyData.groupSize === tripPreferences?.groupSize &&
       s.surveyData.travelMethod?.travelMethod === tripTracingState.travelMethod?.travelMethod
@@ -281,15 +274,6 @@ const TripTracingPage: React.FC = () => {
     }
 
     localStorage.setItem('savedTripTracingSurveys', JSON.stringify(savedSurveys));
-    
-    console.log('✅ Trip Tracing survey saved with metadata:', {
-      surveyId,
-      surveyName,
-      groupSize: tripPreferences?.groupSize,
-      isSoloTraveler: tripPreferences?.groupSize === 'solo',
-      sectionsCompleted,
-      hasExpenseSharing: !!tripTracingState.expenses
-    });
 
     // Update existing documents with trip tracing data
     updateDocumentsWithTripTracingData(enhancedSurveyData);
@@ -311,7 +295,6 @@ const TripTracingPage: React.FC = () => {
           lastModified: new Date().toISOString()
         }));
         localStorage.setItem('destinationDocuments', JSON.stringify(updatedDocs));
-        console.log('✅ Updated documents with trip tracing data');
       }
     } catch (error) {
       console.error('Error updating documents with trip tracing data:', error);
@@ -349,7 +332,6 @@ const TripTracingPage: React.FC = () => {
 
           if (response.ok) {
             const result = await response.json();
-            console.log('✅ Document shared successfully with code:', result.shareCode);
             
             // Store the share code in localStorage for the user to access
             localStorage.setItem('latestSharedDocumentCode', result.shareCode);

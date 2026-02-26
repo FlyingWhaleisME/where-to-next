@@ -34,11 +34,9 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
   }, [isVisible]);
 
   const handleSave = () => {
-    console.log('💾 [DEBUG] Saving collaboration settings:', settings);
-    console.log('💾 [DEBUG] onSettingsChange callback:', typeof onSettingsChange);
     
     if (!settings.shareCode) {
-      console.warn('❌ [DEBUG] No share code generated, generating one now');
+      console.warn('No share code generated, generating one now');
       generateShareCode();
       return;
     }
@@ -47,7 +45,7 @@ const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
       onSettingsChange(settings);
       onClose();
     } catch (error) {
-      console.error('❌ [DEBUG] Error saving settings:', error);
+      console.error('Error saving settings:', error);
     }
   };
 

@@ -13,8 +13,8 @@ const tripTracingStateSchema = new mongoose.Schema({
   surveyName: String,
   surveyDate: String,
   groupSize: String, // From Big Idea survey
-  isSoloTraveler: Boolean, // Computed from groupSize
-  sectionsCompleted: [String], // Track which sections were completed
+  isSoloTraveler: Boolean,// Computed from groupSize
+  sectionsCompleted: [String],// Track which sections were completed
   
   accommodation: {
     selectedTypes: [String],
@@ -57,7 +57,7 @@ const tripTracingStateSchema = new mongoose.Schema({
   },
   
   foodPreferences: {
-    styles: [String], // local, international, street, fine, casual, dontMind
+    styles: [String],// local, international, street, fine, casual, dontMind
     popularity: Boolean,
     vegan: Boolean,
     goodPicVibe: Boolean

@@ -13,7 +13,6 @@ interface Question1GroupSizeProps {
 }
 
 // Functional component receives props via destructuring
-// React.FC indicates this is a React functional component
 const Question1GroupSize: React.FC<Question1GroupSizeProps> = ({
   onAnswer,
   onNext,
